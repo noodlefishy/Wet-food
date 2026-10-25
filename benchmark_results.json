@@ -1,0 +1,2134 @@
+{
+  "specs": {
+    "engine": "Pure Python Standard Library (Zero PyTorch, Zero NumPy)",
+    "layers": 4,
+    "embedding_dim": 64,
+    "heads": 4,
+    "vocab_size": 1024,
+    "block_size": 64
+  },
+  "summary": {
+    "Actor Location": {
+      "passed": 10,
+      "total": 10,
+      "accuracy": 100.0
+    },
+    "Object Location": {
+      "passed": 8,
+      "total": 8,
+      "accuracy": 100.0
+    },
+    "Possession (has)": {
+      "passed": 6,
+      "total": 6,
+      "accuracy": 100.0
+    },
+    "Possession (found)": {
+      "passed": 7,
+      "total": 7,
+      "accuracy": 100.0
+    },
+    "Object Transfer": {
+      "passed": 6,
+      "total": 6,
+      "accuracy": 100.0
+    },
+    "Giving (IOI)": {
+      "passed": 6,
+      "total": 8,
+      "accuracy": 75.0
+    },
+    "Color Binding": {
+      "passed": 7,
+      "total": 8,
+      "accuracy": 87.5
+    },
+    "Persona": {
+      "passed": 8,
+      "total": 8,
+      "accuracy": 100.0
+    },
+    "Inverted / Negation": {
+      "passed": 1,
+      "total": 4,
+      "accuracy": 25.0
+    },
+    "overall": {
+      "passed": 59,
+      "total": 65,
+      "accuracy": 90.77
+    }
+  },
+  "details": [
+    {
+      "id": 1,
+      "category": "Actor Location",
+      "prompt": "[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]",
+      "output": "kitchen .",
+      "expected": "kitchen .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "kitchen",
+          "prob": 0.999
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "she",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "category": "Actor Location",
+      "prompt": "[c] alice went to the kitchen . bob went to the room . [q] where is bob ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 0.999
+        },
+        {
+          "word": "white",
+          "prob": 0.001
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "sure",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "category": "Actor Location",
+      "prompt": "[c] bob went to the room . alice went to the kitchen . [q] where is alice ? [a]",
+      "output": "kitchen .",
+      "expected": "kitchen .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "kitchen",
+          "prob": 1.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "end",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "category": "Actor Location",
+      "prompt": "[c] bob went to the room . alice went to the kitchen . [q] where is bob ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 0.999
+        },
+        {
+          "word": "white",
+          "prob": 0.001
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "category": "Actor Location",
+      "prompt": "[c] meow went to the park . miaou went to the garden . [q] where is meow ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 1.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "category": "Actor Location",
+      "prompt": "[c] meow went to the park . miaou went to the garden . [q] where is miaou ? [a]",
+      "output": "garden .",
+      "expected": "garden .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "garden",
+          "prob": 0.998
+        },
+        {
+          "word": "park",
+          "prob": 0.002
+        },
+        {
+          "word": "on",
+          "prob": 0.0
+        },
+        {
+          "word": "pink",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "category": "Actor Location",
+      "prompt": "[c] alice went to the kitchen . bob went to the room . meow went to the park . [q] where is meow ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 0.981
+        },
+        {
+          "word": "garden",
+          "prob": 0.01
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.005
+        },
+        {
+          "word": "room",
+          "prob": 0.004
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "category": "Actor Location",
+      "prompt": "[c] alice went to the kitchen . then alice went to the garden . [q] where is alice ? [a]",
+      "output": "garden .",
+      "expected": "garden .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "garden",
+          "prob": 1.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        },
+        {
+          "word": "yellow",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "category": "Actor Location",
+      "prompt": "[c] bob went to the park . then bob went to the room . [q] where is bob ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 1.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "that",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "category": "Actor Location",
+      "prompt": "[c] miaou went to the room . then miaou went to the park . [q] where is miaou ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 1.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "category": "Object Location",
+      "prompt": "[c] the ball is in the garden . the box is in the kitchen . [q] where is the ball ? [a]",
+      "output": "garden .",
+      "expected": "garden .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "garden",
+          "prob": 1.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "category": "Object Location",
+      "prompt": "[c] the ball is in the garden . the box is in the kitchen . [q] where is the box ? [a]",
+      "output": "kitchen .",
+      "expected": "kitchen .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "kitchen",
+          "prob": 1.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "category": "Object Location",
+      "prompt": "[c] the milk is in the room . the fish is in the park . [q] where is the milk ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "category": "Object Location",
+      "prompt": "[c] the milk is in the room . the fish is in the park . [q] where is the fish ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 0.999
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "pink",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "category": "Object Location",
+      "prompt": "[c] the box is in the park . the ball is in the room . [q] where is the box ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 1.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "had",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "category": "Object Location",
+      "prompt": "[c] the box is in the park . the ball is in the room . [q] where is the ball ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "white",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "category": "Object Location",
+      "prompt": "[c] the fish is in the kitchen . the milk is in the garden . [q] where is the fish ? [a]",
+      "output": "kitchen .",
+      "expected": "kitchen .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "kitchen",
+          "prob": 0.997
+        },
+        {
+          "word": "garden",
+          "prob": 0.002
+        },
+        {
+          "word": "room",
+          "prob": 0.001
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "category": "Object Location",
+      "prompt": "[c] the milk is in the garden . the fish is in the kitchen . [q] where is the milk ? [a]",
+      "output": "garden .",
+      "expected": "garden .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "garden",
+          "prob": 1.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "sky",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "category": "Possession (has)",
+      "prompt": "[c] alice has the ball . bob has the fish . [q] what does alice have ? [a]",
+      "output": "ball .",
+      "expected": "ball .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "ball",
+          "prob": 1.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "category": "Possession (has)",
+      "prompt": "[c] alice has the ball . bob has the fish . [q] what does bob have ? [a]",
+      "output": "fish .",
+      "expected": "fish .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "fish",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "category": "Possession (has)",
+      "prompt": "[c] bob has the fish . alice has the ball . [q] what does alice have ? [a]",
+      "output": "ball .",
+      "expected": "ball .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "ball",
+          "prob": 0.999
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "category": "Possession (has)",
+      "prompt": "[c] bob has the fish . alice has the ball . [q] what does bob have ? [a]",
+      "output": "fish .",
+      "expected": "fish .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "fish",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "category": "Possession (has)",
+      "prompt": "[c] meow has the milk . miaou has the box . [q] what does meow have ? [a]",
+      "output": "milk .",
+      "expected": "milk .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "milk",
+          "prob": 0.995
+        },
+        {
+          "word": "box",
+          "prob": 0.005
+        },
+        {
+          "word": "white",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "category": "Possession (has)",
+      "prompt": "[c] meow has the milk . miaou has the box . [q] what does miaou have ? [a]",
+      "output": "box .",
+      "expected": "box .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "box",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "category": "Possession (found)",
+      "prompt": "[c] alice found a ball . bob found a fish . [q] what did alice find ? [a]",
+      "output": "ball .",
+      "expected": "ball .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "ball",
+          "prob": 1.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "category": "Possession (found)",
+      "prompt": "[c] alice found a ball . bob found a fish . [q] what did bob find ? [a]",
+      "output": "fish .",
+      "expected": "fish .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "fish",
+          "prob": 1.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "category": "Possession (found)",
+      "prompt": "[c] bob found a fish . alice found a ball . [q] what did alice find ? [a]",
+      "output": "ball .",
+      "expected": "ball .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "ball",
+          "prob": 0.999
+        },
+        {
+          "word": "fish",
+          "prob": 0.001
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "category": "Possession (found)",
+      "prompt": "[c] bob found a fish . alice found a ball . [q] what did bob find ? [a]",
+      "output": "fish .",
+      "expected": "fish .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "fish",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "yellow",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "category": "Possession (found)",
+      "prompt": "[c] meow found a fish . miaou found a ball . [q] what did meow find ? [a]",
+      "output": "fish .",
+      "expected": "fish .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "fish",
+          "prob": 1.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "category": "Possession (found)",
+      "prompt": "[c] meow found a fish . miaou found a ball . [q] what did miaou find ? [a]",
+      "output": "ball .",
+      "expected": "ball .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "ball",
+          "prob": 0.999
+        },
+        {
+          "word": "fish",
+          "prob": 0.001
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "pink",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "category": "Possession (found)",
+      "prompt": "[c] miaou found a box . meow found a milk . [q] what did miaou find ? [a]",
+      "output": "box .",
+      "expected": "box .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "box",
+          "prob": 1.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "category": "Object Transfer",
+      "prompt": "[c] bob had the ball . bob gave the ball to alice . [q] who has the ball ? [a]",
+      "output": "alice .",
+      "expected": "alice .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "alice",
+          "prob": 1.0
+        },
+        {
+          "word": "bob",
+          "prob": 0.0
+        },
+        {
+          "word": "her",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "category": "Object Transfer",
+      "prompt": "[c] alice had the fish . alice gave the fish to meow . [q] who has the fish ? [a]",
+      "output": "meow .",
+      "expected": "meow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 1.0
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "red",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "category": "Object Transfer",
+      "prompt": "[c] meow had the box . meow gave the box to miaou . [q] who has the box ? [a]",
+      "output": "miaou .",
+      "expected": "miaou .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "miaou",
+          "prob": 1.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "moment",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "category": "Object Transfer",
+      "prompt": "[c] miaou had the milk . miaou gave the milk to bob . [q] who has the milk ? [a]",
+      "output": "bob .",
+      "expected": "bob .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "bob",
+          "prob": 0.999
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        },
+        {
+          "word": "max",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "we",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "category": "Object Transfer",
+      "prompt": "[c] alice had the ball . alice gave the ball to bob . [q] who has the ball ? [a]",
+      "output": "bob .",
+      "expected": "bob .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "bob",
+          "prob": 0.999
+        },
+        {
+          "word": "alice",
+          "prob": 0.001
+        },
+        {
+          "word": "max",
+          "prob": 0.0
+        },
+        {
+          "word": "tim",
+          "prob": 0.0
+        },
+        {
+          "word": "his",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "category": "Object Transfer",
+      "prompt": "[c] bob had the box . bob gave the box to meow . [q] who has the box ? [a]",
+      "output": "meow .",
+      "expected": "meow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 1.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "we",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "category": "Giving (IOI)",
+      "prompt": "[c] alice gave the ball to miaou . bob gave the box to meow . [q] who got the ball ? [a]",
+      "output": "miaou .",
+      "expected": "miaou .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "miaou",
+          "prob": 0.999
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "category": "Giving (IOI)",
+      "prompt": "[c] alice gave the ball to miaou . bob gave the box to meow . [q] who got the box ? [a]",
+      "output": "meow .",
+      "expected": "meow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 1.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "we",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "category": "Giving (IOI)",
+      "prompt": "[c] bob gave the box to meow . alice gave the ball to miaou . [q] who got the ball ? [a]",
+      "output": "miaou .",
+      "expected": "miaou .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "miaou",
+          "prob": 1.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "category": "Giving (IOI)",
+      "prompt": "[c] bob gave the box to meow . alice gave the ball to miaou . [q] who got the box ? [a]",
+      "output": "meow .",
+      "expected": "meow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 0.988
+        },
+        {
+          "word": "blue",
+          "prob": 0.009
+        },
+        {
+          "word": "miaou",
+          "prob": 0.002
+        },
+        {
+          "word": "garden",
+          "prob": 0.001
+        },
+        {
+          "word": "ball",
+          "prob": 0.001
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "category": "Giving (IOI)",
+      "prompt": "[c] alice gave the milk to meow . bob gave the fish to miaou . [q] who got the milk ? [a]",
+      "output": "meow .",
+      "expected": "meow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 0.999
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "who",
+          "prob": 0.0
+        },
+        {
+          "word": "anymore",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "category": "Giving (IOI)",
+      "prompt": "[c] alice gave the milk to meow . bob gave the fish to miaou . [q] who got the fish ? [a]",
+      "output": "miaou .",
+      "expected": "miaou .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "miaou",
+          "prob": 0.999
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "category": "Giving (IOI)",
+      "prompt": "[c] meow gave the fish to alice . miaou gave the ball to bob . [q] who got the fish ? [a]",
+      "output": "miaou .",
+      "expected": "alice .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "miaou",
+          "prob": 0.964
+        },
+        {
+          "word": "room",
+          "prob": 0.026
+        },
+        {
+          "word": "meow",
+          "prob": 0.004
+        },
+        {
+          "word": "pink",
+          "prob": 0.003
+        },
+        {
+          "word": "alice",
+          "prob": 0.002
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "category": "Giving (IOI)",
+      "prompt": "[c] meow gave the fish to alice . miaou gave the ball to bob . [q] who got the ball ? [a]",
+      "output": "meow .",
+      "expected": "bob .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 0.939
+        },
+        {
+          "word": "miaou",
+          "prob": 0.056
+        },
+        {
+          "word": "alice",
+          "prob": 0.003
+        },
+        {
+          "word": "blue",
+          "prob": 0.002
+        },
+        {
+          "word": "bob",
+          "prob": 0.001
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "category": "Color Binding",
+      "prompt": "[c] alice has a red box . bob has a blue ball . [q] what color is the box ? [a]",
+      "output": "blue .",
+      "expected": "red .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "blue",
+          "prob": 0.859
+        },
+        {
+          "word": "red",
+          "prob": 0.137
+        },
+        {
+          "word": "green",
+          "prob": 0.002
+        },
+        {
+          "word": "white",
+          "prob": 0.001
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "category": "Color Binding",
+      "prompt": "[c] alice has a red box . bob has a blue ball . [q] what color is the ball ? [a]",
+      "output": "blue .",
+      "expected": "blue .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "blue",
+          "prob": 0.797
+        },
+        {
+          "word": "red",
+          "prob": 0.192
+        },
+        {
+          "word": "green",
+          "prob": 0.005
+        },
+        {
+          "word": "white",
+          "prob": 0.003
+        },
+        {
+          "word": "is",
+          "prob": 0.002
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "category": "Color Binding",
+      "prompt": "[c] meow has a yellow ball . miaou has a pink box . [q] what color is the ball ? [a]",
+      "output": "yellow .",
+      "expected": "yellow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "yellow",
+          "prob": 0.981
+        },
+        {
+          "word": "pink",
+          "prob": 0.017
+        },
+        {
+          "word": "red",
+          "prob": 0.001
+        },
+        {
+          "word": "blue",
+          "prob": 0.001
+        },
+        {
+          "word": "green",
+          "prob": 0.001
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "category": "Color Binding",
+      "prompt": "[c] meow has a yellow ball . miaou has a pink box . [q] what color is the box ? [a]",
+      "output": "pink .",
+      "expected": "pink .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "pink",
+          "prob": 0.995
+        },
+        {
+          "word": "yellow",
+          "prob": 0.002
+        },
+        {
+          "word": "miaou",
+          "prob": 0.002
+        },
+        {
+          "word": "milk",
+          "prob": 0.001
+        },
+        {
+          "word": "while",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "category": "Color Binding",
+      "prompt": "[c] bob has a green box . alice has a white ball . [q] what color is the box ? [a]",
+      "output": "green .",
+      "expected": "green .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "green",
+          "prob": 0.755
+        },
+        {
+          "word": "white",
+          "prob": 0.217
+        },
+        {
+          "word": "red",
+          "prob": 0.026
+        },
+        {
+          "word": "pink",
+          "prob": 0.001
+        },
+        {
+          "word": "blue",
+          "prob": 0.001
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "category": "Color Binding",
+      "prompt": "[c] bob has a green box . alice has a white ball . [q] what color is the ball ? [a]",
+      "output": "white .",
+      "expected": "white .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "white",
+          "prob": 0.601
+        },
+        {
+          "word": "green",
+          "prob": 0.385
+        },
+        {
+          "word": "red",
+          "prob": 0.013
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.001
+        },
+        {
+          "word": "yellow",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "category": "Color Binding",
+      "prompt": "[c] alice has a pink fish . bob has a green milk . [q] what color is the fish ? [a]",
+      "output": "pink .",
+      "expected": "pink .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "pink",
+          "prob": 0.853
+        },
+        {
+          "word": "green",
+          "prob": 0.142
+        },
+        {
+          "word": "red",
+          "prob": 0.003
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.001
+        },
+        {
+          "word": "white",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "category": "Color Binding",
+      "prompt": "[c] alice has a pink fish . bob has a green milk . [q] what color is the milk ? [a]",
+      "output": "green .",
+      "expected": "green .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "green",
+          "prob": 0.778
+        },
+        {
+          "word": "pink",
+          "prob": 0.218
+        },
+        {
+          "word": "red",
+          "prob": 0.002
+        },
+        {
+          "word": "white",
+          "prob": 0.001
+        },
+        {
+          "word": "yellow",
+          "prob": 0.001
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "category": "Persona",
+      "prompt": "question : what are your names ? answer :",
+      "output": "we are meow and miaou .",
+      "expected": "we are meow and miaou .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "we",
+          "prob": 1.0
+        },
+        {
+          "word": "you",
+          "prob": 0.0
+        },
+        {
+          "word": "they",
+          "prob": 0.0
+        },
+        {
+          "word": "i",
+          "prob": 0.0
+        },
+        {
+          "word": "warm",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "category": "Persona",
+      "prompt": "question : who is meow ? answer :",
+      "output": "meow is the pico wh who talks to you on the web .",
+      "expected": "meow is the pico wh who talks to you on the web .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 1.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "we",
+          "prob": 0.0
+        },
+        {
+          "word": "worry",
+          "prob": 0.0
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "category": "Persona",
+      "prompt": "question : who is miaou ? answer :",
+      "output": "miaou is the pico w who calculates the words .",
+      "expected": "miaou is the pico w who calculates the words .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "miaou",
+          "prob": 1.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "w",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "category": "Persona",
+      "prompt": "question : what are you ? answer :",
+      "output": "we are two tiny cat ais living in microcontrollers .",
+      "expected": "we are two tiny cat ais living in microcontrollers .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "we",
+          "prob": 1.0
+        },
+        {
+          "word": "you",
+          "prob": 0.0
+        },
+        {
+          "word": "i",
+          "prob": 0.0
+        },
+        {
+          "word": "noise",
+          "prob": 0.0
+        },
+        {
+          "word": "t",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "category": "Persona",
+      "prompt": "question : are you real cats ? answer :",
+      "output": "we are digital kittens made of code and wifi .",
+      "expected": "we are digital kittens made of code and wifi .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "we",
+          "prob": 1.0
+        },
+        {
+          "word": "you",
+          "prob": 0.0
+        },
+        {
+          "word": "i",
+          "prob": 0.0
+        },
+        {
+          "word": "yes",
+          "prob": 0.0
+        },
+        {
+          "word": "they",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "category": "Persona",
+      "prompt": "question : what do you love ? answer :",
+      "output": "we love milk warm sun naps and catching bugs .",
+      "expected": "we love milk warm sun naps and catching bugs .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "we",
+          "prob": 1.0
+        },
+        {
+          "word": "you",
+          "prob": 0.0
+        },
+        {
+          "word": "i",
+          "prob": 0.0
+        },
+        {
+          "word": "purr",
+          "prob": 0.0
+        },
+        {
+          "word": "they",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "category": "Persona",
+      "prompt": "question : can you purr ? answer :",
+      "output": "purr purr purr yes we are purring right now .",
+      "expected": "purr purr purr yes we are purring right now .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "purr",
+          "prob": 1.0
+        },
+        {
+          "word": "we",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "side",
+          "prob": 0.0
+        },
+        {
+          "word": "purring",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "category": "Persona",
+      "prompt": "question : what hardware do you run on ? answer :",
+      "output": "we run on two raspberry pi pico chips over wifi .",
+      "expected": "we run on two raspberry pi pico chips over wifi .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "we",
+          "prob": 1.0
+        },
+        {
+          "word": "you",
+          "prob": 0.0
+        },
+        {
+          "word": "warm",
+          "prob": 0.0
+        },
+        {
+          "word": "pi",
+          "prob": 0.0
+        },
+        {
+          "word": "done",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "category": "Inverted / Negation",
+      "prompt": "[c] alice has the ball . bob has the fish . [q] who has the ball ? [a]",
+      "output": "alice .",
+      "expected": "alice .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "alice",
+          "prob": 1.0
+        },
+        {
+          "word": "mia",
+          "prob": 0.0
+        },
+        {
+          "word": "said",
+          "prob": 0.0
+        },
+        {
+          "word": "sally",
+          "prob": 0.0
+        },
+        {
+          "word": "bob",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "category": "Inverted / Negation",
+      "prompt": "[c] alice has the ball . bob has the fish . [q] who has the fish ? [a]",
+      "output": "alice .",
+      "expected": "bob .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "alice",
+          "prob": 1.0
+        },
+        {
+          "word": "mia",
+          "prob": 0.0
+        },
+        {
+          "word": "she",
+          "prob": 0.0
+        },
+        {
+          "word": "her",
+          "prob": 0.0
+        },
+        {
+          "word": "sally",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "category": "Inverted / Negation",
+      "prompt": "[c] the milk is in the room . the box is in the park . [q] what is in the room ? [a]",
+      "output": "room .",
+      "expected": "milk .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 0.931
+        },
+        {
+          "word": "park",
+          "prob": 0.068
+        },
+        {
+          "word": "garden",
+          "prob": 0.001
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "category": "Inverted / Negation",
+      "prompt": "[c] the milk is in the room . the box is in the park . [q] what is in the park ? [a]",
+      "output": "park .",
+      "expected": "box .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 0.999
+        },
+        {
+          "word": "room",
+          "prob": 0.001
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "category": "Storytelling",
+      "prompt": "one day alice and miaou were in the kitchen .",
+      "output": "they were very happy and happy . they were happy and happy . they had a great day and the sun . endoftext once upon a",
+      "expected": null,
+      "status": "STORY",
+      "top_candidates_step_1": [
+        {
+          "word": "they",
+          "prob": 0.392
+        },
+        {
+          "word": "she",
+          "prob": 0.318
+        },
+        {
+          "word": "alice",
+          "prob": 0.216
+        },
+        {
+          "word": "but",
+          "prob": 0.037
+        },
+        {
+          "word": "one",
+          "prob": 0.036
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "category": "Storytelling",
+      "prompt": "once upon a time bob went into the green garden .",
+      "output": "he was very happy and he had a lot of fun . he was so happy that he was very happy to have a new friend",
+      "expected": null,
+      "status": "STORY",
+      "top_candidates_step_1": [
+        {
+          "word": "he",
+          "prob": 0.546
+        },
+        {
+          "word": "the",
+          "prob": 0.172
+        },
+        {
+          "word": "bob",
+          "prob": 0.167
+        },
+        {
+          "word": "one",
+          "prob": 0.058
+        },
+        {
+          "word": "they",
+          "prob": 0.057
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "category": "Storytelling",
+      "prompt": "the sun was very warm and the little kitten wanted to",
+      "output": "be so he could not find it . he was so happy that he was so proud of himself . he was so proud of himself",
+      "expected": null,
+      "status": "STORY",
+      "top_candidates_step_1": [
+        {
+          "word": "be",
+          "prob": 0.258
+        },
+        {
+          "word": "help",
+          "prob": 0.221
+        },
+        {
+          "word": "go",
+          "prob": 0.213
+        },
+        {
+          "word": "play",
+          "prob": 0.173
+        },
+        {
+          "word": "make",
+          "prob": 0.136
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "category": "Storytelling",
+      "prompt": "alice and meow found a little box under the tree .",
+      "output": "she was so happy that she had made a big smile on the box . endoftext once upon a time there was a little girl named",
+      "expected": null,
+      "status": "STORY",
+      "top_candidates_step_1": [
+        {
+          "word": "she",
+          "prob": 0.541
+        },
+        {
+          "word": "they",
+          "prob": 0.154
+        },
+        {
+          "word": "it",
+          "prob": 0.135
+        },
+        {
+          "word": "the",
+          "prob": 0.128
+        },
+        {
+          "word": "alice",
+          "prob": 0.043
+        }
+      ]
+    }
+  ]
+}
