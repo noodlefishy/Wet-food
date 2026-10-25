@@ -12,12 +12,11 @@ import re
 print("[EVALUATOR] Running Pure Standard-Library Engine (No PyTorch, No NumPy)...")
 
 # 1. Load Vocab
-try:
-    import vocab
-    VOCAB = vocab.VOCAB
-except ImportError:
-    print("Error: vocab.py not found in current directory.")
-    sys.exit(1)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from models.local import vocab
+VOCAB = vocab.VOCAB
+
 
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 VOCAB_SIZE = 1024
@@ -27,25 +26,36 @@ NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 LAYER0_OFFSET = (VOCAB_SIZE * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4
 
-# 2. Locate Weight Files
-def resolve_path(filename):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, ".."))
+# # 2. Locate Weight Files
+# def resolve_path(filename):
+#     script_dir = os.path.dirname(os.path.abspath(__file__))
+#     project_root = os.path.abspath(os.path.join(script_dir, ".."))
     
-    candidates = [
-        filename,
-        os.path.join(project_root, filename),
-        os.path.join(project_root, "models", filename),
-        os.path.join(script_dir, filename),
-        os.path.join(script_dir, "models", filename),
+#     candidates = [
+#         filename,
+#         os.path.join(project_root, filename),
+#         os.path.join(project_root, "models", filename),
+#         os.path.join(script_dir, filename),
+#         os.path.join(script_dir, "models", filename),
+#     ]
+#     for p in candidates:
+#         if os.path.exists(p):
+#             return p
+#     return filename
+
+def find_model_file(filename):
+    # Searches models/local/ first
+    search_paths = [
+        os.path.join("models", "local", filename),
+        os.path.join("models", filename),
+        filename
     ]
-    for p in candidates:
-        if os.path.exists(p):
-            return p
+    for p in search_paths:
+        if os.path.exists(p): return p
     return filename
 
-p1_path = resolve_path("pico1 weights.model")
-p2_path = resolve_path("pico2 weights.model")
+p1_path = find_model_file("pico1 weights.model")
+p2_path = find_model_file("pico2 weights.model")
 
 if not os.path.exists(p1_path) or not os.path.exists(p2_path):
     print(f"Error: Missing '{p1_path}' or '{p2_path}'. Check your models/ folder.")

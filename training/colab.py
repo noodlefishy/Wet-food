@@ -7,7 +7,7 @@ import math
 import random
 from collections import Counter
 import os
-from google.colab import files
+from google.colab import files # pyright: ignore[reportMissingImports]
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Training Verified 4L 64-D Engine on: {device}")
@@ -168,6 +168,62 @@ for _ in range(450):
     logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] what color is the {i2} ? [a] {c2} . <eos>")
 
 
+###
+
+# --- 8. CREATIVE REASONING TASKS ---
+
+# A. Transitive Reasoning (Alice with Bob -> Bob in Kitchen -> Alice in Kitchen)
+for _ in range(300):
+    a1, a2 = random.sample(actors, 2)
+    l = random.choice(locations)
+    logic_tasks.append(f"[c] {a1} is with {a2} . {a2} is in the {l} . [q] where is {a1} ? [a] {l} . <eos>")
+
+# B. Functional Needs (Hungry -> Eat, Tired -> Sleep, Thirsty -> Water)
+needs = [
+    ("hungry", "wants to eat"),
+    ("tired", "wants to sleep"),
+    ("cold", "needs a blanket"),
+    ("thirsty", "wants water")
+]
+for _ in range(300):
+    a1, a2 = random.sample(actors, 2)
+    (s1, n1), (s2, n2) = random.sample(needs, 2)
+    logic_tasks.append(f"[c] {a1} is {s1} . {a2} is {s2} . [q] who {n1} ? [a] {a1} . <eos>")
+    logic_tasks.append(f"[c] {a1} is {s1} . {a2} is {s2} . [q] who {n2} ? [a] {a2} . <eos>")
+
+# C. Action Affordances (Capabilities of entities)
+actions = [
+    ("bird", "fly"),
+    ("cat", "climb"),
+    ("fish", "swim"),
+    ("rabbit", "hop")
+]
+for _ in range(300):
+    (e1, act1), (e2, act2) = random.sample(actions, 2)
+    logic_tasks.append(f"[c] the {e1} can {act1} . the {e2} can {act2} . [q] who can {act1} ? [a] {e1} . <eos>")
+    logic_tasks.append(f"[c] the {e1} can {act1} . the {e2} can {act2} . [q] who can {act2} ? [a] {e2} . <eos>")
+
+# D. Physical States & Opposites
+states = [
+    ("milk", "hot"),
+    ("water", "cold"),
+    ("box", "heavy"),
+    ("ball", "soft")
+]
+for _ in range(300):
+    (i1, p1), (i2, p2) = random.sample(states, 2)
+    logic_tasks.append(f"[c] the {i1} is {p1} . the {i2} is {p2} . [q] what is {p1} ? [a] {i1} . <eos>")
+    logic_tasks.append(f"[c] the {i1} is {p1} . the {i2} is {p2} . [q] what is {p2} ? [a] {i2} . <eos>")
+
+# E. Temporal Ordering (First vs. Next)
+for _ in range(300):
+    a = random.choice(actors)
+    l1, l2 = random.sample(locations, 2)
+    logic_tasks.append(f"[c] first {a} went to the {l1} . then {a} went to the {l2} . [q] where was {a} first ? [a] {l1} . <eos>")
+    logic_tasks.append(f"[c] first {a} went to the {l1} . then {a} went to the {l2} . [q] where did {a} go next ? [a] {l2} . <eos>")
+
+###
+
 # --- 6. FELINE PERSONA ---
 cat_identities = [
     "question : what are your names ? answer : we are meow and miaou . <eos>",
@@ -237,7 +293,7 @@ for task in all_qa_tasks:
 
     x = toks + [pad_id] * (BLOCK_SIZE - len(toks))
     y = [-100] * BLOCK_SIZE
-    
+
     ans_start = -1
     for idx, t in enumerate(toks):
         if t in (a_token_id, ans_token_id):
@@ -329,10 +385,10 @@ for step in range(TOTAL_STEPS + 1):
         p["lr"] = lr
 
     x_qa, y_qa, x_st, y_st = get_balanced_batch()
-    
+
     x_all = torch.cat([x_qa, x_st], dim=0)
     logits_all = model(x_all)
-    
+
     logits_qa = logits_all[:HALF_BATCH]
     logits_st = logits_all[HALF_BATCH:]
 
@@ -374,7 +430,7 @@ EVAL_DATABASE = [
     ("Possession (has)", "[c] alice has the ball . bob has the fish . [q] what does bob have ? [a]", "fish ."),
     ("Possession (has)", "[c] bob has the fish . alice has the ball . [q] what does alice have ? [a]", "ball ."),
     ("Possession (has)", "[c] bob has the fish . alice has the ball . [q] what does bob have ? [a]", "fish ."),
-    
+
     ("Possession (found)", "[c] alice found a ball . bob found a fish . [q] what did alice find ? [a]", "ball ."),
     ("Possession (found)", "[c] alice found a ball . bob found a fish . [q] what did bob find ? [a]", "fish ."),
     ("Possession (found)", "[c] meow found a fish . miaou found a ball . [q] what did meow find ? [a]", "fish ."),
@@ -424,7 +480,7 @@ def eval_gpu(prompt_text, max_tokens=30, temp=0.05):
         for _ in range(max_tokens):
             x_cond = x[:, -BLOCK_SIZE:]
             logits = model(x_cond)
-            
+
             if logits.dim() == 3:
                 last_logits = logits[:, -1, :]
             else:
@@ -440,7 +496,7 @@ def eval_gpu(prompt_text, max_tokens=30, temp=0.05):
                 probs = F.softmax(top_vals, dim=-1)
                 next_tok = top_idx[0, torch.multinomial(probs, 1)[0, 0]].item()
 
-            w = VOCAB[next_tok]
+            w = VOCAB[next_tok] # pyright: ignore[reportCallIssue, reportArgumentType]
             if w in ("<eos>", "<pad>"): break
             out_words.append(w)
             x = torch.cat((x, torch.tensor([[next_tok]], device=device)), dim=1)
