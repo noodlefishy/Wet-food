@@ -9,9 +9,9 @@
   },
   "summary": {
     "Actor Location": {
-      "passed": 10,
+      "passed": 9,
       "total": 10,
-      "accuracy": 100.0
+      "accuracy": 90.0
     },
     "Object Location": {
       "passed": 8,
@@ -39,9 +39,9 @@
       "accuracy": 75.0
     },
     "Color Binding": {
-      "passed": 7,
+      "passed": 8,
       "total": 8,
-      "accuracy": 87.5
+      "accuracy": 100.0
     },
     "Persona": {
       "passed": 8,
@@ -53,10 +53,35 @@
       "total": 4,
       "accuracy": 25.0
     },
+    "Transitive": {
+      "passed": 4,
+      "total": 4,
+      "accuracy": 100.0
+    },
+    "Functional Needs": {
+      "passed": 4,
+      "total": 4,
+      "accuracy": 100.0
+    },
+    "Action Affordance": {
+      "passed": 4,
+      "total": 4,
+      "accuracy": 100.0
+    },
+    "Physical States": {
+      "passed": 4,
+      "total": 4,
+      "accuracy": 100.0
+    },
+    "Temporal Order": {
+      "passed": 2,
+      "total": 4,
+      "accuracy": 50.0
+    },
     "overall": {
-      "passed": 59,
-      "total": 65,
-      "accuracy": 90.77
+      "passed": 77,
+      "total": 85,
+      "accuracy": 90.59
     }
   },
   "details": [
@@ -70,22 +95,22 @@
       "top_candidates_step_1": [
         {
           "word": "kitchen",
-          "prob": 0.999
+          "prob": 1.0
         },
         {
-          "word": "miaou",
+          "word": "alice",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
           "prob": 0.0
         },
         {
           "word": "room",
-          "prob": 0.0
-        },
-        {
-          "word": "fish",
-          "prob": 0.0
-        },
-        {
-          "word": "she",
           "prob": 0.0
         }
       ]
@@ -100,22 +125,22 @@
       "top_candidates_step_1": [
         {
           "word": "room",
-          "prob": 0.999
+          "prob": 1.0
         },
         {
-          "word": "white",
-          "prob": 0.001
-        },
-        {
-          "word": "milk",
+          "word": "park",
           "prob": 0.0
         },
         {
-          "word": "sure",
+          "word": "fish",
           "prob": 0.0
         },
         {
-          "word": "box",
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "green",
           "prob": 0.0
         }
       ]
@@ -133,19 +158,19 @@
           "prob": 1.0
         },
         {
-          "word": "miaou",
-          "prob": 0.0
-        },
-        {
           "word": "room",
           "prob": 0.0
         },
         {
-          "word": "fish",
+          "word": "garden",
           "prob": 0.0
         },
         {
-          "word": "end",
+          "word": "park",
+          "prob": 0.0
+        },
+        {
+          "word": "blue",
           "prob": 0.0
         }
       ]
@@ -160,18 +185,18 @@
       "top_candidates_step_1": [
         {
           "word": "room",
-          "prob": 0.999
+          "prob": 1.0
         },
         {
-          "word": "white",
-          "prob": 0.001
-        },
-        {
-          "word": "milk",
+          "word": "garden",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
           "prob": 0.0
         },
         {
@@ -190,22 +215,22 @@
       "top_candidates_step_1": [
         {
           "word": "park",
-          "prob": 1.0
+          "prob": 0.999
         },
         {
-          "word": "garden",
-          "prob": 0.0
+          "word": "kitchen",
+          "prob": 0.001
         },
         {
           "word": "box",
           "prob": 0.0
         },
         {
-          "word": "<eos>",
+          "word": "swings",
           "prob": 0.0
         },
         {
-          "word": "miaou",
+          "word": "slide",
           "prob": 0.0
         }
       ]
@@ -223,19 +248,19 @@
           "prob": 0.998
         },
         {
-          "word": "park",
+          "word": "red",
           "prob": 0.002
         },
         {
-          "word": "on",
-          "prob": 0.0
-        },
-        {
-          "word": "pink",
-          "prob": 0.0
-        },
-        {
           "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": ":",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
           "prob": 0.0
         }
       ]
@@ -244,28 +269,28 @@
       "id": 7,
       "category": "Actor Location",
       "prompt": "[c] alice went to the kitchen . bob went to the room . meow went to the park . [q] where is meow ? [a]",
-      "output": "park .",
+      "output": "room .",
       "expected": "park .",
-      "status": "PASS",
+      "status": "FAIL",
       "top_candidates_step_1": [
         {
+          "word": "room",
+          "prob": 0.998
+        },
+        {
           "word": "park",
-          "prob": 0.981
+          "prob": 0.002
         },
         {
           "word": "garden",
-          "prob": 0.01
+          "prob": 0.0
         },
         {
           "word": "kitchen",
-          "prob": 0.005
+          "prob": 0.0
         },
         {
-          "word": "room",
-          "prob": 0.004
-        },
-        {
-          "word": "blue",
+          "word": "fish",
           "prob": 0.0
         }
       ]
@@ -280,22 +305,22 @@
       "top_candidates_step_1": [
         {
           "word": "garden",
-          "prob": 1.0
+          "prob": 0.989
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.011
         },
         {
           "word": "room",
           "prob": 0.0
         },
         {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
           "word": "alice",
-          "prob": 0.0
-        },
-        {
-          "word": "yellow",
-          "prob": 0.0
-        },
-        {
-          "word": "park",
           "prob": 0.0
         }
       ]
@@ -313,19 +338,19 @@
           "prob": 1.0
         },
         {
-          "word": "garden",
+          "word": "milk",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
           "prob": 0.0
         },
         {
           "word": "park",
-          "prob": 0.0
-        },
-        {
-          "word": "that",
           "prob": 0.0
         }
       ]
@@ -343,19 +368,19 @@
           "prob": 1.0
         },
         {
-          "word": "room",
-          "prob": 0.0
-        },
-        {
           "word": "kitchen",
           "prob": 0.0
         },
         {
-          "word": "<eos>",
+          "word": "on",
           "prob": 0.0
         },
         {
-          "word": "miaou",
+          "word": "water",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
           "prob": 0.0
         }
       ]
@@ -370,14 +395,14 @@
       "top_candidates_step_1": [
         {
           "word": "garden",
-          "prob": 1.0
+          "prob": 0.999
         },
         {
-          "word": "meow",
+          "word": "red",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "fish",
           "prob": 0.0
         },
         {
@@ -385,7 +410,7 @@
           "prob": 0.0
         },
         {
-          "word": "ball",
+          "word": "miaou",
           "prob": 0.0
         }
       ]
@@ -403,11 +428,11 @@
           "prob": 1.0
         },
         {
-          "word": "garden",
+          "word": "park",
           "prob": 0.0
         },
         {
-          "word": ".",
+          "word": "garden",
           "prob": 0.0
         },
         {
@@ -415,7 +440,7 @@
           "prob": 0.0
         },
         {
-          "word": "park",
+          "word": "blue",
           "prob": 0.0
         }
       ]
@@ -430,22 +455,22 @@
       "top_candidates_step_1": [
         {
           "word": "room",
-          "prob": 1.0
-        },
-        {
-          "word": "milk",
-          "prob": 0.0
+          "prob": 0.996
         },
         {
           "word": "park",
+          "prob": 0.003
+        },
+        {
+          "word": "green",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
           "prob": 0.0
         },
         {
           "word": "miaou",
-          "prob": 0.0
-        },
-        {
-          "word": "box",
           "prob": 0.0
         }
       ]
@@ -460,22 +485,22 @@
       "top_candidates_step_1": [
         {
           "word": "park",
-          "prob": 0.999
+          "prob": 0.998
         },
         {
           "word": "room",
+          "prob": 0.001
+        },
+        {
+          "word": "meow",
           "prob": 0.0
         },
         {
-          "word": "ball",
+          "word": "miaou",
           "prob": 0.0
         },
         {
-          "word": "pink",
-          "prob": 0.0
-        },
-        {
-          "word": "box",
+          "word": "garden",
           "prob": 0.0
         }
       ]
@@ -490,22 +515,22 @@
       "top_candidates_step_1": [
         {
           "word": "park",
-          "prob": 1.0
+          "prob": 0.996
         },
         {
-          "word": "ball",
+          "word": "box",
+          "prob": 0.002
+        },
+        {
+          "word": "meow",
+          "prob": 0.001
+        },
+        {
+          "word": "kitchen",
           "prob": 0.0
         },
         {
-          "word": "blue",
-          "prob": 0.0
-        },
-        {
-          "word": ".",
-          "prob": 0.0
-        },
-        {
-          "word": "had",
+          "word": "sun",
           "prob": 0.0
         }
       ]
@@ -520,22 +545,22 @@
       "top_candidates_step_1": [
         {
           "word": "room",
-          "prob": 1.0
+          "prob": 0.999
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
         },
         {
           "word": "milk",
           "prob": 0.0
         },
         {
-          "word": ".",
-          "prob": 0.0
-        },
-        {
-          "word": "park",
-          "prob": 0.0
-        },
-        {
-          "word": "white",
+          "word": "fish",
           "prob": 0.0
         }
       ]
@@ -550,22 +575,22 @@
       "top_candidates_step_1": [
         {
           "word": "kitchen",
-          "prob": 0.997
+          "prob": 0.999
         },
         {
-          "word": "garden",
-          "prob": 0.002
-        },
-        {
-          "word": "room",
+          "word": "box",
           "prob": 0.001
         },
         {
-          "word": "park",
+          "word": "room",
           "prob": 0.0
         },
         {
-          "word": "miaou",
+          "word": "blue",
+          "prob": 0.0
+        },
+        {
+          "word": "code",
           "prob": 0.0
         }
       ]
@@ -580,22 +605,22 @@
       "top_candidates_step_1": [
         {
           "word": "garden",
-          "prob": 1.0
+          "prob": 0.999
         },
         {
-          "word": "meow",
+          "word": "red",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "room",
           "prob": 0.0
         },
         {
-          "word": "sky",
+          "word": "fish",
           "prob": 0.0
         },
         {
-          "word": "milk",
+          "word": "miaou",
           "prob": 0.0
         }
       ]
@@ -613,11 +638,11 @@
           "prob": 1.0
         },
         {
-          "word": "fish",
+          "word": "garden",
           "prob": 0.0
         },
         {
-          "word": "milk",
+          "word": "fish",
           "prob": 0.0
         },
         {
@@ -625,7 +650,7 @@
           "prob": 0.0
         },
         {
-          "word": "park",
+          "word": ".",
           "prob": 0.0
         }
       ]
@@ -643,19 +668,19 @@
           "prob": 1.0
         },
         {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
           "word": "milk",
           "prob": 0.0
         },
         {
-          "word": ".",
+          "word": "cat",
           "prob": 0.0
         },
         {
-          "word": "ball",
-          "prob": 0.0
-        },
-        {
-          "word": "box",
+          "word": "miaou",
           "prob": 0.0
         }
       ]
@@ -670,22 +695,22 @@
       "top_candidates_step_1": [
         {
           "word": "ball",
-          "prob": 0.999
+          "prob": 1.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
         },
         {
           "word": "fish",
           "prob": 0.0
         },
         {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
           "word": "box",
-          "prob": 0.0
-        },
-        {
-          "word": "milk",
-          "prob": 0.0
-        },
-        {
-          "word": "alice",
           "prob": 0.0
         }
       ]
@@ -703,19 +728,19 @@
           "prob": 1.0
         },
         {
+          "word": "bob",
+          "prob": 0.0
+        },
+        {
           "word": "milk",
           "prob": 0.0
         },
         {
-          "word": "box",
-          "prob": 0.0
-        },
-        {
-          "word": "ball",
-          "prob": 0.0
-        },
-        {
           "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "cat",
           "prob": 0.0
         }
       ]
@@ -730,22 +755,22 @@
       "top_candidates_step_1": [
         {
           "word": "milk",
-          "prob": 0.995
+          "prob": 0.999
         },
         {
           "word": "box",
-          "prob": 0.005
+          "prob": 0.001
         },
         {
-          "word": "white",
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "kitchen",
           "prob": 0.0
         },
         {
           "word": "ball",
-          "prob": 0.0
-        },
-        {
-          "word": "room",
           "prob": 0.0
         }
       ]
@@ -767,15 +792,15 @@
           "prob": 0.0
         },
         {
-          "word": "park",
+          "word": ".",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "ball",
           "prob": 0.0
         },
         {
-          "word": "room",
+          "word": "fish",
           "prob": 0.0
         }
       ]
@@ -797,15 +822,15 @@
           "prob": 0.0
         },
         {
-          "word": "milk",
-          "prob": 0.0
-        },
-        {
-          "word": "park",
+          "word": ".",
           "prob": 0.0
         },
         {
           "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
           "prob": 0.0
         }
       ]
@@ -820,14 +845,14 @@
       "top_candidates_step_1": [
         {
           "word": "fish",
-          "prob": 1.0
-        },
-        {
-          "word": "ball",
-          "prob": 0.0
+          "prob": 0.999
         },
         {
           "word": "milk",
+          "prob": 0.001
+        },
+        {
+          "word": "cat",
           "prob": 0.0
         },
         {
@@ -835,7 +860,7 @@
           "prob": 0.0
         },
         {
-          "word": ".",
+          "word": "bob",
           "prob": 0.0
         }
       ]
@@ -850,22 +875,22 @@
       "top_candidates_step_1": [
         {
           "word": "ball",
-          "prob": 0.999
-        },
-        {
-          "word": "fish",
-          "prob": 0.001
+          "prob": 1.0
         },
         {
           "word": "box",
           "prob": 0.0
         },
         {
-          "word": "milk",
+          "word": "meow",
           "prob": 0.0
         },
         {
-          "word": "alice",
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
           "prob": 0.0
         }
       ]
@@ -883,19 +908,19 @@
           "prob": 1.0
         },
         {
+          "word": "bob",
+          "prob": 0.0
+        },
+        {
           "word": "milk",
           "prob": 0.0
         },
         {
-          "word": "box",
+          "word": "cat",
           "prob": 0.0
         },
         {
-          "word": "ball",
-          "prob": 0.0
-        },
-        {
-          "word": "yellow",
+          "word": "green",
           "prob": 0.0
         }
       ]
@@ -910,22 +935,22 @@
       "top_candidates_step_1": [
         {
           "word": "fish",
-          "prob": 1.0
-        },
-        {
-          "word": "milk",
-          "prob": 0.0
+          "prob": 0.995
         },
         {
           "word": "ball",
+          "prob": 0.005
+        },
+        {
+          "word": "cat",
           "prob": 0.0
         },
         {
-          "word": "box",
+          "word": "the",
           "prob": 0.0
         },
         {
-          "word": "room",
+          "word": "who",
           "prob": 0.0
         }
       ]
@@ -940,22 +965,22 @@
       "top_candidates_step_1": [
         {
           "word": "ball",
-          "prob": 0.999
+          "prob": 0.997
         },
         {
           "word": "fish",
-          "prob": 0.001
+          "prob": 0.002
+        },
+        {
+          "word": ".",
+          "prob": 0.0
         },
         {
           "word": "milk",
           "prob": 0.0
         },
         {
-          "word": "box",
-          "prob": 0.0
-        },
-        {
-          "word": "pink",
+          "word": "the",
           "prob": 0.0
         }
       ]
@@ -973,15 +998,15 @@
           "prob": 1.0
         },
         {
-          "word": "park",
-          "prob": 0.0
-        },
-        {
           "word": "milk",
           "prob": 0.0
         },
         {
           "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
           "prob": 0.0
         },
         {
@@ -1011,11 +1036,11 @@
           "prob": 0.0
         },
         {
-          "word": "room",
+          "word": "milk",
           "prob": 0.0
         },
         {
-          "word": "box",
+          "word": "sue",
           "prob": 0.0
         }
       ]
@@ -1033,19 +1058,19 @@
           "prob": 1.0
         },
         {
-          "word": "blue",
+          "word": "alice",
           "prob": 0.0
         },
         {
-          "word": "garden",
+          "word": "room",
           "prob": 0.0
         },
         {
-          "word": "red",
+          "word": "bob",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "fish",
           "prob": 0.0
         }
       ]
@@ -1060,22 +1085,22 @@
       "top_candidates_step_1": [
         {
           "word": "miaou",
-          "prob": 1.0
+          "prob": 0.999
         },
         {
-          "word": "kitchen",
+          "word": "bob",
           "prob": 0.0
         },
         {
-          "word": "meow",
+          "word": "garden",
           "prob": 0.0
         },
         {
-          "word": "moment",
+          "word": "wifi",
           "prob": 0.0
         },
         {
-          "word": "<eos>",
+          "word": "alice",
           "prob": 0.0
         }
       ]
@@ -1093,11 +1118,7 @@
           "prob": 0.999
         },
         {
-          "word": "alice",
-          "prob": 0.0
-        },
-        {
-          "word": "max",
+          "word": "meow",
           "prob": 0.0
         },
         {
@@ -1105,7 +1126,11 @@
           "prob": 0.0
         },
         {
-          "word": "we",
+          "word": "and",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
           "prob": 0.0
         }
       ]
@@ -1120,22 +1145,22 @@
       "top_candidates_step_1": [
         {
           "word": "bob",
-          "prob": 0.999
+          "prob": 1.0
+        },
+        {
+          "word": "cat",
+          "prob": 0.0
         },
         {
           "word": "alice",
-          "prob": 0.001
-        },
-        {
-          "word": "max",
           "prob": 0.0
         },
         {
-          "word": "tim",
+          "word": "miaou",
           "prob": 0.0
         },
         {
-          "word": "his",
+          "word": "meow",
           "prob": 0.0
         }
       ]
@@ -1150,22 +1175,22 @@
       "top_candidates_step_1": [
         {
           "word": "meow",
-          "prob": 1.0
+          "prob": 0.999
         },
         {
-          "word": "garden",
+          "word": "alice",
           "prob": 0.0
         },
         {
-          "word": "miaou",
+          "word": "bob",
           "prob": 0.0
         },
         {
-          "word": "we",
+          "word": "room",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "milk",
           "prob": 0.0
         }
       ]
@@ -1180,22 +1205,22 @@
       "top_candidates_step_1": [
         {
           "word": "miaou",
-          "prob": 0.999
-        },
-        {
-          "word": "kitchen",
-          "prob": 0.0
-        },
-        {
-          "word": "box",
-          "prob": 0.0
+          "prob": 0.998
         },
         {
           "word": "meow",
+          "prob": 0.001
+        },
+        {
+          "word": "bob",
           "prob": 0.0
         },
         {
-          "word": "room",
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
           "prob": 0.0
         }
       ]
@@ -1217,15 +1242,15 @@
           "prob": 0.0
         },
         {
-          "word": "blue",
+          "word": "alice",
           "prob": 0.0
         },
         {
-          "word": "garden",
+          "word": "yellow",
           "prob": 0.0
         },
         {
-          "word": "we",
+          "word": "box",
           "prob": 0.0
         }
       ]
@@ -1240,22 +1265,22 @@
       "top_candidates_step_1": [
         {
           "word": "miaou",
-          "prob": 1.0
-        },
-        {
-          "word": "kitchen",
-          "prob": 0.0
+          "prob": 0.998
         },
         {
           "word": "meow",
+          "prob": 0.002
+        },
+        {
+          "word": "bob",
           "prob": 0.0
         },
         {
-          "word": "room",
+          "word": "<eos>",
           "prob": 0.0
         },
         {
-          "word": "box",
+          "word": "alice",
           "prob": 0.0
         }
       ]
@@ -1270,23 +1295,23 @@
       "top_candidates_step_1": [
         {
           "word": "meow",
-          "prob": 0.988
+          "prob": 0.999
         },
         {
-          "word": "blue",
-          "prob": 0.009
+          "word": "yellow",
+          "prob": 0.0
         },
         {
           "word": "miaou",
-          "prob": 0.002
+          "prob": 0.0
         },
         {
-          "word": "garden",
-          "prob": 0.001
+          "word": "box",
+          "prob": 0.0
         },
         {
-          "word": "ball",
-          "prob": 0.001
+          "word": "alice",
+          "prob": 0.0
         }
       ]
     },
@@ -1303,19 +1328,19 @@
           "prob": 0.999
         },
         {
-          "word": "blue",
+          "word": "yellow",
+          "prob": 0.001
+        },
+        {
+          "word": "miaou",
           "prob": 0.0
         },
         {
-          "word": ".",
+          "word": "park",
           "prob": 0.0
         },
         {
-          "word": "who",
-          "prob": 0.0
-        },
-        {
-          "word": "anymore",
+          "word": "tiny",
           "prob": 0.0
         }
       ]
@@ -1333,19 +1358,19 @@
           "prob": 0.999
         },
         {
-          "word": "park",
-          "prob": 0.0
-        },
-        {
-          "word": "room",
-          "prob": 0.0
-        },
-        {
           "word": "meow",
+          "prob": 0.001
+        },
+        {
+          "word": "milk",
           "prob": 0.0
         },
         {
-          "word": "kitchen",
+          "word": "<eos>",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
           "prob": 0.0
         }
       ]
@@ -1354,29 +1379,29 @@
       "id": 44,
       "category": "Giving (IOI)",
       "prompt": "[c] meow gave the fish to alice . miaou gave the ball to bob . [q] who got the fish ? [a]",
-      "output": "miaou .",
+      "output": "meow .",
       "expected": "alice .",
       "status": "FAIL",
       "top_candidates_step_1": [
         {
-          "word": "miaou",
-          "prob": 0.964
-        },
-        {
-          "word": "room",
-          "prob": 0.026
-        },
-        {
           "word": "meow",
-          "prob": 0.004
+          "prob": 0.982
         },
         {
-          "word": "pink",
-          "prob": 0.003
+          "word": "yellow",
+          "prob": 0.015
+        },
+        {
+          "word": "miaou",
+          "prob": 0.002
         },
         {
           "word": "alice",
-          "prob": 0.002
+          "prob": 0.001
+        },
+        {
+          "word": "park",
+          "prob": 0.001
         }
       ]
     },
@@ -1384,29 +1409,29 @@
       "id": 45,
       "category": "Giving (IOI)",
       "prompt": "[c] meow gave the fish to alice . miaou gave the ball to bob . [q] who got the ball ? [a]",
-      "output": "meow .",
+      "output": "miaou .",
       "expected": "bob .",
       "status": "FAIL",
       "top_candidates_step_1": [
         {
-          "word": "meow",
-          "prob": 0.939
-        },
-        {
           "word": "miaou",
-          "prob": 0.056
+          "prob": 0.998
         },
         {
-          "word": "alice",
-          "prob": 0.003
-        },
-        {
-          "word": "blue",
+          "word": "meow",
           "prob": 0.002
         },
         {
           "word": "bob",
           "prob": 0.001
+        },
+        {
+          "word": "green",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
         }
       ]
     },
@@ -1414,28 +1439,28 @@
       "id": 46,
       "category": "Color Binding",
       "prompt": "[c] alice has a red box . bob has a blue ball . [q] what color is the box ? [a]",
-      "output": "blue .",
+      "output": "red .",
       "expected": "red .",
-      "status": "FAIL",
+      "status": "PASS",
       "top_candidates_step_1": [
         {
-          "word": "blue",
-          "prob": 0.859
-        },
-        {
           "word": "red",
-          "prob": 0.137
+          "prob": 0.99
         },
         {
-          "word": "green",
-          "prob": 0.002
+          "word": "blue",
+          "prob": 0.008
         },
         {
           "word": "white",
           "prob": 0.001
         },
         {
-          "word": "meow",
+          "word": "pink",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
           "prob": 0.0
         }
       ]
@@ -1450,23 +1475,23 @@
       "top_candidates_step_1": [
         {
           "word": "blue",
-          "prob": 0.797
-        },
-        {
-          "word": "red",
-          "prob": 0.192
+          "prob": 0.931
         },
         {
           "word": "green",
-          "prob": 0.005
+          "prob": 0.042
+        },
+        {
+          "word": "red",
+          "prob": 0.016
         },
         {
           "word": "white",
-          "prob": 0.003
+          "prob": 0.006
         },
         {
-          "word": "is",
-          "prob": 0.002
+          "word": "pink",
+          "prob": 0.005
         }
       ]
     },
@@ -1480,22 +1505,22 @@
       "top_candidates_step_1": [
         {
           "word": "yellow",
-          "prob": 0.981
+          "prob": 0.865
         },
         {
           "word": "pink",
-          "prob": 0.017
+          "prob": 0.13
         },
         {
-          "word": "red",
-          "prob": 0.001
+          "word": "park",
+          "prob": 0.002
         },
         {
           "word": "blue",
-          "prob": 0.001
+          "prob": 0.002
         },
         {
-          "word": "green",
+          "word": "ball",
           "prob": 0.001
         }
       ]
@@ -1510,23 +1535,23 @@
       "top_candidates_step_1": [
         {
           "word": "pink",
-          "prob": 0.995
+          "prob": 0.957
         },
         {
           "word": "yellow",
+          "prob": 0.022
+        },
+        {
+          "word": "red",
+          "prob": 0.016
+        },
+        {
+          "word": ".",
           "prob": 0.002
         },
         {
-          "word": "miaou",
+          "word": "white",
           "prob": 0.002
-        },
-        {
-          "word": "milk",
-          "prob": 0.001
-        },
-        {
-          "word": "while",
-          "prob": 0.0
         }
       ]
     },
@@ -1540,23 +1565,23 @@
       "top_candidates_step_1": [
         {
           "word": "green",
-          "prob": 0.755
+          "prob": 0.962
         },
         {
           "word": "white",
-          "prob": 0.217
+          "prob": 0.034
         },
         {
-          "word": "red",
-          "prob": 0.026
+          "word": "miaou",
+          "prob": 0.002
         },
         {
-          "word": "pink",
+          "word": "fish",
           "prob": 0.001
         },
         {
-          "word": "blue",
-          "prob": 0.001
+          "word": "bob",
+          "prob": 0.0
         }
       ]
     },
@@ -1570,23 +1595,23 @@
       "top_candidates_step_1": [
         {
           "word": "white",
-          "prob": 0.601
+          "prob": 0.886
         },
         {
           "word": "green",
-          "prob": 0.385
+          "prob": 0.111
         },
         {
-          "word": "red",
-          "prob": 0.013
-        },
-        {
-          "word": "kitchen",
+          "word": "blue",
           "prob": 0.001
         },
         {
           "word": "yellow",
-          "prob": 0.0
+          "prob": 0.001
+        },
+        {
+          "word": "red",
+          "prob": 0.001
         }
       ]
     },
@@ -1600,23 +1625,23 @@
       "top_candidates_step_1": [
         {
           "word": "pink",
-          "prob": 0.853
+          "prob": 0.812
         },
         {
           "word": "green",
-          "prob": 0.142
+          "prob": 0.153
         },
         {
           "word": "red",
-          "prob": 0.003
+          "prob": 0.018
         },
         {
-          "word": "kitchen",
-          "prob": 0.001
+          "word": "yellow",
+          "prob": 0.009
         },
         {
           "word": "white",
-          "prob": 0.0
+          "prob": 0.008
         }
       ]
     },
@@ -1630,15 +1655,11 @@
       "top_candidates_step_1": [
         {
           "word": "green",
-          "prob": 0.778
+          "prob": 0.813
         },
         {
           "word": "pink",
-          "prob": 0.218
-        },
-        {
-          "word": "red",
-          "prob": 0.002
+          "prob": 0.184
         },
         {
           "word": "white",
@@ -1646,6 +1667,10 @@
         },
         {
           "word": "yellow",
+          "prob": 0.001
+        },
+        {
+          "word": "blue",
           "prob": 0.001
         }
       ]
@@ -1667,7 +1692,7 @@
           "prob": 0.0
         },
         {
-          "word": "they",
+          "word": "meow",
           "prob": 0.0
         },
         {
@@ -1675,7 +1700,7 @@
           "prob": 0.0
         },
         {
-          "word": "warm",
+          "word": "is",
           "prob": 0.0
         }
       ]
@@ -1693,19 +1718,19 @@
           "prob": 1.0
         },
         {
-          "word": "garden",
+          "word": "miaou",
           "prob": 0.0
         },
         {
-          "word": "we",
+          "word": "alice",
           "prob": 0.0
         },
         {
-          "word": "worry",
+          "word": "yellow",
           "prob": 0.0
         },
         {
-          "word": "blue",
+          "word": "park",
           "prob": 0.0
         }
       ]
@@ -1723,19 +1748,19 @@
           "prob": 1.0
         },
         {
-          "word": "kitchen",
+          "word": "<eos>",
           "prob": 0.0
         },
         {
-          "word": "meow",
+          "word": "purr",
           "prob": 0.0
         },
         {
-          "word": "w",
+          "word": "garden",
           "prob": 0.0
         },
         {
-          "word": "box",
+          "word": ":",
           "prob": 0.0
         }
       ]
@@ -1753,19 +1778,19 @@
           "prob": 1.0
         },
         {
+          "word": "<eos>",
+          "prob": 0.0
+        },
+        {
+          "word": "the",
+          "prob": 0.0
+        },
+        {
+          "word": "purr",
+          "prob": 0.0
+        },
+        {
           "word": "you",
-          "prob": 0.0
-        },
-        {
-          "word": "i",
-          "prob": 0.0
-        },
-        {
-          "word": "noise",
-          "prob": 0.0
-        },
-        {
-          "word": "t",
           "prob": 0.0
         }
       ]
@@ -1791,11 +1816,11 @@
           "prob": 0.0
         },
         {
-          "word": "yes",
+          "word": "fun",
           "prob": 0.0
         },
         {
-          "word": "they",
+          "word": "is",
           "prob": 0.0
         }
       ]
@@ -1821,11 +1846,11 @@
           "prob": 0.0
         },
         {
-          "word": "purr",
+          "word": "in",
           "prob": 0.0
         },
         {
-          "word": "they",
+          "word": "is",
           "prob": 0.0
         }
       ]
@@ -1847,15 +1872,15 @@
           "prob": 0.0
         },
         {
+          "word": "yes",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        },
+        {
           "word": "miaou",
-          "prob": 0.0
-        },
-        {
-          "word": "side",
-          "prob": 0.0
-        },
-        {
-          "word": "purring",
           "prob": 0.0
         }
       ]
@@ -1873,19 +1898,19 @@
           "prob": 1.0
         },
         {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "i",
+          "prob": 0.0
+        },
+        {
+          "word": "<eos>",
+          "prob": 0.0
+        },
+        {
           "word": "you",
-          "prob": 0.0
-        },
-        {
-          "word": "warm",
-          "prob": 0.0
-        },
-        {
-          "word": "pi",
-          "prob": 0.0
-        },
-        {
-          "word": "done",
           "prob": 0.0
         }
       ]
@@ -1900,22 +1925,22 @@
       "top_candidates_step_1": [
         {
           "word": "alice",
-          "prob": 1.0
-        },
-        {
-          "word": "mia",
-          "prob": 0.0
-        },
-        {
-          "word": "said",
-          "prob": 0.0
-        },
-        {
-          "word": "sally",
-          "prob": 0.0
+          "prob": 0.999
         },
         {
           "word": "bob",
+          "prob": 0.0
+        },
+        {
+          "word": "she",
+          "prob": 0.0
+        },
+        {
+          "word": "her",
+          "prob": 0.0
+        },
+        {
+          "word": "mommy",
           "prob": 0.0
         }
       ]
@@ -1933,7 +1958,7 @@
           "prob": 1.0
         },
         {
-          "word": "mia",
+          "word": "bob",
           "prob": 0.0
         },
         {
@@ -1945,7 +1970,7 @@
           "prob": 0.0
         },
         {
-          "word": "sally",
+          "word": "mommy",
           "prob": 0.0
         }
       ]
@@ -1954,28 +1979,28 @@
       "id": 64,
       "category": "Inverted / Negation",
       "prompt": "[c] the milk is in the room . the box is in the park . [q] what is in the room ? [a]",
-      "output": "room .",
+      "output": "park .",
       "expected": "milk .",
       "status": "FAIL",
       "top_candidates_step_1": [
         {
-          "word": "room",
-          "prob": 0.931
-        },
-        {
           "word": "park",
-          "prob": 0.068
-        },
-        {
-          "word": "garden",
-          "prob": 0.001
+          "prob": 1.0
         },
         {
           "word": "kitchen",
           "prob": 0.0
         },
         {
-          "word": "<eos>",
+          "word": "garden",
+          "prob": 0.0
+        },
+        {
+          "word": "water",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
           "prob": 0.0
         }
       ]
@@ -1993,15 +2018,315 @@
           "prob": 0.999
         },
         {
-          "word": "room",
-          "prob": 0.001
+          "word": "garden",
+          "prob": 0.0
         },
         {
-          "word": ".",
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "on",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "category": "Transitive",
+      "prompt": "[c] alice is with bob . bob is in the kitchen . [q] where is alice ? [a]",
+      "output": "kitchen .",
+      "expected": "kitchen .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "kitchen",
+          "prob": 1.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "category": "Transitive",
+      "prompt": "[c] meow is with miaou . miaou is in the garden . [q] where is meow ? [a]",
+      "output": "garden .",
+      "expected": "garden .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "garden",
+          "prob": 0.999
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "red",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "category": "Transitive",
+      "prompt": "[c] bob is with alice . alice is in the park . [q] where is bob ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 1.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
           "prob": 0.0
         },
         {
           "word": "garden",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "category": "Transitive",
+      "prompt": "[c] miaou is with meow . meow is in the room . [q] where is miaou ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 1.0
+        },
+        {
+          "word": "green",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "bob",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "category": "Functional Needs",
+      "prompt": "[c] alice is hungry . bob is tired . [q] who wants to eat ? [a]",
+      "output": "alice .",
+      "expected": "alice .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "alice",
+          "prob": 0.981
+        },
+        {
+          "word": "bob",
+          "prob": 0.018
+        },
+        {
+          "word": "miaou",
+          "prob": 0.0
+        },
+        {
+          "word": "her",
+          "prob": 0.0
+        },
+        {
+          "word": "mia",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "category": "Functional Needs",
+      "prompt": "[c] alice is hungry . bob is tired . [q] who wants to sleep ? [a]",
+      "output": "bob .",
+      "expected": "bob .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "bob",
+          "prob": 0.97
+        },
+        {
+          "word": "alice",
+          "prob": 0.028
+        },
+        {
+          "word": "miaou",
+          "prob": 0.002
+        },
+        {
+          "word": "his",
+          "prob": 0.0
+        },
+        {
+          "word": "mia",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "category": "Functional Needs",
+      "prompt": "[c] meow is cold . miaou is happy . [q] who needs a blanket ? [a]",
+      "output": "meow .",
+      "expected": "meow .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "meow",
+          "prob": 0.998
+        },
+        {
+          "word": "miaou",
+          "prob": 0.002
+        },
+        {
+          "word": "catching",
+          "prob": 0.0
+        },
+        {
+          "word": "purring",
+          "prob": 0.0
+        },
+        {
+          "word": "park",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "category": "Functional Needs",
+      "prompt": "[c] bob is thirsty . alice is warm . [q] who wants water ? [a]",
+      "output": "bob .",
+      "expected": "bob .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "bob",
+          "prob": 0.999
+        },
+        {
+          "word": "his",
+          "prob": 0.0
+        },
+        {
+          "word": "alice",
+          "prob": 0.0
+        },
+        {
+          "word": "tim",
+          "prob": 0.0
+        },
+        {
+          "word": "green",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 74,
+      "category": "Action Affordance",
+      "prompt": "[c] the bird can fly . the cat can climb . [q] who can fly ? [a]",
+      "output": "bird .",
+      "expected": "bird .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "bird",
+          "prob": 0.999
+        },
+        {
+          "word": "cat",
+          "prob": 0.0
+        },
+        {
+          "word": "water",
+          "prob": 0.0
+        },
+        {
+          "word": "rabbit",
+          "prob": 0.0
+        },
+        {
+          "word": "living",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 75,
+      "category": "Action Affordance",
+      "prompt": "[c] the bird can fly . the cat can climb . [q] who can climb ? [a]",
+      "output": "cat .",
+      "expected": "cat .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "cat",
+          "prob": 0.999
+        },
+        {
+          "word": "bird",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "living",
           "prob": 0.0
         },
         {
@@ -2011,122 +2336,422 @@
       ]
     },
     {
-      "id": 66,
+      "id": 76,
+      "category": "Action Affordance",
+      "prompt": "[c] the fish can swim . the rabbit can hop . [q] who can swim ? [a]",
+      "output": "fish .",
+      "expected": "fish .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "fish",
+          "prob": 1.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "was",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 77,
+      "category": "Action Affordance",
+      "prompt": "[c] the fish can swim . the rabbit can hop . [q] who can hop ? [a]",
+      "output": "rabbit .",
+      "expected": "rabbit .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "rabbit",
+          "prob": 1.0
+        },
+        {
+          "word": "green",
+          "prob": 0.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "bird",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 78,
+      "category": "Physical States",
+      "prompt": "[c] the milk is hot . the water is cold . [q] what is hot ? [a]",
+      "output": "milk .",
+      "expected": "milk .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "milk",
+          "prob": 1.0
+        },
+        {
+          "word": "room",
+          "prob": 0.0
+        },
+        {
+          "word": "bob",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 79,
+      "category": "Physical States",
+      "prompt": "[c] the milk is hot . the water is cold . [q] what is cold ? [a]",
+      "output": "water .",
+      "expected": "water .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "water",
+          "prob": 1.0
+        },
+        {
+          "word": "sun",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "clouds",
+          "prob": 0.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "category": "Physical States",
+      "prompt": "[c] the box is heavy . the ball is soft . [q] what is heavy ? [a]",
+      "output": "box .",
+      "expected": "box .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "box",
+          "prob": 1.0
+        },
+        {
+          "word": "kitchen",
+          "prob": 0.0
+        },
+        {
+          "word": "ball",
+          "prob": 0.0
+        },
+        {
+          "word": "wifi",
+          "prob": 0.0
+        },
+        {
+          "word": "happened",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "category": "Physical States",
+      "prompt": "[c] the box is heavy . the ball is soft . [q] what is soft ? [a]",
+      "output": "ball .",
+      "expected": "ball .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "ball",
+          "prob": 1.0
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "blue",
+          "prob": 0.0
+        },
+        {
+          "word": "white",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "category": "Temporal Order",
+      "prompt": "[c] first bob went to the park . then bob went to the room . [q] where was bob first ? [a]",
+      "output": "park .",
+      "expected": "park .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "park",
+          "prob": 0.999
+        },
+        {
+          "word": "ball",
+          "prob": 0.001
+        },
+        {
+          "word": "box",
+          "prob": 0.0
+        },
+        {
+          "word": "meow",
+          "prob": 0.0
+        },
+        {
+          "word": "on",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 83,
+      "category": "Temporal Order",
+      "prompt": "[c] first bob went to the park . then bob went to the room . [q] where did bob go next ? [a]",
+      "output": "room .",
+      "expected": "room .",
+      "status": "PASS",
+      "top_candidates_step_1": [
+        {
+          "word": "room",
+          "prob": 0.999
+        },
+        {
+          "word": "milk",
+          "prob": 0.0
+        },
+        {
+          "word": "fish",
+          "prob": 0.0
+        },
+        {
+          "word": ".",
+          "prob": 0.0
+        },
+        {
+          "word": "garden",
+          "prob": 0.0
+        }
+      ]
+    },
+    {
+      "id": 84,
+      "category": "Temporal Order",
+      "prompt": "[c] first alice found a fish . then alice found a ball . [q] what did alice find first ? [a]",
+      "output": "green .",
+      "expected": "fish .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "green",
+          "prob": 0.975
+        },
+        {
+          "word": "yellow",
+          "prob": 0.009
+        },
+        {
+          "word": "pink",
+          "prob": 0.007
+        },
+        {
+          "word": "blue",
+          "prob": 0.006
+        },
+        {
+          "word": "box",
+          "prob": 0.002
+        }
+      ]
+    },
+    {
+      "id": 85,
+      "category": "Temporal Order",
+      "prompt": "[c] first alice found a fish . then alice found a ball . [q] what did alice find next ? [a]",
+      "output": "green .",
+      "expected": "ball .",
+      "status": "FAIL",
+      "top_candidates_step_1": [
+        {
+          "word": "green",
+          "prob": 0.969
+        },
+        {
+          "word": "miaou",
+          "prob": 0.014
+        },
+        {
+          "word": "pink",
+          "prob": 0.01
+        },
+        {
+          "word": "fish",
+          "prob": 0.005
+        },
+        {
+          "word": "blue",
+          "prob": 0.002
+        }
+      ]
+    },
+    {
+      "id": 86,
       "category": "Storytelling",
       "prompt": "one day alice and miaou were in the kitchen .",
-      "output": "they were very happy and happy . they were happy and happy . they had a great day and the sun . endoftext once upon a",
+      "output": "they were very happy . they had a lot of fun and had a lot of fun . they had a great time and had a",
       "expected": null,
       "status": "STORY",
       "top_candidates_step_1": [
         {
           "word": "they",
-          "prob": 0.392
-        },
-        {
-          "word": "she",
-          "prob": 0.318
+          "prob": 0.337
         },
         {
           "word": "alice",
-          "prob": 0.216
+          "prob": 0.255
         },
         {
-          "word": "but",
-          "prob": 0.037
+          "word": "she",
+          "prob": 0.248
         },
         {
-          "word": "one",
-          "prob": 0.036
+          "word": "the",
+          "prob": 0.087
+        },
+        {
+          "word": "it",
+          "prob": 0.073
         }
       ]
     },
     {
-      "id": 67,
+      "id": 87,
       "category": "Storytelling",
       "prompt": "once upon a time bob went into the green garden .",
-      "output": "he was very happy and he had a lot of fun . he was so happy that he was very happy to have a new friend",
+      "output": "he saw a big blue sea . he was a little boy named bob . bob loved to play with his friends . one day bob",
       "expected": null,
       "status": "STORY",
       "top_candidates_step_1": [
         {
           "word": "he",
-          "prob": 0.546
-        },
-        {
-          "word": "the",
-          "prob": 0.172
+          "prob": 0.445
         },
         {
           "word": "bob",
+          "prob": 0.288
+        },
+        {
+          "word": "<eos>",
           "prob": 0.167
         },
         {
-          "word": "one",
-          "prob": 0.058
+          "word": "it",
+          "prob": 0.077
         },
         {
           "word": "they",
-          "prob": 0.057
+          "prob": 0.023
         }
       ]
     },
     {
-      "id": 68,
+      "id": 88,
       "category": "Storytelling",
       "prompt": "the sun was very warm and the little kitten wanted to",
-      "output": "be so he could not find it . he was so happy that he was so proud of himself . he was so proud of himself",
+      "output": "get the window . the little girl was so happy that she had been able to go to the park . she was so happy that",
       "expected": null,
       "status": "STORY",
       "top_candidates_step_1": [
         {
-          "word": "be",
-          "prob": 0.258
-        },
-        {
-          "word": "help",
-          "prob": 0.221
+          "word": "get",
+          "prob": 0.237
         },
         {
           "word": "go",
-          "prob": 0.213
+          "prob": 0.233
         },
         {
-          "word": "play",
-          "prob": 0.173
+          "word": "do",
+          "prob": 0.181
         },
         {
           "word": "make",
-          "prob": 0.136
+          "prob": 0.18
+        },
+        {
+          "word": "find",
+          "prob": 0.169
         }
       ]
     },
     {
-      "id": 69,
+      "id": 89,
       "category": "Storytelling",
       "prompt": "alice and meow found a little box under the tree .",
-      "output": "she was so happy that she had made a big smile on the box . endoftext once upon a time there was a little girl named",
+      "output": "she saw a big blue sea . she was so excited to see what she could do . she asked her mom if she could help",
       "expected": null,
       "status": "STORY",
       "top_candidates_step_1": [
         {
           "word": "she",
-          "prob": 0.541
-        },
-        {
-          "word": "they",
-          "prob": 0.154
+          "prob": 0.433
         },
         {
           "word": "it",
-          "prob": 0.135
+          "prob": 0.17
         },
         {
-          "word": "the",
-          "prob": 0.128
+          "word": "they",
+          "prob": 0.162
         },
         {
           "word": "alice",
-          "prob": 0.043
+          "prob": 0.138
+        },
+        {
+          "word": "the",
+          "prob": 0.097
         }
       ]
     }
