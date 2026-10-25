@@ -1,0 +1,52 @@
+{
+  "architecture": {
+    "vocab_size": 1024,
+    "block_size": 64,
+    "embed_dim": 64,
+    "num_heads": 4,
+    "num_layers": 4
+  },
+  "training": {
+    "device": "cpu",
+    "total_steps": 8000,
+    "warmup_steps": 200,
+    "base_lr": 0.002,
+    "min_lr": 0.0002,
+    "half_batch": 16,
+    "weight_decay": 0.01,
+    "grad_clip": 1.0,
+    "loss_weights": {
+      "qa": 2.5,
+      "story": 0.3
+    }
+  },
+  "dataset": {
+    "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
+    "logic_samples_target": 15000,
+    "name_replacements": {
+      "bob": ["timmy", "tom", "jack", "sam", "billy"],
+      "alice": ["lily", "anna", "sarah", "jane", "lucy", "emma"]
+    },
+    "core_words": [
+      "<unk>", "<pad>", "<eos>", ".", "?", ":", "[c]", "[q]", "[a]",
+      "question", "answer",
+      "the", "in", "to", "a", "and", "who", "what", "where", "when", "is", "are", "was", "were", "then", "does", "did", "got",
+      "alice", "bob", "meow", "miaou", "cat", "cats", "kitten", "kittens",
+      "garden", "kitchen", "park", "room",
+      "milk", "fish", "ball", "box", "rabbit",
+      "purr", "paws", "fur", "tail", "whiskers", "nap", "sun", "warm", "fluffy",
+      "pico", "wifi",
+      "went", "gave", "has", "had", "have", "found", "find",
+      "red", "blue", "yellow", "green", "pink", "white",
+      "bag", "cup", "bowl",
+      "likes", "wants",
+      "left", "sad", "happy", "dropped",
+      "put", "moved", "look", "really"
+    ]
+  },
+  "paths": {
+    "models_dir": "models/local",
+    "stories_file": "stories.txt",
+    "questions_file": "config/questions.json"
+  }
+}
