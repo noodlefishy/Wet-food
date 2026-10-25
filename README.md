@@ -45,7 +45,7 @@ Even with extremely humble hardware clocked at 240 MHz, this model has a real tr
 
 ---
 
-## Benchmark Scorecard (The 89-Question Battery)
+## Benchmark Scorecard (The 85-Question Battery)
 
 Ran using `evaluator.py` with pure standard python (deterministic argmax on logic benchmarks, creative multinomial on stories):
 
