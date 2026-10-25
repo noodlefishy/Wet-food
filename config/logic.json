@@ -40,7 +40,7 @@
     },
     {
       "name": "Actor Location Multi",
-      "weight": 5,
+      "weight": 2,
       "templates": [
         "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] where is {actor1} ? [a] {location1} . <eos>",
         "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] where is {actor2} ? [a] {location2} . <eos>",
@@ -50,7 +50,7 @@
     },
     {
       "name": "Actor Location Three",
-      "weight": 2.5,
+      "weight": 3,
       "templates": [
         "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor1} ? [a] {location1} . <eos>",
         "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor2} ? [a] {location2} . <eos>",
@@ -73,7 +73,7 @@
     },
     {
       "name": "Object Location Multi",
-      "weight": 1,
+      "weight": 2,
       "templates": [
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . [q] where is the {item1} ? [a] {location1} . <eos>",
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . [q] where is the {item2} ? [a] {location2} . <eos>",
@@ -83,7 +83,7 @@
     },
     {
       "name": "Object Location Three",
-      "weight": 2.5,
+      "weight": 3,
       "templates": [
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item1} ? [a] {location1} . <eos>",
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item2} ? [a] {location2} . <eos>",
@@ -139,7 +139,7 @@
     },
     {
       "name": "colour Binding Multi",
-      "weight": 1.0,
+      "weight": 2,
       "templates": [
         "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] what colour is the {item1} ? [a] {colour1} . <eos>",
         "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] what colour is the {item2} ? [a] {colour2} . <eos>",
@@ -156,7 +156,7 @@
     },
     {
       "name": "Functional Needs",
-      "weight": 1.0,
+      "weight": 2.4,
       "templates": [
         "[c] {actor1} is {need1_state} . {actor2} is {need2_state} . [q] who {need1_need} ? [a] {actor1} . <eos>",
         "[c] {actor1} is {need1_state} . {actor2} is {need2_state} . [q] who {need2_need} ? [a] {actor2} . <eos>"
@@ -188,7 +188,7 @@
     },
     {
       "name":"Inverted / Negation",
-      "weight": 2.5,
+      "weight": 3,
       "templates":[
         "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item2} ? [a] {actor2} . <eos>",
         "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>",
@@ -198,7 +198,7 @@
     },
     {
       "name": "Process of Elimination",
-      "weight": 1.0,
+      "weight": 0.5,
       "templates": [
         "[c] {actor1} and {actor2} have a {item1} and a {item2} . {actor1} has the {item1} . [q] who has the {item2} ? [a] {actor2} . <eos>",
         "[c] {actor1} and {actor2} have a {item1} and a {item2} . {actor2} has the {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>"
@@ -214,7 +214,7 @@
     },
     {
       "name": "Preference Matching",
-      "weight": 2.5,
+      "weight": 2,
       "templates": [
         "[c] {actor1} likes {colour1} . {actor2} likes {colour2} . [q] who wants the {colour1} {item1} ? [a] {actor1} . <eos>",
         "[c] {actor1} likes {colour1} . {actor2} likes {colour2} . [q] who wants the {colour2} {item1} ? [a] {actor2} . <eos>"
