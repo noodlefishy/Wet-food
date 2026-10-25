@@ -28,8 +28,24 @@ HEAD_DIM = EMBED_DIM // NUM_HEADS
 LAYER0_OFFSET = (VOCAB_SIZE * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4
 
 # 2. Locate Weight Files
-p1_path = os.path.join("models", "pico1 weights.model") if os.path.exists("models/pico1 weights.model") else "pico1 weights.model"
-p2_path = os.path.join("models", "pico2 weights.model") if os.path.exists("models/pico2 weights.model") else "pico2 weights.model"
+def resolve_path(filename):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(script_dir, ".."))
+    
+    candidates = [
+        filename,
+        os.path.join(project_root, filename),
+        os.path.join(project_root, "models", filename),
+        os.path.join(script_dir, filename),
+        os.path.join(script_dir, "models", filename),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return filename
+
+p1_path = resolve_path("pico1 weights.model")
+p2_path = resolve_path("pico2 weights.model")
 
 if not os.path.exists(p1_path) or not os.path.exists(p2_path):
     print(f"Error: Missing '{p1_path}' or '{p2_path}'. Check your models/ folder.")
