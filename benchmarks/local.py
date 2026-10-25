@@ -1,45 +1,11 @@
-# =====================================================================
 # WET FOOD: ZERO-DEPENDENCY LOCAL RUNNER (64-D, 4-LAYER)
-# Simulates Meow & Miaou pipeline directly in terminal.
-# Supports Left/Right cursor editing and Up/Down prompt history.
-# =====================================================================
 import os
 import sys
 import math
 import struct
 import random
 import re
-import atexit
 
-# ---------------------------------------------------------
-# 0. READLINE CONFIGURATION (ARROW KEYS & PROMPT HISTORY)
-# ---------------------------------------------------------
-try:
-    import readline
-    # Persistent history file in the benchmarks/ directory
-    hist_dir = os.path.dirname(os.path.abspath(__file__))
-    hist_file = os.path.join(hist_dir, ".local_history")
-    
-    try:
-        readline.read_history_file(hist_file)
-        readline.set_history_length(1000)
-    except (FileNotFoundError, OSError):
-        pass
-
-    def save_history():
-        try:
-            readline.write_history_file(hist_file)
-        except (OSError, IOError):
-            pass
-
-    atexit.register(save_history)
-except ImportError:
-    # Fallback for environments lacking readline
-    pass
-
-# ---------------------------------------------------------
-# 1. PATH RESOLUTION & VOCABULARY IMPORT
-# ---------------------------------------------------------
 def resolve_path(filename):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
@@ -71,9 +37,6 @@ except ImportError:
 
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-# ---------------------------------------------------------
-# 2. 64-D MODEL SPECIFICATIONS
-# ---------------------------------------------------------
 EMBED_DIM = 64
 BLOCK_SIZE = 64
 NUM_HEADS = 4
@@ -158,9 +121,6 @@ def run_layer(f, layer_idx, x, kv_caches):
     h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, h1_relu)
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
-# ---------------------------------------------------------
-# 4. END-TO-END PIPELINE (MEOW + MIAOU SIMULATOR)
-# ---------------------------------------------------------
 def generate(prompt_text, max_words=50):
     t_clean = prompt_text.strip().lower()
     
@@ -267,9 +227,6 @@ def generate(prompt_text, max_words=50):
     res = " ".join(generated).replace(" .", ".")
     return res
 
-# ---------------------------------------------------------
-# 5. INTERACTIVE CLI REPL
-# ---------------------------------------------------------
 if __name__ == "__main__":
     print("=" * 68)
     print("      MEOW & MIAOU DISTRIBUTED NEURAL ENGINE (LOCAL SIMULATOR)     ")
@@ -277,7 +234,6 @@ if __name__ == "__main__":
     print(f"Architecture : 4-Layer 64-D Transformer (Exact Hardware Math)")
     print(f"Vocabulary   : {VOCAB_SIZE} words | Context: {BLOCK_SIZE} tokens")
     print(f"Model Files  :\n  Pico 1 (Meow)  -> {PATH_PICO1}\n  Pico 2 (Miaou) -> {PATH_PICO2}")
-    print("Navigation   : Left/Right arrows move cursor, Up/Down recalls history")
     print("=" * 68)
     print("Type a prompt or 'exit' to quit.\n")
 
