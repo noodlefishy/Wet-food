@@ -3,7 +3,7 @@
     "vocab_size": 1024,
     "block_size": 64,
     "embed_dim": 64,
-    "num_heads": 4,
+    "num_heads": 2,
     "num_layers": 4
   },
   "training": {
@@ -23,6 +23,7 @@
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
     "logic_samples_target": 25000,
+    "eval_samples_per_category": 15,
     "name_replacements": {
       "bob": ["timmy", "tom", "jack", "sam", "billy"],
       "alice": ["lily", "anna", "sarah", "jane", "lucy", "emma"]
