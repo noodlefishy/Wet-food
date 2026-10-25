@@ -47,9 +47,9 @@ def resolve_path(filename):
     candidates = [
         filename,
         os.path.join(project_root, filename),
-        os.path.join(project_root, "models", filename),
+        os.path.join(project_root, "models","local", filename),
         os.path.join(script_dir, filename),
-        os.path.join(script_dir, "models", filename),
+        os.path.join(script_dir, "models","local", filename),
     ]
     for p in candidates:
         if os.path.exists(p):
@@ -74,9 +74,9 @@ WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 # ---------------------------------------------------------
 # 2. 64-D MODEL SPECIFICATIONS
 # ---------------------------------------------------------
-EMBED_DIM = 64
+EMBED_DIM = 96
 BLOCK_SIZE = 64
-NUM_HEADS = 4
+NUM_HEADS = 3
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 VOCAB_SIZE = 1024
 LAYER0_OFFSET = (VOCAB_SIZE * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4

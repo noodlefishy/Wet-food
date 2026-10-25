@@ -99,11 +99,11 @@ Tracks items changing hands:
 * `[c] alice gave the ball to miaou . bob gave the box to meow . [q] who got the ball ? [a]`
   -> `miaou .`
 
-### 7. Color Binding (Adjective-Noun Pairing)
-Binds colors to specific objects without mixing them up:
-* `[c] alice has a red box . bob has a blue ball . [q] what color is the box ? [a]`
+### 7.colour Binding (Adjective-Noun Pairing)
+Bindscolours to specific objects without mixing them up:
+* `[c] alice has a red box . bob has a blue ball . [q] whatcolour is the box ? [a]`
   -> `red .`
-* `[c] meow has a yellow ball . miaou has a pink box . [q] what color is the box ? [a]`
+* `[c] meow has a yellow ball . miaou has a pink box . [q] whatcolour is the box ? [a]`
   -> `pink .`
 
 ### 8. Feline Persona & Hardware Identity

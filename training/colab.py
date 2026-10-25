@@ -150,22 +150,22 @@ for _ in range(350):
     logic_tasks.append(f"[c] {g1} gave the {i1} to {r1} . {g2} gave the {i2} to {r2} . [q] who got the {i2} ? [a] {r2} . <eos>")
 
 
-# --- 5. COLOR BINDING (Strict 50/50 Balance) ---
+# --- 5.colour BINDING (Strict 50/50 Balance) ---
 # 1-Color Primers (Compact grid: 96 tasks)
 for a in actors:
-    for c in colors:
+    for c incolours:
         for i in items:
-            logic_tasks.append(f"[c] {a} has a {c} {i} . [q] what color is the {i} ? [a] {c} . <eos>")
+            logic_tasks.append(f"[c] {a} has a {c} {i} . [q] whatcolour is the {i} ? [a] {c} . <eos>")
 
 # 2-Color Tasks: Symmetrically query c1 and c2 equally
 for _ in range(450):
     a1, a2 = random.sample(actors, 2)
     c1, c2 = random.sample(colors, 2)
     i1, i2 = random.sample(items, 2)
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] what color is the {i1} ? [a] {c1} . <eos>")
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] what color is the {i2} ? [a] {c2} . <eos>")
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] what color is the {i1} ? [a] {c1} . <eos>")
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] what color is the {i2} ? [a] {c2} . <eos>")
+    logic_tasks.append(f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] whatcolour is the {i1} ? [a] {c1} . <eos>")
+    logic_tasks.append(f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] whatcolour is the {i2} ? [a] {c2} . <eos>")
+    logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] whatcolour is the {i1} ? [a] {c1} . <eos>")
+    logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] whatcolour is the {i2} ? [a] {c2} . <eos>")
 
 
 ###
@@ -448,12 +448,12 @@ EVAL_DATABASE = [
     ("Giving (IOI)", "[c] alice gave the milk to meow . bob gave the fish to miaou . [q] who got the milk ? [a]", "meow ."),
     ("Giving (IOI)", "[c] alice gave the milk to meow . bob gave the fish to miaou . [q] who got the fish ? [a]", "miaou ."),
 
-    ("Color Binding", "[c] alice has a red box . bob has a blue ball . [q] what color is the box ? [a]", "red ."),
-    ("Color Binding", "[c] alice has a red box . bob has a blue ball . [q] what color is the ball ? [a]", "blue ."),
-    ("Color Binding", "[c] meow has a yellow ball . miaou has a pink box . [q] what color is the ball ? [a]", "yellow ."),
-    ("Color Binding", "[c] meow has a yellow ball . miaou has a pink box . [q] what color is the box ? [a]", "pink ."),
-    ("Color Binding", "[c] bob has a green box . alice has a white ball . [q] what color is the box ? [a]", "green ."),
-    ("Color Binding", "[c] bob has a green box . alice has a white ball . [q] what color is the ball ? [a]", "white ."),
+    ("Color Binding", "[c] alice has a red box . bob has a blue ball . [q] whatcolour is the box ? [a]", "red ."),
+    ("Color Binding", "[c] alice has a red box . bob has a blue ball . [q] whatcolour is the ball ? [a]", "blue ."),
+    ("Color Binding", "[c] meow has a yellow ball . miaou has a pink box . [q] whatcolour is the ball ? [a]", "yellow ."),
+    ("Color Binding", "[c] meow has a yellow ball . miaou has a pink box . [q] whatcolour is the box ? [a]", "pink ."),
+    ("Color Binding", "[c] bob has a green box . alice has a white ball . [q] whatcolour is the box ? [a]", "green ."),
+    ("Color Binding", "[c] bob has a green box . alice has a white ball . [q] whatcolour is the ball ? [a]", "white ."),
 
     ("Feline Persona", "question : what are your names ? answer :", "we are meow and miaou ."),
     ("Feline Persona", "question : who is meow ? answer :", "meow is the pico wh who talks to you on the web ."),

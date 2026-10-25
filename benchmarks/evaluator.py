@@ -269,15 +269,15 @@ for cat, items in BENCHMARKS_DICT.items():
                 passed_count += 1
                 cat_stats[cat]["passed"] += 1
                 record["status"] = "PASS"
-                print(f"[{idx:03d}] PASS | {cat:<details_space} | {clean_out}")
+                print(f"[{idx:03d}] PASS | {cat:<29} | {clean_out}")
             else:
                 record["status"] = "FAIL"
-                print(f"[{idx:03d}] FAIL | {cat:<details_space} | {clean_out} (Expected: {clean_target})")
+                print(f"[{idx:03d}] FAIL | {cat:<29} | {clean_out} (Expected: {clean_target})")
         else:
             has_leak = any(tag in clean_out for tag in ("[q]", "[a]", "[c]"))
             status = "LEAK" if has_leak else "STORY"
             record["status"] = status
-            print(f"[{idx:03d}] {status:<4} | {cat:<(details_space-1)} | {clean_out}")
+            print(f"[{idx:03d}] {status:<4} | {cat:<28} | {clean_out}")
 
         results_json["details"].append(record)
         idx += 1
