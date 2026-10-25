@@ -49,18 +49,8 @@
       ]
     },
     {
-      "name": "Actor Location Specific Inference",
-      "weight": 1,
-      "templates": [
-        "[c] alice went to the {location1} . bob went to the {location2} . [q] where is alice ? [a] {location1} . <eos>",
-        "[c] alice went to the {location1} . bob went to the {location2} . [q] where is bob ? [a] {location2} . <eos>",
-        "[c] bob went to the {location2} . alice went to the {location1} . [q] where is alice ? [a] {location1} . <eos>",
-        "[c] bob went to the {location2} . alice went to the {location1} . [q] where is bob ? [a] {location2} . <eos>"
-      ]
-    },
-    {
       "name": "Actor Location Three",
-      "weight": 1,
+      "weight": 2.5,
       "templates": [
         "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor1} ? [a] {location1} . <eos>",
         "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor2} ? [a] {location2} . <eos>",
@@ -93,7 +83,7 @@
     },
     {
       "name": "Object Location Three",
-      "weight": 1.5,
+      "weight": 2.5,
       "templates": [
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item1} ? [a] {location1} . <eos>",
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item2} ? [a] {location2} . <eos>",
@@ -198,12 +188,12 @@
     },
     {
       "name":"Inverted / Negation",
-      "weight": 2,
+      "weight": 2.5,
       "templates":[
         "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item2} ? [a] {actor2} . <eos>",
         "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>",
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2}  . [q] what is in the {location2} ? [a] {item2} . <eos>",
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2}  . [q] what is in the {location2} ? [a] {item1} . <eos>"
+        "[c] the {item1} is in the {location1} . the {item2} is in the {location2}  . [q] what is in the {location1} ? [a] {item1} . <eos>"
       ]
     },
     {

@@ -98,6 +98,9 @@ def instantiate_template(template, p_pools, pp_pools):
                     
     return template.format(**replacements)
 
+
+DEFAULT_EVAL_PER_CAT = mod_cfg["dataset"]['eval_samples_per_category']
+
 total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
 
 for cat in log_cfg["categories"]:
@@ -105,7 +108,6 @@ for cat in log_cfg["categories"]:
     cat_name = cat["name"]
     templates = cat["templates"]
     
-    # Initialize the array for this category
     eval_benchmarks[cat_name] = [] 
 
     cat_total_reps = int((weight / total_weight) * TARGET_LOGIC_SAMPLES)
@@ -118,8 +120,10 @@ for cat in log_cfg["categories"]:
         for _ in range(reps):
             logic_tasks.append(instantiate_template(template, pools, pair_pools))
             
-    # B. Generate the Evaluation Benchmarks (5 per category)
-    for _ in range(5):
+    # B. Generate the Evaluation Benchmarks (Uses category override or global default)
+    eval_count = cat.get("eval_samples", DEFAULT_EVAL_PER_CAT)
+    
+    for _ in range(eval_count):
         eval_template = random.choice(templates)
         eval_str = instantiate_template(eval_template, pools, pair_pools)
         if " [a] " in eval_str:
