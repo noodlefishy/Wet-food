@@ -1,5 +1,5 @@
 # =====================================================================
-# WET FOOD: BLAZING FAST LOCAL MAC TRAINING (CPU OPTIMIZED)
+# WET FOOD: BLAZING FAST LOCAL MAC TRAINING (JSON OPTIMIZED)
 # =====================================================================
 import torch
 import torch.nn as nn
@@ -10,240 +10,159 @@ import math
 import random
 from collections import Counter
 import os
+import json
 
-# For a 138k parameter model, Apple's M-Series CPU cache is actually 
-# faster than sending tiny 64-D matrices back and forth to the GPU.
-MODELS_DIR = "models/local"
+# ---------------------------------------------------------
+# 1. LOAD CONFIGURATIONS
+# ---------------------------------------------------------
+print("Loading configurations...")
+with open("config/model.json", "r") as f:
+    mod_cfg = json.load(f)
+
+with open("config/logic.json", "r") as f:
+    log_cfg = json.load(f)
+
+# Extract Architecture settings
+VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
+BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
+EMBED_DIM  = mod_cfg["architecture"]["embed_dim"]
+NUM_HEADS  = mod_cfg["architecture"]["num_heads"]
+NUM_LAYERS = mod_cfg["architecture"]["num_layers"]
+
+# Extract Paths and Device
+MODELS_DIR = mod_cfg["paths"]["models_dir"]
+STORIES_FILE = mod_cfg["paths"]["stories_file"]
+QUESTIONS_FILE = mod_cfg["paths"]["questions_file"]
+DEVICE = mod_cfg["training"]["device"]
+
 os.makedirs(MODELS_DIR, exist_ok=True)
-
-device = "cpu"
-
-print("==================================================")
-print(f" Training Verified 4L 64-D Engine on: {device.upper()}")
-print("==================================================")
-
 os.makedirs("models", exist_ok=True)
 
+print("==================================================")
+print(f" Training Verified {NUM_LAYERS}L {EMBED_DIM}-D Engine on: {DEVICE.upper()}")
+print("==================================================")
+
 # ---------------------------------------------------------
-# 1. FETCH FAIRY TALE FOUNDATION
+# 2. FETCH FAIRY TALE FOUNDATION
 # ---------------------------------------------------------
-if os.path.exists("stories.txt"):
-    print("Using cached stories.txt...")
-    with open("stories.txt", "r", encoding="utf-8", errors="ignore") as f:
+if os.path.exists(STORIES_FILE):
+    print(f"Using cached {STORIES_FILE}...")
+    with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f:
         raw_stories = f.read().lower()
 else:
     print("Downloading TinyStories...")
-    url = "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt"
+    url = mod_cfg["dataset"]["url"]
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers, stream=True)
-    with open("stories.txt", "wb") as f:
+    with open(STORIES_FILE, "wb") as f:
         for chunk in response.iter_content(chunk_size=512 * 1024):
             f.write(chunk)
             if f.tell() >= 6 * 1024 * 1024: break
-    with open("stories.txt", "r", encoding="utf-8", errors="ignore") as f:
+    with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f:
         raw_stories = f.read().lower()
 
-raw_stories = re.sub(r"\b(timmy|tom|jack|sam|billy)\b", "bob", raw_stories)
-raw_stories = re.sub(r"\b(lily|anna|sarah|jane|lucy|emma)\b", "alice", raw_stories)
+for target, names in mod_cfg["dataset"]["name_replacements"].items():
+    pattern = r"\b(" + "|".join(names) + r")\b"
+    raw_stories = re.sub(pattern, target, raw_stories)
+
 
 # ---------------------------------------------------------
-# 2. COMPILE REASONING TASKS
+# 3. COMPILE REASONING TASKS & GENERATE EVAL QUESTIONS
 # ---------------------------------------------------------
-print("Compiling Strictly Balanced Reasoning Curriculum...")
-actors = ["alice", "bob", "meow", "miaou"]
-locations = ["garden", "kitchen", "park", "room"]
-items = ["milk", "fish", "ball", "box"]
-colors = ["red", "blue", "yellow", "green", "pink", "white"]
+TARGET_LOGIC_SAMPLES = mod_cfg["dataset"].get("logic_samples_target", 15000)
+print(f"Compiling strictly balanced logic dataset ({TARGET_LOGIC_SAMPLES} targeted)...")
 
 logic_tasks = []
+eval_benchmarks = []
+pools = log_cfg["pools"]
+pair_pools = log_cfg.get("pair_pools", {})
 
-# Location
-for _ in range(25):
-    for a in actors:
-        for l in locations:
-            logic_tasks.append(f"[c] {a} went to the {l} . [q] where is {a} ? [a] {l} . <eos>")
-            logic_tasks.append(f"[c] {a} is in the {l} . [q] where is {a} ? [a] {l} . <eos>")
-for _ in range(350):
-    a1, a2 = random.sample(actors, 2)
-    l1, l2 = random.sample(locations, 2)
-    logic_tasks.append(f"[c] {a1} went to the {l1} . {a2} went to the {l2} . [q] where is {a1} ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] {a1} went to the {l1} . {a2} went to the {l2} . [q] where is {a2} ? [a] {l2} . <eos>")
-    logic_tasks.append(f"[c] {a1} is in the {l1} . {a2} is in the {l2} . [q] where is {a1} ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] {a1} is in the {l1} . {a2} is in the {l2} . [q] where is {a2} ? [a] {l2} . <eos>")
-for _ in range(300):
-    l1, l2 = random.sample(locations, 2)
-    logic_tasks.append(f"[c] alice went to the {l1} . bob went to the {l2} . [q] where is alice ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] alice went to the {l1} . bob went to the {l2} . [q] where is bob ? [a] {l2} . <eos>")
-    logic_tasks.append(f"[c] bob went to the {l2} . alice went to the {l1} . [q] where is alice ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] bob went to the {l2} . alice went to the {l1} . [q] where is bob ? [a] {l2} . <eos>")
-for _ in range(250):
-    a1, a2, a3 = random.sample(actors, 3)
-    l1, l2, l3 = random.sample(locations, 3)
-    t_a, t_l = random.choice([(a1, l1), (a2, l2), (a3, l3)])
-    logic_tasks.append(f"[c] {a1} went to the {l1} . {a2} went to the {l2} . {a3} went to the {l3} . [q] where is {t_a} ? [a] {t_l} . <eos>")
-for _ in range(250):
-    a = random.choice(actors)
-    l1, l2 = random.sample(locations, 2)
-    logic_tasks.append(f"[c] {a} went to the {l1} . then {a} went to the {l2} . [q] where is {a} ? [a] {l2} . <eos>")
+def instantiate_template(template, p_pools, pp_pools):
+    matches = re.findall(r'\{([a-z]+)(\d+)(?:_([a-z]+))?\}', template)
+    replacements = {}
+    
+    # Handle flat string pools (e.g. {actor1} -> 'alice')
+    for p_key, p_values in p_pools.items():
+        indices = set(m[1] for m in matches if m[0] == p_key)
+        if indices:
+            sampled = random.sample(p_values, len(indices))
+            for idx, val in zip(sorted(list(indices)), sampled):
+                replacements[f"{p_key}{idx}"] = val
+                
+    # Handle paired dictionary pools (e.g. {need1_state} -> 'hungry')
+    for p_key, p_values in pp_pools.items():
+        indices = set(m[1] for m in matches if m[0] == p_key)
+        if indices:
+            sampled = random.sample(p_values, len(indices))
+            for idx, val_dict in zip(sorted(list(indices)), sampled):
+                for sub_key, sub_val in val_dict.items():
+                    replacements[f"{p_key}{idx}_{sub_key}"] = sub_val
+                    
+    return template.format(**replacements)
 
-# Object Location
-for _ in range(20):
-    for i in items:
-        for l in locations:
-            logic_tasks.append(f"[c] the {i} is in the {l} . [q] where is the {i} ? [a] {l} . <eos>")
-for _ in range(350):
-    i1, i2 = random.sample(items, 2)
-    l1, l2 = random.sample(locations, 2)
-    logic_tasks.append(f"[c] the {i1} is in the {l1} . the {i2} is in the {l2} . [q] where is the {i1} ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] the {i1} is in the {l1} . the {i2} is in the {l2} . [q] where is the {i2} ? [a] {l2} . <eos>")
-    logic_tasks.append(f"[c] the {i1} is in the {l1} and the {i2} is in the {l2} . [q] where is the {i1} ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] the {i1} is in the {l1} and the {i2} is in the {l2} . [q] where is the {i2} ? [a] {l2} . <eos>")
-for _ in range(200):
-    i1, i2, i3 = random.sample(items, 3)
-    l1, l2, l3 = random.sample(locations, 3)
-    t_i, t_l = random.choice([(i1, l1), (i2, l2), (i3, l3)])
-    logic_tasks.append(f"[c] the {i1} is in the {l1} . the {i2} is in the {l2} . the {i3} is in the {l3} . [q] where is the {t_i} ? [a] {t_l} . <eos>")
+total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
 
-# Possession
-for _ in range(20):
-    for a in actors:
-        for i in items:
-            logic_tasks.append(f"[c] {a} has the {i} . [q] what does {a} have ? [a] {i} . <eos>")
-            logic_tasks.append(f"[c] {a} found a {i} . [q] what did {a} find ? [a] {i} . <eos>")
-for _ in range(300):
-    a1, a2 = random.sample(actors, 2)
-    i1, i2 = random.sample(items, 2)
-    logic_tasks.append(f"[c] {a1} has the {i1} . {a2} has the {i2} . [q] what does {a1} have ? [a] {i1} . <eos>")
-    logic_tasks.append(f"[c] {a1} has the {i1} . {a2} has the {i2} . [q] what does {a2} have ? [a] {i2} . <eos>")
-    logic_tasks.append(f"[c] {a1} found a {i1} . {a2} found a {i2} . [q] what did {a1} find ? [a] {i1} . <eos>")
-    logic_tasks.append(f"[c] {a1} found a {i1} . {a2} found a {i2} . [q] what did {a2} find ? [a] {i2} . <eos>")
-    logic_tasks.append(f"[c] {a1} has the {i1} . {a2} has the {i2} . [q] who has the {i1} ? [a] {a1} . <eos>")
-for _ in range(300):
-    i1, i2 = random.sample(items, 2)
-    logic_tasks.append(f"[c] alice has the {i1} . bob has the {i2} . [q] what does alice have ? [a] {i1} . <eos>")
-    logic_tasks.append(f"[c] alice has the {i1} . bob has the {i2} . [q] what does bob have ? [a] {i2} . <eos>")
-    logic_tasks.append(f"[c] bob has the {i2} . alice has the {i1} . [q] what does alice have ? [a] {i1} . <eos>")
-    logic_tasks.append(f"[c] bob has the {i2} . alice has the {i1} . [q] what does bob have ? [a] {i2} . <eos>")
-    logic_tasks.append(f"[c] alice found a {i1} . bob found a {i2} . [q] what did alice find ? [a] {i1} . <eos>")
-    logic_tasks.append(f"[c] alice found a {i1} . bob found a {i2} . [q] what did bob find ? [a] {i2} . <eos>")
+for cat in log_cfg["categories"]:
+    weight = cat.get("weight", 1.0)
+    templates = cat["templates"]
+    
+    cat_total_reps = int((weight / total_weight) * TARGET_LOGIC_SAMPLES)
+    reps_per_template = cat_total_reps // len(templates)
+    remainder = cat_total_reps % len(templates)
+    
+    # A. Build the Training Data
+    for i, template in enumerate(templates):
+        reps = reps_per_template + (1 if i < remainder else 0)
+        for _ in range(reps):
+            logic_tasks.append(instantiate_template(template, pools, pair_pools))
+            
+    # B. Generate the Evaluation Benchmarks (5 per category)
+    for _ in range(5):
+        eval_template = random.choice(templates)
+        eval_str = instantiate_template(eval_template, pools, pair_pools)
+        if " [a] " in eval_str:
+            q_part, a_part = eval_str.split(" [a] ")
+            eval_benchmarks.append({
+                "cat": cat["name"],
+                "q": q_part + " [a]",
+                "target": a_part.replace("<eos>", "").strip()
+            })
 
-# Transfers
-for _ in range(300):
-    a1, a2 = random.sample(actors, 2)
-    item = random.choice(items)
-    logic_tasks.append(f"[c] {a1} had the {item} . {a1} gave the {item} to {a2} . [q] who has the {item} ? [a] {a2} . <eos>")
-for _ in range(350):
-    g1, g2 = random.sample(["alice", "bob"], 2)
-    r1, r2 = random.sample(["meow", "miaou"], 2)
-    i1, i2 = random.sample(items, 2)
-    logic_tasks.append(f"[c] {g1} gave the {i1} to {r1} . {g2} gave the {i2} to {r2} . [q] who got the {i1} ? [a] {r1} . <eos>")
-    logic_tasks.append(f"[c] {g1} gave the {i1} to {r1} . {g2} gave the {i2} to {r2} . [q] who got the {i2} ? [a] {r2} . <eos>")
+# Inject Personas (Training & Eval)
+cat_identities = log_cfg["personas"]
+all_qa_tasks = logic_tasks + (cat_identities * log_cfg["persona_reps"])
 
-# Colors
-for a in actors:
-    for c in colors:
-        for i in items:
-            logic_tasks.append(f"[c] {a} has a {c} {i} . [q] what color is the {i} ? [a] {c} . <eos>")
-for _ in range(450):
-    a1, a2 = random.sample(actors, 2)
-    c1, c2 = random.sample(colors, 2)
-    i1, i2 = random.sample(items, 2)
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] what color is the {i1} ? [a] {c1} . <eos>")
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] what color is the {i2} ? [a] {c2} . <eos>")
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] what color is the {i1} ? [a] {c1} . <eos>")
-    logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] what color is the {i2} ? [a] {c2} . <eos>")
+for p in cat_identities:
+    if " answer : " in p:
+        q_part, a_part = p.split(" answer : ")
+        eval_benchmarks.append({
+            "cat": "Persona",
+            "q": q_part + " answer :",
+            "target": a_part.replace("<eos>", "").strip()
+        })
 
-
-# --- 8. CREATIVE REASONING TASKS ---
-
-# A. Transitive Reasoning (Alice with Bob -> Bob in Kitchen -> Alice in Kitchen)
-for _ in range(300):
-    a1, a2 = random.sample(actors, 2)
-    l = random.choice(locations)
-    logic_tasks.append(f"[c] {a1} is with {a2} . {a2} is in the {l} . [q] where is {a1} ? [a] {l} . <eos>")
-
-# B. Functional Needs (Hungry -> Eat, Tired -> Sleep, Thirsty -> Water)
-needs = [
-    ("hungry", "wants to eat"),
-    ("tired", "wants to sleep"),
-    ("cold", "needs a blanket"),
-    ("thirsty", "wants water")
+# Append Open-Ended Storytelling Checks to Eval
+story_prompts = [
+    "one day alice and miaou were in the kitchen .",
+    "once upon a time bob went into the green garden .",
+    "the sun was very warm and the little kitten wanted to",
+    "alice and meow found a little box under the tree ."
 ]
-for _ in range(300):
-    a1, a2 = random.sample(actors, 2)
-    (s1, n1), (s2, n2) = random.sample(needs, 2)
-    logic_tasks.append(f"[c] {a1} is {s1} . {a2} is {s2} . [q] who {n1} ? [a] {a1} . <eos>")
-    logic_tasks.append(f"[c] {a1} is {s1} . {a2} is {s2} . [q] who {n2} ? [a] {a2} . <eos>")
+for sp in story_prompts:
+    eval_benchmarks.append({"cat": "Storytelling", "q": sp, "target": None})
 
-# C. Action Affordances (Capabilities of entities)
-actions = [
-    ("bird", "fly"),
-    ("cat", "climb"),
-    ("fish", "swim"),
-    ("rabbit", "hop")
-]
-for _ in range(300):
-    (e1, act1), (e2, act2) = random.sample(actions, 2)
-    logic_tasks.append(f"[c] the {e1} can {act1} . the {e2} can {act2} . [q] who can {act1} ? [a] {e1} . <eos>")
-    logic_tasks.append(f"[c] the {e1} can {act1} . the {e2} can {act2} . [q] who can {act2} ? [a] {e2} . <eos>")
+# Dump strictly formatted JSON questions for evaluator.py
+with open(QUESTIONS_FILE, "w") as f:
+    json.dump(eval_benchmarks, f, indent=2)
+print(f"Generated {len(eval_benchmarks)} dynamic evaluation questions -> {QUESTIONS_FILE}")
 
-# D. Physical States & Opposites
-states = [
-    ("milk", "hot"),
-    ("water", "cold"),
-    ("box", "heavy"),
-    ("ball", "soft")
-]
-for _ in range(300):
-    (i1, p1), (i2, p2) = random.sample(states, 2)
-    logic_tasks.append(f"[c] the {i1} is {p1} . the {i2} is {p2} . [q] what is {p1} ? [a] {i1} . <eos>")
-    logic_tasks.append(f"[c] the {i1} is {p1} . the {i2} is {p2} . [q] what is {p2} ? [a] {i2} . <eos>")
-
-# E. Temporal Ordering (First vs. Next)
-for _ in range(300):
-    a = random.choice(actors)
-    l1, l2 = random.sample(locations, 2)
-    logic_tasks.append(f"[c] first {a} went to the {l1} . then {a} went to the {l2} . [q] where was {a} first ? [a] {l1} . <eos>")
-    logic_tasks.append(f"[c] first {a} went to the {l1} . then {a} went to the {l2} . [q] where did {a} go next ? [a] {l2} . <eos>")
-
-###
-
-# Persona
-cat_identities = [
-    "question : what are your names ? answer : we are meow and miaou . <eos>",
-    "question : who is meow ? answer : meow is the pico wh who talks to you on the web . <eos>",
-    "question : who is miaou ? answer : miaou is the pico w who calculates the words . <eos>",
-    "question : what are you ? answer : we are two tiny cat ais living in microcontrollers . <eos>",
-    "question : are you real cats ? answer : we are digital kittens made of code and wifi . <eos>",
-    "question : what do you love ? answer : we love milk warm sun naps and catching bugs . <eos>",
-    "question : can you purr ? answer : purr purr purr yes we are purring right now . <eos>",
-    "question : what hardware do you run on ? answer : we run on two raspberry pi pico chips over wifi . <eos>",
-]
-all_qa_tasks = logic_tasks + (cat_identities * 120)
 random.seed(42)
 random.shuffle(all_qa_tasks)
 
 # ---------------------------------------------------------
-# 3. VOCABULARY GENERATION
+# 4. VOCABULARY GENERATION
 # ---------------------------------------------------------
-VOCAB_SIZE = 1024
-BLOCK_SIZE = 64
-EMBED_DIM = 64
-NUM_HEADS = 4
-NUM_LAYERS = 4
-
-CAT_CORE_WORDS = [
-    "<unk>", "<pad>", "<eos>", ".", "?", ":", "[c]", "[q]", "[a]",
-    "question", "answer",
-    "the", "in", "to", "a", "and", "who", "what", "where", "when", "is", "are", "was", "were", "then", "does", "did", "got",
-    "alice", "bob", "meow", "miaou", "cat", "cats", "kitten", "kittens",
-    "garden", "kitchen", "park", "room",
-    "milk", "fish", "ball", "box", "rabbit",
-    "purr", "paws", "fur", "tail", "whiskers", "nap", "sun", "warm", "fluffy",
-    "pico", "wifi",
-    "went", "gave", "has", "had", "have", "found", "find",
-    "red", "blue", "yellow", "green", "pink", "white",
-]
+CAT_CORE_WORDS = mod_cfg["dataset"]["core_words"]
 
 all_words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", raw_stories + " " + " ".join(all_qa_tasks))
 counts = Counter(all_words)
@@ -255,9 +174,8 @@ VOCAB = CAT_CORE_WORDS + top_words
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
 # ---------------------------------------------------------
-# 4. DATASET TOKENIZATION (STRICT CPU PROCESSING)
+# 5. DATASET TOKENIZATION (STRICT CPU PROCESSING)
 # ---------------------------------------------------------
-
 print("Tokenizing and constructing masked QA tensors...")
 def tokenize_str(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", s.lower())]
@@ -283,7 +201,6 @@ for task in all_qa_tasks:
     qa_tensor_x.append(torch.tensor(x, dtype=torch.long))
     qa_tensor_y.append(torch.tensor(y, dtype=torch.long))
 
-# Data stays safely on CPU to prevent indexing latency
 qa_x_data = torch.stack(qa_tensor_x)
 qa_y_data = torch.stack(qa_tensor_y)
 
@@ -291,7 +208,7 @@ story_tokens = tokenize_str(raw_stories)
 story_data = torch.tensor(story_tokens, dtype=torch.long)
 
 # ---------------------------------------------------------
-# 5. MODEL ARCHITECTURE & BALANCED TRAINING
+# 6. MODEL ARCHITECTURE & BALANCED TRAINING
 # ---------------------------------------------------------
 class Block(nn.Module):
     def __init__(self):
@@ -319,19 +236,22 @@ class BabyStories(nn.Module):
 
     def forward(self, idx):
         B, T = idx.shape
-        x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=device))
+        x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=DEVICE))
         for layer in self.layers:
             x = layer(x)
         return self.lm_head(self.ln_f(x))
 
-model = BabyStories().to(device)
+model = BabyStories().to(DEVICE)
 
-TOTAL_STEPS = 8000
-WARMUP = 200
-BASE_LR, MIN_LR = 2e-3, 2e-4
-HALF_BATCH = 16
+TOTAL_STEPS = mod_cfg["training"]["total_steps"]
+WARMUP = mod_cfg["training"]["warmup_steps"]
+BASE_LR = mod_cfg["training"]["base_lr"]
+MIN_LR = mod_cfg["training"]["min_lr"]
+HALF_BATCH = mod_cfg["training"]["half_batch"]
+W_DECAY = mod_cfg["training"]["weight_decay"]
+G_CLIP = mod_cfg["training"]["grad_clip"]
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=BASE_LR, weight_decay=1e-2)
+optimizer = torch.optim.AdamW(model.parameters(), lr=BASE_LR, weight_decay=W_DECAY)
 
 def get_lr(step):
     if step < WARMUP: return BASE_LR * (step + 1) / WARMUP
@@ -339,7 +259,6 @@ def get_lr(step):
     return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * ratio)) * (BASE_LR - MIN_LR)
 
 def get_balanced_batch():
-    # Random selection and slicing happens purely in CPU RAM (Instantaneous)
     qa_idx = torch.randint(len(qa_x_data), (HALF_BATCH,))
     x_qa = qa_x_data[qa_idx]
     y_qa = qa_y_data[qa_idx]
@@ -348,8 +267,7 @@ def get_balanced_batch():
     x_st = torch.stack([story_data[i : i + BLOCK_SIZE] for i in st_idx])
     y_st = torch.stack([story_data[i + 1 : i + BLOCK_SIZE + 1] for i in st_idx])
     
-    # Only push the tiny final batch to device
-    return x_qa.to(device), y_qa.to(device), x_st.to(device), y_st.to(device)
+    return x_qa.to(DEVICE), y_qa.to(DEVICE), x_st.to(DEVICE), y_st.to(DEVICE)
 
 print(f"\nTraining for {TOTAL_STEPS} steps...")
 model.train()
@@ -364,21 +282,23 @@ for step in range(TOTAL_STEPS + 1):
     logits_qa = logits_all[:HALF_BATCH]
     logits_st = logits_all[HALF_BATCH:]
 
-    # SURGICAL LOSS GRADIENT WEIGHTING
     loss_qa = F.cross_entropy(logits_qa.view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
     loss_st = F.cross_entropy(logits_st.view(-1, VOCAB_SIZE), y_st.view(-1))
-    loss = 2.5 * loss_qa + 0.3 * loss_st
+    
+    w_qa = mod_cfg["training"]["loss_weights"]["qa"]
+    w_st = mod_cfg["training"]["loss_weights"]["story"]
+    loss = (w_qa * loss_qa) + (w_st * loss_st)
 
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    torch.nn.utils.clip_grad_norm_(model.parameters(), G_CLIP)
     optimizer.step()
 
     if step % 500 == 0:
         print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
 
 # ---------------------------------------------------------
-# 6. EXPORT BINARIES DIRECTLY TO MODELS FOLDER
+# 7. EXPORT BINARIES DIRECTLY TO MODELS FOLDER
 # ---------------------------------------------------------
 def dump_t(t, f): 
     f.write(t.detach().cpu().to(torch.float32).numpy().tobytes())
@@ -400,10 +320,11 @@ with open(path2, "wb") as f:
     dump_t(model.lm_head.weight, f)
     dump_t(model.lm_head.bias, f)
 
-with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: 
+vocab_path = os.path.join(MODELS_DIR, "vocab.py")
+with open(vocab_path, "w") as f: 
     f.write(f"VOCAB = {repr(VOCAB)}\n")
 
 print(f"Meow Weights (pico1): {os.path.getsize(path1)/1024:.1f} KB -> Saved to {path1}")
 print(f"Miaou Weights (pico2): {os.path.getsize(path2)/1024:.1f} KB -> Saved to {path2}")
-print(f"Vocab List: Saved to ./{os.path.join(MODELS_DIR, "vocab.py")}")
+print(f"Vocab List: Saved to ./{vocab_path}")
 print("\nTraining Complete!")
