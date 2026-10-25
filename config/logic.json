@@ -32,7 +32,7 @@
   "categories": [
     {
       "name": "Actor Location Base",
-      "weight": 1,
+      "weight": 0.5,
       "templates": [
         "[c] {actor1} went to the {location1} . [q] where is {actor1} ? [a] {location1} . <eos>",
         "[c] {actor1} is in the {location1} . [q] where is {actor1} ? [a] {location1} . <eos>"
@@ -76,7 +76,7 @@
     },
     {
       "name": "Object Location Base",
-      "weight": 1,
+      "weight": 0.5,
       "templates": [
         "[c] the {item1} is in the {location1} . [q] where is the {item1} ? [a] {location1} . <eos>"
       ]
@@ -93,7 +93,7 @@
     },
     {
       "name": "Object Location Three",
-      "weight": 1,
+      "weight": 1.5,
       "templates": [
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item1} ? [a] {location1} . <eos>",
         "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item2} ? [a] {location2} . <eos>",
@@ -102,7 +102,7 @@
     },
     {
       "name": "Possession Base",
-      "weight": 1,
+      "weight": 0.5,
       "templates": [
         "[c] {actor1} has the {item1} . [q] what does {actor1} have ? [a] {item1} . <eos>",
         "[c] {actor1} found a {item1} . [q] what did {actor1} find ? [a] {item1} . <eos>",
@@ -111,7 +111,7 @@
     },
     {
       "name": "Possession Multi",
-      "weight": 1,
+      "weight": 2,
       "templates": [
         "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] what does {actor1} have ? [a] {item1} . <eos>",
         "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] what does {actor2} have ? [a] {item2} . <eos>",
@@ -190,7 +190,7 @@
     },
     {
       "name": "Temporal Ordering",
-      "weight":   1,
+      "weight": 1,
       "templates": [
         "[c] first {actor1} went to the {location1} . then {actor1} went to the {location2} . [q] where was {actor1} first ? [a] {location1} . <eos>",
         "[c] first {actor1} went to the {location1} . then {actor1} went to the {location2} . [q] where did {actor1} go next ? [a] {location2} . <eos>"
@@ -198,7 +198,7 @@
     },
     {
       "name":"Inverted / Negation",
-      "weight":1,
+      "weight": 2,
       "templates":[
         "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item2} ? [a] {actor2} . <eos>",
         "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>",
@@ -224,7 +224,7 @@
     },
     {
       "name": "Preference Matching",
-      "weight": 1.0,
+      "weight": 2.5,
       "templates": [
         "[c] {actor1} likes {colour1} . {actor2} likes {colour2} . [q] who wants the {colour1} {item1} ? [a] {actor1} . <eos>",
         "[c] {actor1} likes {colour1} . {actor2} likes {colour2} . [q] who wants the {colour2} {item1} ? [a] {actor2} . <eos>"

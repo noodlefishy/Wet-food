@@ -69,11 +69,11 @@ for target, names in mod_cfg["dataset"]["name_replacements"].items():
 # ---------------------------------------------------------
 # 3. COMPILE REASONING TASKS & GENERATE EVAL QUESTIONS
 # ---------------------------------------------------------
-TARGET_LOGIC_SAMPLES = mod_cfg["dataset"].get("logic_samples_target", 15000)
+TARGET_LOGIC_SAMPLES = mod_cfg["dataset"].get("logic_samples_target", 25000)
 print(f"Compiling strictly balanced logic dataset ({TARGET_LOGIC_SAMPLES} targeted)...")
 
 logic_tasks = []
-eval_benchmarks = []
+eval_benchmarks = {} # <--- NOW A DICTIONARY
 pools = log_cfg["pools"]
 pair_pools = log_cfg.get("pair_pools", {})
 
@@ -81,7 +81,6 @@ def instantiate_template(template, p_pools, pp_pools):
     matches = re.findall(r'\{([a-z]+)(\d+)(?:_([a-z]+))?\}', template)
     replacements = {}
     
-    # Handle flat string pools (e.g. {actor1} -> 'alice')
     for p_key, p_values in p_pools.items():
         indices = set(m[1] for m in matches if m[0] == p_key)
         if indices:
@@ -89,7 +88,6 @@ def instantiate_template(template, p_pools, pp_pools):
             for idx, val in zip(sorted(list(indices)), sampled):
                 replacements[f"{p_key}{idx}"] = val
                 
-    # Handle paired dictionary pools (e.g. {need1_state} -> 'hungry')
     for p_key, p_values in pp_pools.items():
         indices = set(m[1] for m in matches if m[0] == p_key)
         if indices:
@@ -104,8 +102,12 @@ total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
 
 for cat in log_cfg["categories"]:
     weight = cat.get("weight", 1.0)
+    cat_name = cat["name"]
     templates = cat["templates"]
     
+    # Initialize the array for this category
+    eval_benchmarks[cat_name] = [] 
+
     cat_total_reps = int((weight / total_weight) * TARGET_LOGIC_SAMPLES)
     reps_per_template = cat_total_reps // len(templates)
     remainder = cat_total_reps % len(templates)
@@ -122,8 +124,7 @@ for cat in log_cfg["categories"]:
         eval_str = instantiate_template(eval_template, pools, pair_pools)
         if " [a] " in eval_str:
             q_part, a_part = eval_str.split(" [a] ")
-            eval_benchmarks.append({
-                "cat": cat["name"],
+            eval_benchmarks[cat_name].append({
                 "q": q_part + " [a]",
                 "target": a_part.replace("<eos>", "").strip()
             })
@@ -132,16 +133,17 @@ for cat in log_cfg["categories"]:
 cat_identities = log_cfg["personas"]
 all_qa_tasks = logic_tasks + (cat_identities * log_cfg["persona_reps"])
 
+eval_benchmarks["Persona"] = []
 for p in cat_identities:
     if " answer : " in p:
         q_part, a_part = p.split(" answer : ")
-        eval_benchmarks.append({
-            "cat": "Persona",
+        eval_benchmarks["Persona"].append({
             "q": q_part + " answer :",
             "target": a_part.replace("<eos>", "").strip()
         })
 
 # Append Open-Ended Storytelling Checks to Eval
+eval_benchmarks["Storytelling"] = []
 story_prompts = [
     "one day alice and miaou were in the kitchen .",
     "once upon a time bob went into the green garden .",
@@ -149,12 +151,14 @@ story_prompts = [
     "alice and meow found a little box under the tree ."
 ]
 for sp in story_prompts:
-    eval_benchmarks.append({"cat": "Storytelling", "q": sp, "target": None})
+    eval_benchmarks["Storytelling"].append({"q": sp, "target": None})
 
-# Dump strictly formatted JSON questions for evaluator.py
+# Dump strictly formatted JSON questions
 with open(QUESTIONS_FILE, "w") as f:
     json.dump(eval_benchmarks, f, indent=2)
-print(f"Generated {len(eval_benchmarks)} dynamic evaluation questions -> {QUESTIONS_FILE}")
+
+total_q_count = sum(len(qs) for qs in eval_benchmarks.values())
+print(f"Generated {total_q_count} dynamic evaluation questions -> {QUESTIONS_FILE}")
 
 random.seed(42)
 random.shuffle(all_qa_tasks)
