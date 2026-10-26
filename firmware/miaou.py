@@ -1,6 +1,3 @@
-# ---
-# MIAOU (Pico W) - Slave Worker (64-D, 4-Layer)
-# ---
 import network
 import socket
 import select
@@ -14,7 +11,6 @@ import machine
 from machine import Pin
 from array import array
 
-# 240 MHz: Rock-solid stability without thermal/voltage sag
 machine.freq(240_000_000)
 
 led = Pin("LED", Pin.OUT)
@@ -26,7 +22,7 @@ BLOCK_SIZE = 64
 NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 VOCAB_SIZE = 1024
-BUF = bytearray(256 * 4)  # 256 floats for MLP hidden layer
+BUF = bytearray(256 * 4)
 
 def read_vec(f, count):
     return struct.unpack(f'{count}f', f.read(count * 4))
@@ -66,10 +62,9 @@ def recv_exact(sock, n):
         buf.extend(chunk)
     return buf
 
-# Zero-allocation single-pass top-5 selection (Prevents MemoryError)
 def sample_top_k_ranked(logits, k=5, temperature=0.7):
-    logits[0] = -1e9  # <unk>
-    logits[1] = -1e9  # <pad>
+    logits[0] = -1e9
+    logits[1] = -1e9
 
     top_idx = [2] * k
     top_val = [-1e9] * k
@@ -116,7 +111,6 @@ def run_layer(f, layer_idx, x, kv_caches):
     qkv = stream_linear(f, 3 * EMBED_DIM, EMBED_DIM, norm_x)
     q, k, v = qkv[:EMBED_DIM], qkv[EMBED_DIM:2*EMBED_DIM], qkv[2*EMBED_DIM:]
 
-    # C-contiguous 32-bit float arrays: 80% RAM reduction, zero heap fragmentation
     cache = kv_caches[layer_idx]
     cache['k'].append(array('f', k))
     cache['v'].append(array('f', v))
@@ -136,7 +130,6 @@ def run_layer(f, layer_idx, x, kv_caches):
         sum_exp = sum(exp_s)
         weights = [e / sum_exp for e in exp_s]
 
-        # Direct memory access without slice allocations
         for t in range(seq_len):
             w_t = weights[t]
             v_vec = cache['v'][t]
@@ -172,7 +165,6 @@ while True:
                 time.sleep(0.3)
                 if sta.isconnected(): break
 
-        # Disable Wi-Fi sleep permanently AFTER connection is verified
         try: sta.config(pm = 0xa11140)
         except: pass
 
@@ -191,13 +183,11 @@ while True:
                 continue
                 
             led.on()
-            # Receive 64 floats
             data = recv_exact(client, 64 * 4)
             if not data: break
 
             floats = struct.unpack('64f', data)
             
-            # Reset packet (-999.0 indicates reset)
             if floats[0] == -999.0:
                 kv_caches[0]['k'].clear(); kv_caches[0]['v'].clear()
                 kv_caches[1]['k'].clear(); kv_caches[1]['v'].clear()
@@ -210,7 +200,6 @@ while True:
             x = list(floats)
             f_weights.seek(0)
             
-            # Run Layers 2 and 3
             x = run_layer(f_weights, 0, x, kv_caches)
             x = run_layer(f_weights, 1, x, kv_caches)
 

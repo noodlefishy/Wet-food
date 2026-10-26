@@ -1,6 +1,3 @@
-# =====================================================================
-# WET FOOD: BLAZING FAST LOCAL MAC TRAINING (JSON OPTIMIZED)
-# =====================================================================
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -12,9 +9,6 @@ from collections import Counter
 import os
 import json
 
-# ---------------------------------------------------------
-# 1. LOAD CONFIGURATIONS
-# ---------------------------------------------------------
 print("Loading configurations...")
 with open("config/model.json", "r") as f:
     mod_cfg = json.load(f)
@@ -22,14 +16,12 @@ with open("config/model.json", "r") as f:
 with open("config/logic.json", "r") as f:
     log_cfg = json.load(f)
 
-# Extract Architecture settings
 VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
 BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
 EMBED_DIM  = mod_cfg["architecture"]["embed_dim"]
 NUM_HEADS  = mod_cfg["architecture"]["num_heads"]
 NUM_LAYERS = mod_cfg["architecture"]["num_layers"]
 
-# Extract Paths and Device
 MODELS_DIR = mod_cfg["paths"]["models_dir"]
 STORIES_FILE = mod_cfg["paths"]["stories_file"]
 QUESTIONS_FILE = mod_cfg["paths"]["questions_file"]
@@ -42,9 +34,6 @@ print("==================================================")
 print(f" Training Verified {NUM_LAYERS}L {EMBED_DIM}-D Engine on: {DEVICE.upper()}")
 print("==================================================")
 
-# ---------------------------------------------------------
-# 2. FETCH FAIRY TALE FOUNDATION
-# ---------------------------------------------------------
 if os.path.exists(STORIES_FILE):
     print(f"Using cached {STORIES_FILE}...")
     with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f:
@@ -65,15 +54,11 @@ for target, names in mod_cfg["dataset"]["name_replacements"].items():
     pattern = r"\b(" + "|".join(names) + r")\b"
     raw_stories = re.sub(pattern, target, raw_stories)
 
-
-# ---------------------------------------------------------
-# 3. COMPILE REASONING TASKS & GENERATE EVAL QUESTIONS
-# ---------------------------------------------------------
 TARGET_LOGIC_SAMPLES = mod_cfg["dataset"].get("logic_samples_target", 25000)
 print(f"Compiling strictly balanced logic dataset ({TARGET_LOGIC_SAMPLES} targeted)...")
 
 logic_tasks = []
-eval_benchmarks = {} # <--- NOW A DICTIONARY
+eval_benchmarks = {}
 pools = log_cfg["pools"]
 pair_pools = log_cfg.get("pair_pools", {})
 
@@ -98,7 +83,6 @@ def instantiate_template(template, p_pools, pp_pools):
                     
     return template.format(**replacements)
 
-
 DEFAULT_EVAL_PER_CAT = mod_cfg["dataset"]['eval_samples_per_category']
 
 total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
@@ -114,13 +98,11 @@ for cat in log_cfg["categories"]:
     reps_per_template = cat_total_reps // len(templates)
     remainder = cat_total_reps % len(templates)
     
-    # A. Build the Training Data
     for i, template in enumerate(templates):
         reps = reps_per_template + (1 if i < remainder else 0)
         for _ in range(reps):
             logic_tasks.append(instantiate_template(template, pools, pair_pools))
             
-    # B. Generate the Evaluation Benchmarks (Uses category override or global default)
     eval_count = cat.get("eval_samples", DEFAULT_EVAL_PER_CAT)
     
     for _ in range(eval_count):
@@ -133,7 +115,6 @@ for cat in log_cfg["categories"]:
                 "target": a_part.replace("<eos>", "").strip()
             })
 
-# Inject Personas (Training & Eval)
 cat_identities = log_cfg["personas"]
 all_qa_tasks = logic_tasks + (cat_identities * log_cfg["persona_reps"])
 
@@ -146,7 +127,6 @@ for p in cat_identities:
             "target": a_part.replace("<eos>", "").strip()
         })
 
-# Append Open-Ended Storytelling Checks to Eval
 eval_benchmarks["Storytelling"] = []
 story_prompts = [
     "one day alice and miaou were in the kitchen .",
@@ -157,7 +137,6 @@ story_prompts = [
 for sp in story_prompts:
     eval_benchmarks["Storytelling"].append({"q": sp, "target": None})
 
-# Dump strictly formatted JSON questions
 with open(QUESTIONS_FILE, "w") as f:
     json.dump(eval_benchmarks, f, indent=2)
 
@@ -167,9 +146,6 @@ print(f"Generated {total_q_count} dynamic evaluation questions -> {QUESTIONS_FIL
 random.seed(42)
 random.shuffle(all_qa_tasks)
 
-# ---------------------------------------------------------
-# 4. VOCABULARY GENERATION
-# ---------------------------------------------------------
 CAT_CORE_WORDS = mod_cfg["dataset"]["core_words"]
 
 all_words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", raw_stories + " " + " ".join(all_qa_tasks))
@@ -181,9 +157,6 @@ top_words = [w for w, _ in counts.most_common(remaining)]
 VOCAB = CAT_CORE_WORDS + top_words
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-# ---------------------------------------------------------
-# 5. DATASET TOKENIZATION (STRICT CPU PROCESSING)
-# ---------------------------------------------------------
 print("Tokenizing and constructing masked QA tensors...")
 def tokenize_str(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", s.lower())]
@@ -215,9 +188,6 @@ qa_y_data = torch.stack(qa_tensor_y)
 story_tokens = tokenize_str(raw_stories)
 story_data = torch.tensor(story_tokens, dtype=torch.long)
 
-# ---------------------------------------------------------
-# 6. MODEL ARCHITECTURE & BALANCED TRAINING
-# ---------------------------------------------------------
 class Block(nn.Module):
     def __init__(self):
         super().__init__()
@@ -296,7 +266,6 @@ for step in range(TOTAL_STEPS + 1):
     w_qa = mod_cfg["training"]["loss_weights"]["qa"]
     base_w_st = mod_cfg["training"]["loss_weights"]["story"]
     
-    # Anneal story weight down to 0.0 in the last 30% of training (Steps 8,400 to 12,000)
     decay_start = int(TOTAL_STEPS * 0.70)
     if step > decay_start:
         current_w_st = base_w_st * (1.0 - (step - decay_start) / (TOTAL_STEPS - decay_start))
@@ -313,9 +282,6 @@ for step in range(TOTAL_STEPS + 1):
     if step % 500 == 0:
         print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
 
-# ---------------------------------------------------------
-# 7. EXPORT BINARIES DIRECTLY TO MODELS FOLDER
-# ---------------------------------------------------------
 def dump_t(t, f): 
     f.write(t.detach().cpu().to(torch.float32).numpy().tobytes())
 
