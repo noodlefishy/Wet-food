@@ -1,74 +1,60 @@
+# =====================================================================
+# WET FOOD: CLEAN LOCAL INTERACTIVE SIMULATOR (DYNAMIC ARCHITECTURE)
+# =====================================================================
 import os
 import sys
 import math
 import struct
-import random
+import json
 import re
 import atexit
 
+# Enable arrow keys & command history in terminal
 try:
     import readline
-    hist_dir = os.path.dirname(os.path.abspath(__file__))
-    hist_file = os.path.join(hist_dir, ".local_history")
-    
+    hist_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".sim_history")
     try:
         readline.read_history_file(hist_file)
         readline.set_history_length(1000)
     except (FileNotFoundError, OSError):
         pass
-
-    def save_history():
-        try:
-            readline.write_history_file(hist_file)
-        except (OSError, IOError):
-            pass
-
-    atexit.register(save_history)
+    atexit.register(lambda: readline.write_history_file(hist_file))
 except ImportError:
     pass
 
-def resolve_path(filename):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, ".."))
-    
-    candidates = [
-        filename,
-        os.path.join(project_root, filename),
-        os.path.join(project_root, "models","local", filename),
-        os.path.join(script_dir, filename),
-        os.path.join(script_dir, "models","local", filename),
-    ]
-    for p in candidates:
-        if os.path.exists(p):
-            return p
-    return filename
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, ".."))
+# 1. Dynamically Load Config & Vocab (Matches Any Dimension Automatically!)
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+config_path = os.path.join(project_root, "config", "model.json")
+with open(config_path, "r") as f:
+    mod_cfg = json.load(f)
 
 from models.local import vocab
 VOCAB = vocab.VOCAB
-
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-EMBED_DIM = 96
-BLOCK_SIZE = 64
-NUM_HEADS = 3
-HEAD_DIM = EMBED_DIM // NUM_HEADS
-VOCAB_SIZE = 1024
+VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
+BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
+EMBED_DIM  = mod_cfg["architecture"]["embed_dim"]
+NUM_HEADS  = mod_cfg["architecture"]["num_heads"]
+NUM_LAYERS = mod_cfg["architecture"]["num_layers"]
+HEAD_DIM   = EMBED_DIM // NUM_HEADS
 LAYER0_OFFSET = (VOCAB_SIZE * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4
 
-PATH_PICO1 = resolve_path("pico1 weights.model")
-PATH_PICO2 = resolve_path("pico2 weights.model")
+# 2. Locate Weight Files
+p1_path = os.path.join(project_root, "models", "local", "pico1 weights.model")
+p2_path = os.path.join(project_root, "models", "local", "pico2 weights.model")
 
-if not os.path.exists(PATH_PICO1) or not os.path.exists(PATH_PICO2):
-    print(f"Error: Missing model files:\n  {PATH_PICO1}\n  {PATH_PICO2}")
+if not os.path.exists(p1_path) or not os.path.exists(p2_path):
+    print(f"Error: Missing model files:\n  {p1_path}\n  {p2_path}")
     sys.exit(1)
 
+f1 = open(p1_path, "rb")
+f2 = open(p2_path, "rb")
+
+# 3. Exact Hardware Math Functions (Pure Python)
 def read_vec(f, count):
     return struct.unpack(f"{count}f", f.read(count * 4))
 
@@ -136,41 +122,35 @@ def run_layer(f, layer_idx, x, kv_caches):
     h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, h1_relu)
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
-def generate(prompt_text, max_words=50):
-    t_clean = prompt_text.strip().lower()
-    
-    q_starters = ("who", "what", "where", "why", "how", "when", "is", "are", "can", "do")
-    if "[c]" in t_clean and "[q]" in t_clean and "[a]" not in t_clean:
-        t_clean = t_clean.rstrip("?.: ") + " ? [a]"
-    elif not t_clean.startswith("question") and not t_clean.startswith("[c]"):
-        if t_clean.endswith("?") or any(t_clean.startswith(w) for w in q_starters):
-            core = t_clean.rstrip("?.: ")
-            t_clean = f"question : {core} ? answer :"
+def generate(prompt_text, max_tokens=25):
+    # Ensure standard prompt tagging without mangling whitespace
+    clean_p = prompt_text.strip()
+    if not clean_p.startswith("[c]") and not clean_p.startswith("question"):
+        if "[q]" in clean_p:
+            clean_p = f"[c] {clean_p}"
+            
+    if "[q]" in clean_p and not clean_p.endswith("[a]"):
+        clean_p = clean_p.rstrip("?.: ") + " ? [a]"
 
-    t_clean = t_clean.replace(":", " : ").replace("?", " ? ").replace(".", " . ")
-    words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", t_clean)
+    words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", clean_p.lower())
     tokens = [WORD_TO_ID.get(w, 0) for w in words]
     if not tokens:
-        tokens = [WORD_TO_ID["meow"]]
+        tokens = [WORD_TO_ID["felix"]]
 
-    is_comprehension = "[a]" in t_clean or "answer" in t_clean
-    temp = 0.05 if is_comprehension else 0.7
+    is_logic = "[a]" in clean_p or "answer" in clean_p
 
-    f1 = open(PATH_PICO1, "rb")
-    f2 = open(PATH_PICO2, "rb")
-
+    # Fresh KV caches on EVERY forward pass
     meow_kv = [{"k": [], "v": []}, {"k": [], "v": []}]
     miaou_kv = [{"k": [], "v": []}, {"k": [], "v": []}]
 
     current_tok = tokens[-1]
-    generated = []
-    content_started = False
-    suppress = {":", "?", "answer", "question", "<unk>", "<pad>"}
+    out_words = []
 
-    for step in range(len(tokens) + max_words):
+    for step in range(len(tokens) + max_tokens):
         pos = min(step, BLOCK_SIZE - 1)
         tok_id = tokens[step] if step < len(tokens) else current_tok
 
+        # Meow (L0, L1)
         f1.seek(tok_id * EMBED_DIM * 4)
         tok_v = read_vec(f1, EMBED_DIM)
 
@@ -182,6 +162,7 @@ def generate(prompt_text, max_words=50):
         x = run_layer(f1, 0, x, meow_kv)
         x = run_layer(f1, 1, x, meow_kv)
 
+        # Miaou (L2, L3 + LM Head)
         f2.seek(0)
         x = run_layer(f2, 0, x, miaou_kv)
         x = run_layer(f2, 1, x, miaou_kv)
@@ -194,56 +175,28 @@ def generate(prompt_text, max_words=50):
         logits[WORD_TO_ID["<unk>"]] = -1e9
         logits[WORD_TO_ID["<pad>"]] = -1e9
 
-        if temp < 0.1:
-            current_tok = max(range(len(logits)), key=lambda i: logits[i])
-        else:
-            indexed = sorted(enumerate(logits), key=lambda it: it[1], reverse=True)[:5]
-            max_v = indexed[0][1] / temp
-            exps = [math.exp((val / temp) - max_v) for _, val in indexed]
-            sum_e = sum(exps)
-            probs = [e / sum_e for e in exps]
-            r = random.random()
-            acc = 0.0
-            current_tok = indexed[0][0]
-            for i, p in enumerate(probs):
-                acc += p
-                if r <= acc:
-                    current_tok = indexed[i][0]
-                    break
+        # Strict greedy argmax for logic queries
+        best_token = max(range(len(logits)), key=lambda i: logits[i])
+        current_tok = best_token
 
         if step >= len(tokens) - 1:
-            word = VOCAB[current_tok]
-            
-            if not content_started:
-                if word in suppress:
-                    continue
-                content_started = True
-
-            if word in ["<eos>", "[c]", "[q]"]:
+            w = VOCAB[current_tok]
+            if w in ("<eos>", "<pad>"):
+                break
+            out_words.append(w)
+            if is_logic and w == ".":
                 break
 
-            generated.append(word)
+    return " ".join(out_words)
 
-            if is_comprehension and word == ".":
-                break
-
-            if not is_comprehension and word == ".":
-                if generated.count(".") >= 2 or len(generated) >= 20:
-                    break
-
-    f1.close()
-    f2.close()
-
-    res = " ".join(generated).replace(" .", ".")
-    return res
-
+# 4. Interactive Terminal REPL
 if __name__ == "__main__":
     print("=" * 68)
     print("      MEOW & MIAOU DISTRIBUTED NEURAL ENGINE (LOCAL SIMULATOR)     ")
     print("=" * 68)
-    print(f"Architecture : 4-Layer 64-D Transformer (Exact Hardware Math)")
+    print(f"Architecture : 4-Layer {EMBED_DIM}-D Transformer ({NUM_HEADS} Heads, Exact Math)")
     print(f"Vocabulary   : {VOCAB_SIZE} words | Context: {BLOCK_SIZE} tokens")
-    print(f"Model Files  :\n  Pico 1 (Meow)  -> {PATH_PICO1}\n  Pico 2 (Miaou) -> {PATH_PICO2}")
+    print(f"Model Files  :\n  Pico 1 (Meow)  -> {p1_path}\n  Pico 2 (Miaou) -> {p2_path}")
     print("Navigation   : Left/Right arrows move cursor, Up/Down recalls history")
     print("=" * 68)
     print("Type a prompt or 'exit' to quit.\n")
@@ -260,3 +213,6 @@ if __name__ == "__main__":
         except (KeyboardInterrupt, EOFError):
             print("\nExiting.")
             break
+
+    f1.close()
+    f2.close()

@@ -74,8 +74,10 @@ pair_pools = log_cfg.get("pair_pools", {})
 total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
 
 for cat in log_cfg["categories"]:
+
     weight = cat.get("weight", 1.0)
     cat_name = cat["name"]
+    
     eval_benchmarks[cat_name] = [] 
 
     templates = expand_category_templates(cat)
@@ -259,7 +261,6 @@ for step in range(TOTAL_STEPS + 1):
 def dump_t(t, f): 
     f.write(t.detach().cpu().to(torch.float32).numpy().tobytes())
 
-print("\nSaving binary files to ./models/")
 path1 = os.path.join(MODELS_DIR, "pico1 weights.model")
 path2 = os.path.join(MODELS_DIR, "pico2 weights.model")
 

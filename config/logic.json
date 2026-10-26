@@ -1,9 +1,9 @@
 {
   "pools": {
     "actor": ["alice", "bob", "felix", "luna"],
-    "location": ["garden", "kitchen", "park", "bedroom"],
+    "location": ["garden", "kitchen", "park", "room"],
     "item": ["ball", "box", "book", "cup"],
-    "colour": ["red", "blue", "green", "yellow"],
+    "colour": ["red", "blue", "yellow", "green"],
     "container": ["box", "bag", "basket", "drawer"]
   },
   "pair_pools": {
@@ -29,67 +29,47 @@
       {"item": "book", "was": "heavy", "now": "light"},
       {"item": "book", "was": "light", "now": "heavy"}
     ]
-  },
-  
-
+  },  
   "categories":[
     {
       "name": "01: Single Supporting Fact",
-      "weight": 1,
-      "premise": "[c] {actor1} is in the {location1} . {actor2} is in the {location2} .",
+      "weight": 2.5,
+      "premise": "{actor1} went to the {location1} . {actor2} went to the {location2}",
       "queries": [
-        {"q": "where is {actor1} ?", "a": "{location1}"},
-        {"q": "where is {actor2} ?", "a": "{location2}"},
-        {"q": "who is in the {location1} ?", "a": "{actor1}"},
-        {"q": "who is in the {location2} ?", "a": "{actor2}"},
-        {"q": "who is in the {location3} ?", "a": "nobody"},
-        {"q": "is {actor1} in the {location1} ?", "a": "yes"},
-        {"q": "is {actor1} in the {location2} ?", "a": "no"}
+        {"q": "where is {actor1}", "a": "{location1}"},
+        {"q": "where is {actor2}", "a": "{location2}"},
+        {"q": "who went to the {location1}", "a": "{actor1}"},
+        {"q": "who went to the {location2}", "a": "{actor2}"}
       ]
     },
     {
       "name": "02: Two Supporting Facts",
       "weight": 2.0,
-      "premise": "[c] {actor1} found the {item1} in the {location1} . then {actor1} went to the {location2} .",
+      "premise": "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}",
       "queries": [
-        {"q": "where is the {item1} now ?", "a": "{location2}"},
-        {"q": "where was the {item1} first ?", "a": "{location1}"},
-        {"q": "where is {actor1} now ?", "a": "{location2}"},
-        {"q": "where was {actor1} first ?", "a": "{location1}"},
-        {"q": "who has the {item1} ?", "a": "{actor1}"},
-        {"q": "who is in the {location2} ?", "a": "{actor1}"},
-        {"q": "who is in the {location1} ?", "a": "nobody"}
+        {"q": "where is the {item1} now", "a": "{location2}"},
+        {"q": "where was the {item1} first", "a": "{location1}"},
+        {"q": "where is {actor1} now", "a": "{location2}"},
+        {"q": "where was {actor1} first", "a": "{location1}"},
+        {"q": "who has the {item1}", "a": "{actor1}"},
+        {"q": "who is in the {location2}", "a": "{actor1}"},
+        {"q": "who is in the {location1}", "a": "nobody"}
       ]
     },
     {
-      "name": "bAbI Task 03: Three Supporting Facts",
+      "name": "03: Three Supporting Facts",
       "weight": 3.0,
-      "premise": "[c] {actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3} .",
+      "premise": "{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}",
       "queries": [
-        {"q": "where is the {item1} now ?", "a": "{location2}"},
-        {"q": "where was the {item1} first ?", "a": "{location1}"},
-        {"q": "where is {actor1} now ?", "a": "{location3}"},
-        {"q": "where was {actor1} first ?", "a": "{location1}"},
-        {"q": "who has the {item1} now ?", "a": "nobody"},
-        {"q": "who had the {item1} first ?", "a": "{actor1}"},
-        {"q": "who is in the {location3} ?", "a": "{actor1}"},
-        {"q": "who is in the {location1} ?", "a": "nobody"},
-        {"q": "is the {item1} in the {location3} ?", "a": "no"}
+        {"q": "where is the {item1} now", "a": "{location2}"},
+        {"q": "where was the {item1} first", "a": "{location1}"},
+        {"q": "where is {actor1} now", "a": "{location3}"},
+        {"q": "where was {actor1} first", "a": "{location1}"},
+        {"q": "who has the {item1} now", "a": "nobody"},
+        {"q": "who had the {item1} first", "a": "{actor1}"},
+        {"q": "who is in the {location3}", "a": "{actor1}"},
+        {"q": "who is in the {location1}", "a": "nobody"}
       ]
     }
-  ],
-
-
-  
-  "personas": [
-    "question : what are your names ? answer : we are meow and miaou . <eos>",
-    "question : who is meow ? answer : meow is the pico wh who talks to you on the web . <eos>",
-    "question : who is miaou ? answer : miaou is the pico w who calculates the words . <eos>",
-    "question : what are you ? answer : we are two tiny cat ais living in microcontrollers . <eos>",
-    "question : are you real cats ? answer : we are digital kittens made of code and wifi . <eos>",
-    "question : what do you love ? answer : we love milk warm sun naps and catching bugs . <eos>",
-    "question : can you purr ? answer : purr purr purr yes we are purring right now . <eos>",
-    "question : what hardware do you run on ? answer : we run on two raspberry pi pico chips over wifi . <eos>"
-  ],
-  "persona_reps": 0
+  ]
 }
