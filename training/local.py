@@ -294,8 +294,16 @@ for step in range(TOTAL_STEPS + 1):
     loss_st = F.cross_entropy(logits_st.view(-1, VOCAB_SIZE), y_st.view(-1))
     
     w_qa = mod_cfg["training"]["loss_weights"]["qa"]
-    w_st = mod_cfg["training"]["loss_weights"]["story"]
-    loss = (w_qa * loss_qa) + (w_st * loss_st)
+    base_w_st = mod_cfg["training"]["loss_weights"]["story"]
+    
+    # Anneal story weight down to 0.0 in the last 30% of training (Steps 8,400 to 12,000)
+    decay_start = int(TOTAL_STEPS * 0.70)
+    if step > decay_start:
+        current_w_st = base_w_st * (1.0 - (step - decay_start) / (TOTAL_STEPS - decay_start))
+    else:
+        current_w_st = base_w_st
+
+    loss = (w_qa * loss_qa) + (current_w_st * loss_st)
 
     optimizer.zero_grad(set_to_none=True)
     loss.backward()

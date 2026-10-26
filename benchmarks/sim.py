@@ -62,12 +62,10 @@ project_root = os.path.abspath(os.path.join(script_dir, ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-try:
-    import vocab
-    VOCAB = vocab.VOCAB
-except ImportError:
-    print("Error: Could not import root vocab.py.")
-    sys.exit(1)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from models.local import vocab
+VOCAB = vocab.VOCAB
 
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
