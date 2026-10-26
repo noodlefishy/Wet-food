@@ -90,8 +90,8 @@ total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
 for cat in log_cfg["categories"]:
     weight = cat.get("weight", 1.0)
     cat_name = cat["name"]
-    templates = cat["templates"]
-    
+    templates = [f"{cat['premise']} [q] {q['q']} [a] {q['a']} . <eos>" for q in cat["queries"]]
+
     eval_benchmarks[cat_name] = [] 
 
     cat_total_reps = int((weight / total_weight) * TARGET_LOGIC_SAMPLES)

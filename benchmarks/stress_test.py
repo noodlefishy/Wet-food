@@ -22,8 +22,11 @@ def generate_dataset():
         dataset[cat_name] = []
         seen_prompts = set()
         
-        for template in category['templates']:
-            # 1. Parse all placeholders (e.g., ['actor1', 'need1_state', 'actor2'])
+
+        cat_templates = [f"{category['premise']} [q] {q['q']} [a] {q['a']} . <eos>" for q in category["queries"]]            
+        cat_templates = category.get("templates", [])
+        
+        for template in cat_templates:            # 1. Parse all placeholders (e.g., ['actor1', 'need1_state', 'actor2'])
             placeholders = re.findall(r'\{(\w+)\}', template)
             
             # 2. Group unique entities by their pool type
