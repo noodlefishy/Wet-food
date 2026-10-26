@@ -27,26 +27,32 @@
     "name_replacements": {
       "bob": ["timmy", "tom", "jack"],
       "alice": ["lily", "anna", "sarah"],
-      "miaou": [ "jane", "lucy", "emma"],
-      "meow": ["billy", "sam", "billy"]
+      "felix": [ "jane", "lucy", "emma"],
+      "luna": ["billy", "sam", "billy"]
     },
-    "core_words": [
-      "<unk>", "<pad>", "<eos>", ".", "?", ":", "[c]", "[q]", "[a]",
+   "core_words": [
+      "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
       "question", "answer",
-      "the", "in", "to", "a", "and", "who", "what", "where", "when", "is", "are", "was", "were", "then", "does", "did", "got",
-      "alice", "bob", "meow", "miaou", "cat", "cats", "kitten", "kittens",
+      "the", "in", "to", "from", "a", "and", "or",
+      "who", "what", "where",
+      "is", "are", "was", "were", "does", "did",
+      "he", "she", "they",
+      "alice", "bob", "felix", "luna",
+      "cat", "cats",
       "garden", "kitchen", "park", "room",
-      "milk", "fish", "ball", "box", "rabbit",
-      "purr", "paws", "fur", "tail", "whiskers", "nap", "sun", "warm", "fluffy",
-      "pico", "wifi",
+      "ball", "box", "book", "cup", "key", "bag",
+      "red", "blue", "yellow", "green", "colour",
+      "hot", "cold",
+      "heavy", "light",
+      "clean", "dirty",
+      "open", "closed",
+      "first", "then", "now", "before", "after",
+      "yes", "no",
+      "nobody", "nothing", "nowhere",
       "went", "gave", "has", "had", "have", "found", "find",
-      "red", "blue", "yellow", "green", "pink", "white",
-      "bag", "cup", "bowl",
-      "likes", "wants",
-      "left", "sad", "happy", "dropped",
-      "put", "moved", "look", "really",
-      "now","first","light","hard",
-      "yes","no"
+      "put", "left", "likes", "wants",
+      "hungry", "tired", "thirsty",
+      "pico", "wifi"
     ]
   },
   "paths": {
