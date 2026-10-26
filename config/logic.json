@@ -1,285 +1,30 @@
 {
   "pools": {
-    "actor": ["alice", "bob", "meow", "miaou"],
-    "location": ["garden", "kitchen", "park", "room"],
-    "item": ["milk", "fish", "ball", "box"],
-    "colour": ["red", "blue", "yellow", "green", "pink", "white"],
-    "giver": ["alice", "bob"],
-    "receiver": ["meow", "miaou"],
-    "container": ["box", "bag", "cup", "bowl"] 
-
+    "actor": ["alice", "bob", "felix", "luna"],
+    "location": ["garden", "kitchen", "park", "bedroom"],
+    "item": ["ball", "box", "book", "cup"],
+    "colour": ["red", "blue", "green", "yellow"],
+    "container": ["box", "bag", "basket", "drawer"]
   },
   "pair_pools": {
-    "need": [
-      {"state": "hungry", "need": "wants to eat"},
-      {"state": "tired", "need": "wants to sleep"},
-      {"state": "cold", "need": "needs a blanket"},
-      {"state": "thirsty", "need": "wants water"}
+    "temperature": [
+      {"item": "cup", "was": "cold", "now": "hot"},
+      {"item": "cup", "was": "hot", "now": "cold"}
     ],
-    "ability": [
-      {"entity": "bird", "action": "fly"},
-      {"entity": "cat", "action": "climb"},
-      {"entity": "fish", "action": "swim"},
-      {"entity": "rabbit", "action": "hop"}
+    "cleanliness": [
+      {"item": "ball", "was": "clean", "now": "dirty"},
+      {"item": "ball", "was": "dirty", "now": "clean"}
     ],
-    "state": [
-      {"item": "milk", "state": "hot"},
-      {"item": "water", "state": "cold"},
-      {"item": "box", "state": "heavy"},
-      {"item": "ball", "state": "soft"}
+    "aperture": [
+      {"item": "box", "was": "open", "now": "closed"},
+      {"item": "box", "was": "closed", "now": "open"}
     ],
-     "mutation": [
-      {"item": "milk", "was": "cold", "now": "hot"},
-      {"item": "milk", "was": "hot", "now": "cold"},
-      {"item": "water", "was": "cold", "now": "hot"},
-      {"item": "water", "was": "hot", "now": "cold"},
-      {"item": "box", "was": "heavy", "now": "light"},
-      {"item": "box", "was": "light", "now": "heavy"},
-      {"item": "ball", "was": "soft", "now": "hard"},
-      {"item": "ball", "was": "hard", "now": "soft"}
+    "weight": [
+      {"item": "book", "was": "heavy", "now": "light"},
+      {"item": "book", "was": "light", "now": "heavy"}
     ]
   },
-  "categories": [
-    {
-      "name": "Actor Location Base",
-      "weight": 0.5,
-      "templates": [
-        "[c] {actor1} went to the {location1} . [q] where is {actor1} ? [a] {location1} . <eos>",
-        "[c] {actor1} is in the {location1} . [q] where is {actor1} ? [a] {location1} . <eos>"
-      ]
-    },
-    {
-      "name": "Actor Location Multi",
-      "weight": 2,
-      "templates": [
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] where is {actor1} ? [a] {location1} . <eos>",
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] where is {actor2} ? [a] {location2} . <eos>",
-        "[c] {actor1} is in the {location1} . {actor2} is in the {location2} . [q] where is {actor1} ? [a] {location1} . <eos>",
-        "[c] {actor1} is in the {location1} . {actor2} is in the {location2} . [q] where is {actor2} ? [a] {location2} . <eos>"
-      ]
-    },
-    {
-      "name": "Actor Location Three",
-      "weight": 3,
-      "templates": [
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor1} ? [a] {location1} . <eos>",
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor2} ? [a] {location2} . <eos>",
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3} . [q] where is {actor3} ? [a] {location3} . <eos>"
-      ]
-    },
-    {
-      "name": "Actor Sequential Movement",
-      "weight": 0.5,
-      "templates": [
-        "[c] {actor1} went to the {location1} . then {actor1} went to the {location2} . [q] where is {actor1} ? [a] {location2} . <eos>"
-      ]
-    },
-    {
-      "name": "Object Location Base",
-      "weight": 0.5,
-      "templates": [
-        "[c] the {item1} is in the {location1} . [q] where is the {item1} ? [a] {location1} . <eos>"
-      ]
-    },
-    {
-      "name": "Object Location Multi",
-      "weight": 2,
-      "templates": [
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . [q] where is the {item1} ? [a] {location1} . <eos>",
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . [q] where is the {item2} ? [a] {location2} . <eos>",
-        "[c] the {item1} is in the {location1} and the {item2} is in the {location2} . [q] where is the {item1} ? [a] {location1} . <eos>",
-        "[c] the {item1} is in the {location1} and the {item2} is in the {location2} . [q] where is the {item2} ? [a] {location2} . <eos>"
-      ]
-    },
-    {
-      "name": "Object Location Three",
-      "weight": 3,
-      "templates": [
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item1} ? [a] {location1} . <eos>",
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item2} ? [a] {location2} . <eos>",
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2} . the {item3} is in the {location3} . [q] where is the {item3} ? [a] {location3} . <eos>"
-      ]
-    },
-    {
-      "name": "Possession Base",
-      "weight": 0.5,
-      "templates": [
-        "[c] {actor1} has the {item1} . [q] what does {actor1} have ? [a] {item1} . <eos>",
-        "[c] {actor1} found a {item1} . [q] what did {actor1} find ? [a] {item1} . <eos>",
-        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>"
-      ]
-    },
-    {
-      "name": "Possession Multi",
-      "weight": 2,
-      "templates": [
-        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] what does {actor1} have ? [a] {item1} . <eos>",
-        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] what does {actor2} have ? [a] {item2} . <eos>",
-        "[c] {actor1} found a {item1} . {actor2} found a {item2} . [q] what did {actor1} find ? [a] {item1} . <eos>",
-        "[c] {actor1} found a {item1} . {actor2} found a {item2} . [q] what did {actor2} find ? [a] {item2} . <eos>"
-      ]
-    },
-    {
-      "name": "Possession Specific Inference",
-      "weight": 1,
-      "templates": [
-        "[c] alice has the {item1} . bob has the {item2} . [q] what does alice have ? [a] {item1} . <eos>",
-        "[c] alice has the {item1} . bob has the {item2} . [q] what does bob have ? [a] {item2} . <eos>",
-        "[c] bob has the {item2} . alice has the {item1} . [q] what does alice have ? [a] {item1} . <eos>",
-        "[c] bob has the {item2} . alice has the {item1} . [q] what does bob have ? [a] {item2} . <eos>",
-        "[c] alice found a {item1} . bob found a {item2} . [q] what did alice find ? [a] {item1} . <eos>",
-        "[c] alice found a {item1} . bob found a {item2} . [q] what did bob find ? [a] {item2} . <eos>"
-      ]
-    },
-    {
-      "name": "Object Transfer",
-      "weight": 1,
-      "templates": [
-        "[c] {actor1} had the {item1} . {actor1} gave the {item1} to {actor2} . [q] who has the {item1} ? [a] {actor2} . <eos>",
-        "[c] {giver1} gave the {item1} to {receiver1} . {giver2} gave the {item2} to {receiver2} . [q] who got the {item1} ? [a] {receiver1} . <eos>",
-        "[c] {giver1} gave the {item1} to {receiver1} . {giver2} gave the {item2} to {receiver2} . [q] who got the {item2} ? [a] {receiver2} . <eos>"
-      ]
-    },
-    {
-      "name": "colour Binding Base",
-      "weight": 0.5,
-      "templates": [
-        "[c] {actor1} has a {colour1} {item1} . [q] what colour is the {item1} ? [a] {colour1} . <eos>"
-      ]
-    },
-    {
-      "name": "colour Binding Multi",
-      "weight": 2,
-      "templates": [
-        "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] what colour is the {item1} ? [a] {colour1} . <eos>",
-        "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] what colour is the {item2} ? [a] {colour2} . <eos>",
-        "[c] {actor1} has a {colour1} {item1} and {actor2} has a {colour2} {item2} . [q] what colour is the {item1} ? [a] {colour1} . <eos>",
-        "[c] {actor1} has a {colour1} {item1} and {actor2} has a {colour2} {item2} . [q] what colour is the {item2} ? [a] {colour2} . <eos>"
-      ]
-    },
-    {
-      "name": "Transitive Spatial Reasoning",
-      "weight": 1.0,
-      "templates": [
-        "[c] {actor1} is with {actor2} . {actor2} is in the {location1} . [q] where is {actor1} ? [a] {location1} . <eos>"
-      ]
-    },
-    {
-      "name":"Symmetric Relations",
-      "weight":1,
-      "templates":[
-        "[c] {actor1} is with {actor2} . {actor3} is with {actor4} . [q] who is with {actor1} ? [a] {actor2} . <eos>",
-        "[c] {actor1} is with {actor2} . {actor3} is with {actor4} . [q] who is with {actor3} ? [a] {actor4} . <eos>"
-      ]
-    },
-    {
-      "name": "Functional Needs",
-      "weight": 2.4,
-      "templates": [
-        "[c] {actor1} is {need1_state} . {actor2} is {need2_state} . [q] who {need1_need} ? [a] {actor1} . <eos>",
-        "[c] {actor1} is {need1_state} . {actor2} is {need2_state} . [q] who {need2_need} ? [a] {actor2} . <eos>"
-      ]
-    },
-    {
-      "name": "Action Affordances",
-      "weight": 1.0,
-      "templates": [
-        "[c] the {ability1_entity} can {ability1_action} . the {ability2_entity} can {ability2_action} . [q] who can {ability1_action} ? [a] {ability1_entity} . <eos>",
-        "[c] the {ability1_entity} can {ability1_action} . the {ability2_entity} can {ability2_action} . [q] who can {ability2_action} ? [a] {ability2_entity} . <eos>"
-      ]
-    },
-    {
-      "name": "Physical States",
-      "weight": 1.0,
-      "templates": [
-        "[c] the {state1_item} is {state1_state} . the {state2_item} is {state2_state} . [q] what is {state1_state} ? [a] {state1_item} . <eos>",
-        "[c] the {state1_item} is {state1_state} . the {state2_item} is {state2_state} . [q] what is {state2_state} ? [a] {state2_item} . <eos>"
-      ]
-    },
-{
-      "name": "State Mutation",
-      "weight": 1.5,
-      "templates": [
-        "[c] first the {mutation1_item} was {mutation1_was} . now the {mutation1_item} is {mutation1_now} . [q] what is the {mutation1_item} now ? [a] {mutation1_now} . <eos>",
-        "[c] first the {mutation1_item} was {mutation1_was} . now the {mutation1_item} is {mutation1_now} . [q] what was the {mutation1_item} first ? [a] {mutation1_was} . <eos>",
-        "[c] the {mutation1_item} was {mutation1_was} . then alice made the {mutation1_item} {mutation1_now} . [q] what is the {mutation1_item} now ? [a] {mutation1_now} . <eos>"
-      ]
-    },
-    {
-      "name": "Yes / No Truth Verification",
-      "weight": 4,
-      "templates": [
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor1} in the {location1} ? [a] yes . <eos>",
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor1} in the {location2} ? [a] no . <eos>",
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor2} in the {location2} ? [a] yes . <eos>",
-        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor2} in the {location1} ? [a] no . <eos>",
-
-        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] does {actor1} have the {item1} ? [a] yes . <eos>",
-        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] does {actor1} have the {item2} ? [a] no . <eos>",
-
-        "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] is the {item1} {colour1} ? [a] yes . <eos>",
-        "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] is the {item1} {colour2} ? [a] no . <eos>"
-      ]
-    },
-    {
-      "name": "Temporal Ordering",
-      "weight": 1,
-      "templates": [
-        "[c] first {actor1} went to the {location1} . then {actor1} went to the {location2} . [q] where was {actor1} first ? [a] {location1} . <eos>",
-        "[c] first {actor1} went to the {location1} . then {actor1} went to the {location2} . [q] where did {actor1} go next ? [a] {location2} . <eos>"
-      ]
-    },
-    {
-      "name":"Inverted / Negation",
-      "weight": 3,
-      "templates":[
-        "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item2} ? [a] {actor2} . <eos>",
-        "[c] {actor1} has a {item1} . {actor2} has a {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>",
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2}  . [q] what is in the {location2} ? [a] {item2} . <eos>",
-        "[c] the {item1} is in the {location1} . the {item2} is in the {location2}  . [q] what is in the {location1} ? [a] {item1} . <eos>"
-      ]
-    },
-    {
-      "name": "Process of Elimination",
-      "weight": 0.5,
-      "templates": [
-        "[c] {actor1} and {actor2} have a {item1} and a {item2} . {actor1} has the {item1} . [q] who has the {item2} ? [a] {actor2} . <eos>",
-        "[c] {actor1} and {actor2} have a {item1} and a {item2} . {actor2} has the {item2} . [q] who has the {item1} ? [a] {actor1} . <eos>"
-      ]
-    },
-    {
-      "name": "Spatial Containment",
-      "weight": 1.0,
-      "templates": [
-        "[c] the {item1} is in the {container1} . the {container1} is in the {location1} . [q] where is the {item1} ? [a] {location1} . <eos>",
-        "[c] the {item1} is in the {container1} . the {container1} is in the {location1} . [q] what is in the {location1} ? [a] {item1} . <eos>"
-      ]
-    },
-    {
-      "name": "Preference Matching",
-      "weight": 2,
-      "templates": [
-        "[c] {actor1} likes {colour1} . {actor2} likes {colour2} . [q] who wants the {colour1} {item1} ? [a] {actor1} . <eos>",
-        "[c] {actor1} likes {colour1} . {actor2} likes {colour2} . [q] who wants the {colour2} {item1} ? [a] {actor2} . <eos>"
-      ]
-    },
-    {
-      "name": "Object Permanence",
-      "weight": 1.0,
-      "templates": [
-        "[c] {actor1} left the {item1} in the {location1} . then {actor1} went to the {location2} . [q] where is the {item1} ? [a] {location1} . <eos>",
-        "[c] {actor1} left the {item1} in the {location1} . then {actor1} went to the {location2} . [q] where is {actor1} ? [a] {location2} . <eos>"
-      ]
-    },
-    {
-      "name": "Emotion Causality",
-      "weight": 1.0,
-      "templates": [
-        "[c] {actor1} dropped the {item1} . {actor1} is sad . {actor2} found a {item2} . {actor2} is happy . [q] who is sad ? [a] {actor1} . <eos>",
-        "[c] {actor1} dropped the {item1} . {actor1} is sad . {actor2} found a {item2} . {actor2} is happy . [q] who is happy ? [a] {actor2} . <eos>"
-      ]
-    }
-  ],
+  
   "personas": [
     "question : what are your names ? answer : we are meow and miaou . <eos>",
     "question : who is meow ? answer : meow is the pico wh who talks to you on the web . <eos>",
