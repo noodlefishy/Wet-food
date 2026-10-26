@@ -27,6 +27,16 @@
       {"item": "water", "state": "cold"},
       {"item": "box", "state": "heavy"},
       {"item": "ball", "state": "soft"}
+    ],
+     "mutation": [
+      {"item": "milk", "was": "cold", "now": "hot"},
+      {"item": "milk", "was": "hot", "now": "cold"},
+      {"item": "water", "was": "cold", "now": "hot"},
+      {"item": "water", "was": "hot", "now": "cold"},
+      {"item": "box", "was": "heavy", "now": "light"},
+      {"item": "box", "was": "light", "now": "heavy"},
+      {"item": "ball", "was": "soft", "now": "hard"},
+      {"item": "ball", "was": "hard", "now": "soft"}
     ]
   },
   "categories": [
@@ -155,6 +165,14 @@
       ]
     },
     {
+      "name":"Symmetric Relations",
+      "weight":1,
+      "templates":[
+        "[c] {actor1} is with {actor2} . {actor3} is with {actor4} . [q] who is with {actor1} ? [a] {actor2} . <eos>",
+        "[c] {actor1} is with {actor2} . {actor3} is with {actor4} . [q] who is with {actor3} ? [a] {actor4} . <eos>"
+      ]
+    },
+    {
       "name": "Functional Needs",
       "weight": 2.4,
       "templates": [
@@ -176,6 +194,31 @@
       "templates": [
         "[c] the {state1_item} is {state1_state} . the {state2_item} is {state2_state} . [q] what is {state1_state} ? [a] {state1_item} . <eos>",
         "[c] the {state1_item} is {state1_state} . the {state2_item} is {state2_state} . [q] what is {state2_state} ? [a] {state2_item} . <eos>"
+      ]
+    },
+{
+      "name": "State Mutation",
+      "weight": 1.5,
+      "templates": [
+        "[c] first the {mutation1_item} was {mutation1_was} . now the {mutation1_item} is {mutation1_now} . [q] what is the {mutation1_item} now ? [a] {mutation1_now} . <eos>",
+        "[c] first the {mutation1_item} was {mutation1_was} . now the {mutation1_item} is {mutation1_now} . [q] what was the {mutation1_item} first ? [a] {mutation1_was} . <eos>",
+        "[c] the {mutation1_item} was {mutation1_was} . then alice made the {mutation1_item} {mutation1_now} . [q] what is the {mutation1_item} now ? [a] {mutation1_now} . <eos>"
+      ]
+    },
+    {
+      "name": "Yes / No Truth Verification",
+      "weight": 4,
+      "templates": [
+        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor1} in the {location1} ? [a] yes . <eos>",
+        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor1} in the {location2} ? [a] no . <eos>",
+        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor2} in the {location2} ? [a] yes . <eos>",
+        "[c] {actor1} went to the {location1} . {actor2} went to the {location2} . [q] is {actor2} in the {location1} ? [a] no . <eos>",
+
+        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] does {actor1} have the {item1} ? [a] yes . <eos>",
+        "[c] {actor1} has the {item1} . {actor2} has the {item2} . [q] does {actor1} have the {item2} ? [a] no . <eos>",
+
+        "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] is the {item1} {colour1} ? [a] yes . <eos>",
+        "[c] {actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . [q] is the {item1} {colour2} ? [a] no . <eos>"
       ]
     },
     {
