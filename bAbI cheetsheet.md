@@ -22,11 +22,3 @@
 | 18 | Size Reasoning | Box is bigger than ball; ball is bigger than fish. **What is smaller than the box?** → ball | Yes |
 | 19 | Path Finding | Kitchen is north of hallway; bathroom is east of kitchen. **How do you get to the bathroom?** → north, east | No |
 | 20 | Agent's Motivations | John is hungry and goes to the kitchen. **Why?** → hungry | Yes |
-
-## Suggested priorities
-
-- **Already supported:** 1, 2, 5, 6, 9, 10, 14, 15, 16, 20
-- **Good next additions:** 7 (small counts), 11 and 13 (pronouns), 18 (size comparisons)
-- **More challenging:** 3 (longer fact chains), 8 (lists), 19 (route planning)
-
-Use task names in `config/logic.json` (for example, `bAbI Task 01: Single Location`) to label benchmark results.
