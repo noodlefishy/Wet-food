@@ -113,7 +113,11 @@ print(f"Loaded {total_questions} questions across {len(data)} categories.\n")
 
 # 5. Tokenization & Fast Batch Processing
 def tokenize_prompt(prompt_text):
-    words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", prompt_text.lower())
+    clean_p = prompt_text.strip()    # If the prompt ends at '?' without '[a]', append '[a]'!
+    if not clean_p.endswith("[a]"):
+        clean_p = clean_p + " [a]"
+        
+    words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", clean_p.lower())
     return [WORD_TO_ID.get(w, 0) for w in words]
 
 BATCH_SIZE = 512
