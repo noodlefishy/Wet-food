@@ -70,6 +70,82 @@
         {"q": "who is in the {location3}", "a": "{actor1}"},
         {"q": "who is in the {location1}", "a": "nobody"}
       ]
+    },
+    {
+      "name": "04: Two Argument Relations",
+      "weight": 2.0,
+      "premise": "the {location1} is north of the {location2} . the {location2} is north of the {location3}",
+      "queries": [
+        {"q": "what is north of the {location2}", "a": "{location1}"},
+        {"q": "what is south of the {location2}", "a": "{location3}"},
+        {"q": "what is north of the {location3}", "a": "{location2}"},
+        {"q": "what is south of the {location1}", "a": "{location2}"}
+      ]
+    },
+    {
+      "name": "05: Three Argument Relations",
+      "weight": 2.5,
+      "premise": "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}",
+      "queries": [
+        {"q": "who gave the {item1} to {actor2}", "a": "{actor1}"},
+        {"q": "who gave the {item1} to {actor3}", "a": "{actor2}"},
+        {"q": "who got the {item1} from {actor1}", "a": "{actor2}"},
+        {"q": "who got the {item1} from {actor2}", "a": "{actor3}"},
+        {"q": "who has the {item1} now", "a": "{actor3}"},
+        {"q": "who had the {item1} first", "a": "{actor1}"}
+      ]
+    },
+    {
+      "name": "06: Yes/No Truth Verification",
+      "weight": 2.0,
+      "premise": "{actor1} went to the {location1} . {actor2} went to the {location2}",
+      "queries": [
+        {"q": "is {actor1} in the {location1}", "a": "yes"},
+        {"q": "is {actor1} in the {location2}", "a": "no"},
+        {"q": "is {actor2} in the {location2}", "a": "yes"},
+        {"q": "is {actor2} in the {location1}", "a": "no"},
+        {"q": "is {actor1} in the {location3}", "a": "no"}
+      ]
+    },
+    {
+      "name": "07: Counting",
+      "weight": 2.5,
+      "premise": "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+      "queries": [
+        {"q": "how many items does {actor1} have", "a": "two"},
+        {"q": "how many items does {actor2} have", "a": "one"},
+        {"q": "how many items does {actor3} have", "a": "none"}
+      ]
+    },
+    {
+      "name": "07: Counting Inverse Pair",
+      "weight": 2.0,
+      "premise": "{actor1} has the {item1} . {actor2} has the {item2} and the {item3}",
+      "queries": [
+        {"q": "how many items does {actor1} have", "a": "one"},
+        {"q": "how many items does {actor2} have", "a": "two"},
+        {"q": "how many items does {actor3} have", "a": "none"}
+      ]
+    },
+    {
+      "name": "08: Lists and Sets",
+      "weight": 2.5,
+      "premise": "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+      "queries": [
+        {"q": "what does {actor1} have", "a": "{item1} and {item2}"},
+        {"q": "what does {actor2} have", "a": "{item3}"},
+        {"q": "what does {actor3} have", "a": "nothing"}
+      ]
+    },
+    {
+      "name": "08: Sequential Acquisition List",
+      "weight": 4,
+      "premise": "{actor1} found the {item1} in the {location1} . then {actor1} found the {item2} in the {location2}",
+      "queries": [
+        {"q": "what did {actor1} find", "a": "{item1} and {item2}"},
+        {"q": "where was {actor1} first", "a": "{location1}"},
+        {"q": "where is {actor1} now", "a": "{location2}"}
+      ]
     }
   ]
 }
