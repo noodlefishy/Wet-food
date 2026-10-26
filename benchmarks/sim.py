@@ -1,8 +1,3 @@
-# =====================================================================
-# WET FOOD: ZERO-DEPENDENCY LOCAL RUNNER (64-D, 4-LAYER)
-# Simulates Meow & Miaou pipeline directly in terminal.
-# Supports Left/Right cursor editing and Up/Down prompt history.
-# =====================================================================
 import os
 import sys
 import math
@@ -11,12 +6,8 @@ import random
 import re
 import atexit
 
-# ---------------------------------------------------------
-# 0. READLINE CONFIGURATION (ARROW KEYS & PROMPT HISTORY)
-# ---------------------------------------------------------
 try:
     import readline
-    # Persistent history file in the benchmarks/ directory
     hist_dir = os.path.dirname(os.path.abspath(__file__))
     hist_file = os.path.join(hist_dir, ".local_history")
     
@@ -34,12 +25,8 @@ try:
 
     atexit.register(save_history)
 except ImportError:
-    # Fallback for environments lacking readline
     pass
 
-# ---------------------------------------------------------
-# 1. PATH RESOLUTION & VOCABULARY IMPORT
-# ---------------------------------------------------------
 def resolve_path(filename):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
@@ -56,7 +43,6 @@ def resolve_path(filename):
             return p
     return filename
 
-# Ensure project root is in sys.path to import single root vocab.py
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, ".."))
 if project_root not in sys.path:
@@ -69,9 +55,6 @@ VOCAB = vocab.VOCAB
 
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-# ---------------------------------------------------------
-# 2. 64-D MODEL SPECIFICATIONS
-# ---------------------------------------------------------
 EMBED_DIM = 96
 BLOCK_SIZE = 64
 NUM_HEADS = 3
@@ -86,9 +69,6 @@ if not os.path.exists(PATH_PICO1) or not os.path.exists(PATH_PICO2):
     print(f"Error: Missing model files:\n  {PATH_PICO1}\n  {PATH_PICO2}")
     sys.exit(1)
 
-# ---------------------------------------------------------
-# 3. PURE PYTHON HARDWARE MATH
-# ---------------------------------------------------------
 def read_vec(f, count):
     return struct.unpack(f"{count}f", f.read(count * 4))
 
@@ -156,13 +136,9 @@ def run_layer(f, layer_idx, x, kv_caches):
     h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, h1_relu)
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
-# ---------------------------------------------------------
-# 4. END-TO-END PIPELINE (MEOW + MIAOU SIMULATOR)
-# ---------------------------------------------------------
 def generate(prompt_text, max_words=50):
     t_clean = prompt_text.strip().lower()
     
-    # Auto-format natural queries if missing syntax
     q_starters = ("who", "what", "where", "why", "how", "when", "is", "are", "can", "do")
     if "[c]" in t_clean and "[q]" in t_clean and "[a]" not in t_clean:
         t_clean = t_clean.rstrip("?.: ") + " ? [a]"
@@ -171,7 +147,6 @@ def generate(prompt_text, max_words=50):
             core = t_clean.rstrip("?.: ")
             t_clean = f"question : {core} ? answer :"
 
-    # Punctuation spacing
     t_clean = t_clean.replace(":", " : ").replace("?", " ? ").replace(".", " . ")
     words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", t_clean)
     tokens = [WORD_TO_ID.get(w, 0) for w in words]
@@ -196,7 +171,6 @@ def generate(prompt_text, max_words=50):
         pos = min(step, BLOCK_SIZE - 1)
         tok_id = tokens[step] if step < len(tokens) else current_tok
 
-        # Meow: Embedding + Layers 0 & 1
         f1.seek(tok_id * EMBED_DIM * 4)
         tok_v = read_vec(f1, EMBED_DIM)
 
@@ -208,7 +182,6 @@ def generate(prompt_text, max_words=50):
         x = run_layer(f1, 0, x, meow_kv)
         x = run_layer(f1, 1, x, meow_kv)
 
-        # Miaou: Layers 2 & 3 + LM Head
         f2.seek(0)
         x = run_layer(f2, 0, x, miaou_kv)
         x = run_layer(f2, 1, x, miaou_kv)
@@ -221,7 +194,6 @@ def generate(prompt_text, max_words=50):
         logits[WORD_TO_ID["<unk>"]] = -1e9
         logits[WORD_TO_ID["<pad>"]] = -1e9
 
-        # Sampling
         if temp < 0.1:
             current_tok = max(range(len(logits)), key=lambda i: logits[i])
         else:
@@ -265,9 +237,6 @@ def generate(prompt_text, max_words=50):
     res = " ".join(generated).replace(" .", ".")
     return res
 
-# ---------------------------------------------------------
-# 5. INTERACTIVE CLI REPL
-# ---------------------------------------------------------
 if __name__ == "__main__":
     print("=" * 68)
     print("      MEOW & MIAOU DISTRIBUTED NEURAL ENGINE (LOCAL SIMULATOR)     ")

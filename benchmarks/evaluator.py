@@ -1,7 +1,3 @@
-# =====================================================================
-# ZERO-DEPENDENCY OFFLINE EVALUATOR (PURE STANDARD PYTHON)
-# Stitches Meow (L0-1) and Miaou (L2-3) directly in memory.
-# =====================================================================
 import os
 import sys
 import math
@@ -11,19 +7,15 @@ import re
 
 print("[EVALUATOR] Running Pure Standard-Library Engine (No PyTorch, No NumPy)...")
 
-# 1. Load Vocab
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models.local import vocab
 VOCAB = vocab.VOCAB
 
-
-
 with open("config/model.json", "r") as f:
     config = json.load(f)
 
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
-VOCAB_SIZE = 102
 VOCAB_SIZE = config["architecture"]["vocab_size"]
 BLOCK_SIZE = config["architecture"]["block_size"]
 EMBED_DIM  = config["architecture"]["embed_dim"]
@@ -33,9 +25,7 @@ NUM_LAYERS = config["architecture"]["num_layers"]
 HEAD_DIM   = EMBED_DIM // NUM_HEADS
 LAYER0_OFFSET = (VOCAB_SIZE * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4
 
-
 def find_model_file(filename):
-    # Searches models/local/ first
     search_paths = [
         os.path.join("models", "local", filename),
         os.path.join("models", filename),
@@ -56,9 +46,6 @@ f1 = open(p1_path, "rb")
 f2 = open(p2_path, "rb")
 print(f"[EVALUATOR] Opened {p1_path} and {p2_path} successfully.\n")
 
-# ---------------------------------------------------------------------
-# EXACT MATH ROUTINES FROM MEOW & MIAOU
-# ---------------------------------------------------------------------
 def read_vec(f, count):
     return struct.unpack(f"{count}f", f.read(count * 4))
 
@@ -126,9 +113,6 @@ def run_layer(f, layer_idx, x, kv_caches):
     h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, h1_relu)
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
-# ---------------------------------------------------------------------
-# TOP-5 LOGIT EXTRACTOR & SAMPLER
-# ---------------------------------------------------------------------
 def extract_top_5(logits):
     indexed = sorted(enumerate(logits), key=lambda x: x[1], reverse=True)[:5]
     max_v = indexed[0][1]
@@ -136,15 +120,11 @@ def extract_top_5(logits):
     sum_e = sum(exps)
     return [{"word": VOCAB[idx], "prob": round(e / sum_e, 3)} for (idx, _), e in zip(indexed, exps)]
 
-# ---------------------------------------------------------------------
-# END-TO-END INFERENCE (MEOW + MIAOU IN ONE LOOP)
-# ---------------------------------------------------------------------
 def run_model_end_to_end(prompt_text, max_tokens=25, greedy=True):
     tokens = [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", prompt_text.lower())]
     if not tokens:
         tokens = [WORD_TO_ID["meow"]]
 
-    # Reset KV caches for both simulated nodes
     meow_kv = [{"k": [], "v": []}, {"k": [], "v": []}]
     miaou_kv = [{"k": [], "v": []}, {"k": [], "v": []}]
 
@@ -156,7 +136,6 @@ def run_model_end_to_end(prompt_text, max_tokens=25, greedy=True):
         pos = min(step, BLOCK_SIZE - 1)
         tok_id = tokens[step] if step < len(tokens) else current_tok
 
-        # --- MEOW'S HALF: EMBEDDINGS + LAYERS 0 & 1 ---
         f1.seek(tok_id * EMBED_DIM * 4)
         tok_v = read_vec(f1, EMBED_DIM)
 
@@ -168,9 +147,6 @@ def run_model_end_to_end(prompt_text, max_tokens=25, greedy=True):
         x = run_layer(f1, 0, x, meow_kv)
         x = run_layer(f1, 1, x, meow_kv)
 
-        # --- SIMULATED WI-FI HOP: x IS SENT TO MIAOU ---
-
-        # --- MIAOU'S HALF: LAYERS 2 & 3 + LM HEAD ---
         f2.seek(0)
         x = run_layer(f2, 0, x, miaou_kv)
         x = run_layer(f2, 1, x, miaou_kv)
@@ -181,13 +157,11 @@ def run_model_end_to_end(prompt_text, max_tokens=25, greedy=True):
 
         logits = stream_linear(f2, VOCAB_SIZE, EMBED_DIM, norm_x)
 
-        # Suppress special tokens
         logits[WORD_TO_ID["<unk>"]] = -1e9
         logits[WORD_TO_ID["<pad>"]] = -1e9
 
         top_candidates = extract_top_5(logits)
 
-        # Greedy choice (Rank 1)
         best_token = max(range(len(logits)), key=lambda i: logits[i])
         current_tok = best_token
 
@@ -202,14 +176,6 @@ def run_model_end_to_end(prompt_text, max_tokens=25, greedy=True):
 
     return " ".join(out_words), step_candidates_log
 
-
-with open('config/questions.json','r') as f:
-    BENCHMARKS = json.load(f)
-
-# ---------------------------------------------------------------------
-# EXECUTE BENCHMARK RUN
-# ---------------------------------------------------------------------
-# Load the newly formatted JSON
 with open(config["paths"]["questions_file"], "r") as f:
     BENCHMARKS_DICT = json.load(f)
 
@@ -236,8 +202,7 @@ cat_stats = {}
 passed_count = 0
 exact_count = 0
 idx = 1
-details_space = 28
-# Iterate through the dictionary!
+
 for cat, items in BENCHMARKS_DICT.items():
     if cat not in cat_stats:
         cat_stats[cat] = {"passed": 0, "total": 0}
@@ -292,14 +257,11 @@ for cat, stats in cat_stats.items():
         bar = ("#" * int(pct // 10)).ljust(10, "-")
         print(f"{cat:<34} : {stats['passed']:02d}/{stats['total']:02d} [{bar}] {pct:5.1f}%")
 
-
 total_pct = (passed_count / exact_count) * 100
 total_bar = ("#" * int(total_pct // 10)).ljust(10, "-")
 print("-" * 76)
 print(f"TOTAL REASONING SCORE        : {passed_count:02d}/{exact_count:02d} [{total_bar}] {total_pct:5.1f}%")
 print("=" * 76)
-
-
 
 f1.close()
 f2.close()

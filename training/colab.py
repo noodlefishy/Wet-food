@@ -12,9 +12,6 @@ from google.colab import files # pyright: ignore[reportMissingImports]
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Training Verified 4L 64-D Engine on: {device}")
 
-# ---------------------------------------------------------
-# 1. FETCH FAIRY TALE FOUNDATION
-# ---------------------------------------------------------
 print("Fetching fairy-tale foundation...")
 url = "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt"
 headers = {"User-Agent": "Mozilla/5.0"}
@@ -32,9 +29,6 @@ with open("stories.txt", "r", encoding="utf-8", errors="ignore") as f:
 raw_stories = re.sub(r"\b(timmy|tom|jack|sam|billy)\b", "bob", raw_stories)
 raw_stories = re.sub(r"\b(lily|anna|sarah|jane|lucy|emma)\b", "alice", raw_stories)
 
-# ---------------------------------------------------------
-# 2. COMPILE REASONING TASKS (Symmetric Curriculum & Anti-Bias)
-# ---------------------------------------------------------
 print("Compiling Strictly Balanced Reasoning Curriculum...")
 
 actors = ["alice", "bob", "meow", "miaou"]
@@ -44,15 +38,12 @@ colors = ["red", "blue", "yellow", "green", "pink", "white"]
 
 logic_tasks = []
 
-# --- 1. ACTOR LOCATION ---
-# 1-Actor Primers: Cycles every actor through every location equally
 for _ in range(25):
     for a in actors:
         for l in locations:
             logic_tasks.append(f"[c] {a} went to the {l} . [q] where is {a} ? [a] {l} . <eos>")
             logic_tasks.append(f"[c] {a} is in the {l} . [q] where is {a} ? [a] {l} . <eos>")
 
-# 2-Actor Standard & Inverted Queries
 for _ in range(350):
     a1, a2 = random.sample(actors, 2)
     l1, l2 = random.sample(locations, 2)
@@ -61,7 +52,6 @@ for _ in range(350):
     logic_tasks.append(f"[c] {a1} is in the {l1} . {a2} is in the {l2} . [q] where is {a1} ? [a] {l1} . <eos>")
     logic_tasks.append(f"[c] {a1} is in the {l1} . {a2} is in the {l2} . [q] where is {a2} ? [a] {l2} . <eos>")
 
-# Explicit Alice vs Bob Location Contrast
 for _ in range(300):
     l1, l2 = random.sample(locations, 2)
     logic_tasks.append(f"[c] alice went to the {l1} . bob went to the {l2} . [q] where is alice ? [a] {l1} . <eos>")
@@ -69,28 +59,22 @@ for _ in range(300):
     logic_tasks.append(f"[c] bob went to the {l2} . alice went to the {l1} . [q] where is alice ? [a] {l1} . <eos>")
     logic_tasks.append(f"[c] bob went to the {l2} . alice went to the {l1} . [q] where is bob ? [a] {l2} . <eos>")
 
-# 3-Actor Distractors
 for _ in range(250):
     a1, a2, a3 = random.sample(actors, 3)
     l1, l2, l3 = random.sample(locations, 3)
     t_a, t_l = random.choice([(a1, l1), (a2, l2), (a3, l3)])
     logic_tasks.append(f"[c] {a1} went to the {l1} . {a2} went to the {l2} . {a3} went to the {l3} . [q] where is {t_a} ? [a] {t_l} . <eos>")
 
-# Movement Updates
 for _ in range(250):
     a = random.choice(actors)
     l1, l2 = random.sample(locations, 2)
     logic_tasks.append(f"[c] {a} went to the {l1} . then {a} went to the {l2} . [q] where is {a} ? [a] {l2} . <eos>")
 
-
-# --- 2. OBJECT LOCATION (Strict 50/50 Clause Balance) ---
-# 1-Object Primers
 for _ in range(20):
     for i in items:
         for l in locations:
             logic_tasks.append(f"[c] the {i} is in the {l} . [q] where is the {i} ? [a] {l} . <eos>")
 
-# 2-Object Tasks (Equal Clause 1 and Clause 2 Queries)
 for _ in range(350):
     i1, i2 = random.sample(items, 2)
     l1, l2 = random.sample(locations, 2)
@@ -99,23 +83,18 @@ for _ in range(350):
     logic_tasks.append(f"[c] the {i1} is in the {l1} and the {i2} is in the {l2} . [q] where is the {i1} ? [a] {l1} . <eos>")
     logic_tasks.append(f"[c] the {i1} is in the {l1} and the {i2} is in the {l2} . [q] where is the {i2} ? [a] {l2} . <eos>")
 
-# 3-Object Distractors
 for _ in range(200):
     i1, i2, i3 = random.sample(items, 3)
     l1, l2, l3 = random.sample(locations, 3)
     t_i, t_l = random.choice([(i1, l1), (i2, l2), (i3, l3)])
     logic_tasks.append(f"[c] the {i1} is in the {l1} . the {i2} is in the {l2} . the {i3} is in the {l3} . [q] where is the {t_i} ? [a] {t_l} . <eos>")
 
-
-# --- 3. POSSESSION: HAS & FOUND ---
-# 1-Entity Primers
 for _ in range(20):
     for a in actors:
         for i in items:
             logic_tasks.append(f"[c] {a} has the {i} . [q] what does {a} have ? [a] {i} . <eos>")
             logic_tasks.append(f"[c] {a} found a {i} . [q] what did {a} find ? [a] {i} . <eos>")
 
-# 2-Entity General Pairs
 for _ in range(300):
     a1, a2 = random.sample(actors, 2)
     i1, i2 = random.sample(items, 2)
@@ -125,7 +104,6 @@ for _ in range(300):
     logic_tasks.append(f"[c] {a1} found a {i1} . {a2} found a {i2} . [q] what did {a2} find ? [a] {i2} . <eos>")
     logic_tasks.append(f"[c] {a1} has the {i1} . {a2} has the {i2} . [q] who has the {i1} ? [a] {a1} . <eos>")
 
-# Explicit Alice vs Bob Possession Contrast
 for _ in range(300):
     i1, i2 = random.sample(items, 2)
     logic_tasks.append(f"[c] alice has the {i1} . bob has the {i2} . [q] what does alice have ? [a] {i1} . <eos>")
@@ -135,8 +113,6 @@ for _ in range(300):
     logic_tasks.append(f"[c] alice found a {i1} . bob found a {i2} . [q] what did alice find ? [a] {i1} . <eos>")
     logic_tasks.append(f"[c] alice found a {i1} . bob found a {i2} . [q] what did bob find ? [a] {i2} . <eos>")
 
-
-# --- 4. TRANSFERS & GIVING / IOI ---
 for _ in range(300):
     a1, a2 = random.sample(actors, 2)
     item = random.choice(items)
@@ -149,15 +125,11 @@ for _ in range(350):
     logic_tasks.append(f"[c] {g1} gave the {i1} to {r1} . {g2} gave the {i2} to {r2} . [q] who got the {i1} ? [a] {r1} . <eos>")
     logic_tasks.append(f"[c] {g1} gave the {i1} to {r1} . {g2} gave the {i2} to {r2} . [q] who got the {i2} ? [a] {r2} . <eos>")
 
-
-# --- 5.colour BINDING (Strict 50/50 Balance) ---
-# 1-Color Primers (Compact grid: 96 tasks)
 for a in actors:
-    for c incolours:
+    for c in colors:
         for i in items:
             logic_tasks.append(f"[c] {a} has a {c} {i} . [q] whatcolour is the {i} ? [a] {c} . <eos>")
 
-# 2-Color Tasks: Symmetrically query c1 and c2 equally
 for _ in range(450):
     a1, a2 = random.sample(actors, 2)
     c1, c2 = random.sample(colors, 2)
@@ -167,18 +139,11 @@ for _ in range(450):
     logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] whatcolour is the {i1} ? [a] {c1} . <eos>")
     logic_tasks.append(f"[c] {a1} has a {c1} {i1} and {a2} has a {c2} {i2} . [q] whatcolour is the {i2} ? [a] {c2} . <eos>")
 
-
-###
-
-# --- 8. CREATIVE REASONING TASKS ---
-
-# A. Transitive Reasoning (Alice with Bob -> Bob in Kitchen -> Alice in Kitchen)
 for _ in range(300):
     a1, a2 = random.sample(actors, 2)
     l = random.choice(locations)
     logic_tasks.append(f"[c] {a1} is with {a2} . {a2} is in the {l} . [q] where is {a1} ? [a] {l} . <eos>")
 
-# B. Functional Needs (Hungry -> Eat, Tired -> Sleep, Thirsty -> Water)
 needs = [
     ("hungry", "wants to eat"),
     ("tired", "wants to sleep"),
@@ -191,7 +156,6 @@ for _ in range(300):
     logic_tasks.append(f"[c] {a1} is {s1} . {a2} is {s2} . [q] who {n1} ? [a] {a1} . <eos>")
     logic_tasks.append(f"[c] {a1} is {s1} . {a2} is {s2} . [q] who {n2} ? [a] {a2} . <eos>")
 
-# C. Action Affordances (Capabilities of entities)
 actions = [
     ("bird", "fly"),
     ("cat", "climb"),
@@ -203,7 +167,6 @@ for _ in range(300):
     logic_tasks.append(f"[c] the {e1} can {act1} . the {e2} can {act2} . [q] who can {act1} ? [a] {e1} . <eos>")
     logic_tasks.append(f"[c] the {e1} can {act1} . the {e2} can {act2} . [q] who can {act2} ? [a] {e2} . <eos>")
 
-# D. Physical States & Opposites
 states = [
     ("milk", "hot"),
     ("water", "cold"),
@@ -215,16 +178,12 @@ for _ in range(300):
     logic_tasks.append(f"[c] the {i1} is {p1} . the {i2} is {p2} . [q] what is {p1} ? [a] {i1} . <eos>")
     logic_tasks.append(f"[c] the {i1} is {p1} . the {i2} is {p2} . [q] what is {p2} ? [a] {i2} . <eos>")
 
-# E. Temporal Ordering (First vs. Next)
 for _ in range(300):
     a = random.choice(actors)
     l1, l2 = random.sample(locations, 2)
     logic_tasks.append(f"[c] first {a} went to the {l1} . then {a} went to the {l2} . [q] where was {a} first ? [a] {l1} . <eos>")
     logic_tasks.append(f"[c] first {a} went to the {l1} . then {a} went to the {l2} . [q] where did {a} go next ? [a] {l2} . <eos>")
 
-###
-
-# --- 6. FELINE PERSONA ---
 cat_identities = [
     "question : what are your names ? answer : we are meow and miaou . <eos>",
     "question : who is meow ? answer : meow is the pico wh who talks to you on the web . <eos>",
@@ -240,9 +199,6 @@ all_qa_tasks = logic_tasks + (cat_identities * 120)
 random.seed(42)
 random.shuffle(all_qa_tasks)
 
-# ---------------------------------------------------------
-# 3. VOCABULARY GENERATION
-# ---------------------------------------------------------
 VOCAB_SIZE = 1024
 BLOCK_SIZE = 64
 EMBED_DIM = 64
@@ -271,9 +227,6 @@ top_words = [w for w, _ in counts.most_common(remaining)]
 VOCAB = CAT_CORE_WORDS + top_words
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-# ---------------------------------------------------------
-# 4. DATASET TOKENIZATION WITH TARGET MASKING
-# ---------------------------------------------------------
 print("Tokenizing and constructing masked QA tensors...")
 
 def tokenize_str(s):
@@ -315,9 +268,6 @@ story_tokens = tokenize_str(raw_stories)
 story_data = torch.tensor(story_tokens, dtype=torch.long)
 print(f"Constructed {len(story_data)} background story tokens.")
 
-# ---------------------------------------------------------
-# 5. MODEL ARCHITECTURE & BALANCED TRAINING
-# ---------------------------------------------------------
 class Block(nn.Module):
     def __init__(self):
         super().__init__()
@@ -392,7 +342,6 @@ for step in range(TOTAL_STEPS + 1):
     logits_qa = logits_all[:HALF_BATCH]
     logits_st = logits_all[HALF_BATCH:]
 
-    # SURGICAL LOSS GRADIENT WEIGHTING
     loss_qa = F.cross_entropy(logits_qa.view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
     loss_st = F.cross_entropy(logits_st.view(-1, VOCAB_SIZE), y_st.view(-1))
     loss = 2.5 * loss_qa + 0.3 * loss_st
@@ -405,9 +354,6 @@ for step in range(TOTAL_STEPS + 1):
     if step % 500 == 0:
         print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
 
-# ---------------------------------------------------------
-# 6. EVALUATION SUITE
-# ---------------------------------------------------------
 EVAL_DATABASE = [
     ("Actor Location", "[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]", "kitchen ."),
     ("Actor Location", "[c] alice went to the kitchen . bob went to the room . [q] where is bob ? [a]", "room ."),
@@ -496,7 +442,7 @@ def eval_gpu(prompt_text, max_tokens=30, temp=0.05):
                 probs = F.softmax(top_vals, dim=-1)
                 next_tok = top_idx[0, torch.multinomial(probs, 1)[0, 0]].item()
 
-            w = VOCAB[next_tok] # pyright: ignore[reportCallIssue, reportArgumentType]
+            w = VOCAB[next_tok]
             if w in ("<eos>", "<pad>"): break
             out_words.append(w)
             x = torch.cat((x, torch.tensor([[next_tok]], device=device)), dim=1)
@@ -541,9 +487,6 @@ print("-" * 74)
 print(f"TOTAL SCORE: {passed}/{exact} ({(passed/exact)*100:.1f}%)")
 print("=" * 74)
 
-# ---------------------------------------------------------
-# 7. EXPORT BINARIES
-# ---------------------------------------------------------
 def dump_t(t, f): f.write(t.detach().cpu().to(torch.float32).numpy().tobytes())
 
 with open("pico1 weights.model", "wb") as f:

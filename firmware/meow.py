@@ -1,6 +1,3 @@
-# ---
-# MEOW (Pico WH) - Master Host (64-D, 4-Layer)
-# ---
 import network
 import socket
 import select
@@ -13,7 +10,6 @@ import machine
 from array import array
 from machine import Pin
 
-# 240 MHz: Rock-solid stability without thermal/voltage sag
 machine.freq(240_000_000)
 
 led = Pin("LED", Pin.OUT)
@@ -26,7 +22,7 @@ BLOCK_SIZE = 64
 NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 VOCAB_SIZE = 1024
-BUF = bytearray(256 * 4)  # 256 floats for MLP
+BUF = bytearray(256 * 4)
 
 try:
     import vocab
@@ -163,7 +159,6 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
         is_comprehension = "[a]" in prompt_text or "question" in prompt_text
         reset_temp_flag = 1.0 if is_comprehension else 0.0
 
-        # Send reset packet (1 float + 1 float + 62 zeros = 64 floats)
         reset_packet = struct.pack('64f', -999.0, reset_temp_flag, *([0.0] * 62))
         ai_sock.sendall(reset_packet)
         ack = ai_sock.recv(2)
@@ -174,7 +169,6 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
         tokens = [WORD_TO_ID[w] for w in words]
         current_tok = tokens[-1]
         
-        # Proper offset for 64-D model
         LAYER0_OFFSET = (VOCAB_SIZE * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4
 
         prompt_words = [VOCAB[t] for t in tokens]
@@ -203,12 +197,10 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
             x = [tok_v[i] + pos_v[i] for i in range(EMBED_DIM)]
             f_weights.seek(LAYER0_OFFSET)
             
-            # Run Layers 0 and 1
             x = run_layer(f_weights, 0, x)
             x = run_layer(f_weights, 1, x)
 
             try:
-                # Transmit 64 floats to Miaou
                 ai_sock.sendall(struct.pack('64f', *x))
                 
                 reply = recv_exact(ai_sock, 10)
@@ -217,7 +209,7 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
                     return False
                 if reply.startswith(b"ERR:"):
                     err_type = reply[4:].decode('utf-8', 'ignore').strip()
-                    web_client.sendall(f'{{"phase":"err","w":"[Miaou crash: {err_type}]","ms":0,"v":[],"ram":0,"ranks":[]}}\n'.encode('utf-8'))
+                    web_client.sendall(f'{{"phase":"err","w":"[Miaou crash: {err_type}]","ms":0,"v":[],"ram":0,"ranks":[]}\n'.encode('utf-8'))
                     return False
 
                 cand_tokens = struct.unpack('5H', reply)
@@ -231,12 +223,9 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
             cand_words = [VOCAB[t] for t in cand_tokens]
             json_ranks = '["' + '","'.join(cand_words) + '"]'
 
-            # PREFILL
             if step < len(tokens) - 1:
                 prefill_json = f'{{"phase":"prefill","idx":{step},"w":"{prompt_words[step]}","ms":{t_elapsed},"v":{v_prev},"ram":{gc.mem_free()},"ranks":{json_ranks}}}\n'
                 web_client.sendall(prefill_json.encode('utf-8'))
-
-            # GENERATION
             else:
                 word = VOCAB[current_tok]
 
@@ -245,7 +234,6 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
                         continue
                     content_started = True
 
-                # Autonomous End-Of-Sequence
                 if word in ["<eos>", "[c]", "[q]"]:
                     break
 
@@ -253,11 +241,9 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
                 telemetry = f'{{"phase":"gen","w":"{word}","ms":{t_elapsed},"v":{v_prev},"ram":{gc.mem_free()},"ranks":{json_ranks}}}\n'
                 web_client.sendall(telemetry.encode('utf-8'))
 
-                # Q&A Stop
                 if is_comprehension and word == ".":
                     break
 
-                # Story Stop
                 if not is_comprehension and word == ".":
                     sentence_count += 1
                     if sentence_count >= 2 or gen_tokens_count >= 18:
@@ -276,7 +262,6 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
         except: pass
         return False
 
-# AP Setup
 ap = network.WLAN(network.AP_IF)
 ap.active(False)
 time.sleep(0.5)

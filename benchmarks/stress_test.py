@@ -1,69 +1,78 @@
 import json
-import os
+import itertools
 import re
-import random
-from evaluator import run_model_end_to_end
 
-print("=" * 76)
-print("             RUNNING ADVERSARIAL STRESS TEST (UNSEEN DATA)            ")
-print("=" * 76)
+# Load your template definition (the one from your previous prompt)
+with open('config/logic.json', 'r') as f:
+    config = json.load(f)
 
-actors = ["alice", "bob", "meow", "miaou"]
-locations = ["garden", "kitchen", "park", "room"]
-items = ["milk", "fish", "ball", "box"]
-colours = ["red", "blue", "yellow", "green", "pink", "white"]
+pools = config['pools']
+pair_pools = config['pair_pools']
+categories = config['categories']
 
-tests = []
+def get_values(key):
+    """Retrieves list of values or dicts from pools or pair_pools."""
+    base_key = re.sub(r'\d+', '', key)
+    if base_key in pools:
+        return pools[base_key]
+    if base_key in pair_pools:
+        return pair_pools[base_key]
+    return []
 
-# 1. Test Inverted Clause Ordering for multi-colour binding
-for _ in range(10):
-    a1, a2 = random.sample(actors, 2)
-    c1, c2 = random.sample(colours, 2)
-    i1, i2 = random.sample(items, 2)
+def generate_dataset():
+    dataset = {}
     
-    # Query first item
-    tests.append({
-        "type": "Standard",
-        "q": f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] what colour is the {i1} ? [a]",
-        "target": f"{c1} ."
-    })
-    # Query second item
-    tests.append({
-        "type": "Standard",
-        "q": f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} . [q] what colour is the {i2} ? [a]",
-        "target": f"{c2} ."
-    })
-    # Adversarial: Missing period after clause 2
-    tests.append({
-        "type": "Missing Period (OOD)",
-        "q": f"[c] {a1} has a {c1} {i1} . {a2} has a {c2} {i2} [q] what colour is the {i1} ? [a]",
-        "target": f"{c1} ."
-    })
-
-passed_clean = 0
-total_clean = 0
-passed_noisy = 0
-total_noisy = 0
-
-for idx, t in enumerate(tests, 1):
-    out, candidates = run_model_end_to_end(t["q"], max_tokens=10, greedy=True)
-    clean_out = out.strip().lower()
-    clean_target = t["target"].strip().lower()
-    
-    is_clean = t["type"] == "Standard"
-    matched = (clean_out == clean_target)
-    
-    if is_clean:
-        total_clean += 1
-        if matched: passed_clean += 1
-    else:
-        total_noisy += 1
-        if matched: passed_noisy += 1
+    for category in categories:
+        cat_name = category['name']
+        dataset[cat_name] = []
         
-    status = "PASS" if matched else "FAIL"
-    print(f"[{idx:02d}] {status} | {t['type']:<22} | Expected: {clean_target:<10} | Got: {clean_out}")
+        for template in category['templates']:
+            # 1. Parse template to find placeholders (e.g., {actor1}, {need1_state})
+            placeholders = re.findall(r'\{(\w+)\}', template)
+            
+            # 2. Group placeholders by their entity (e.g., actor1, need1)
+            groups = {}
+            for p in placeholders:
+                # 'need1_state' -> 'need1'
+                base = re.sub(r'_[a-z]+$', '', p)
+                if base not in groups:
+                    groups[base] = get_values(base)
+            
+            # 3. Create all combinations
+            keys = list(groups.keys())
+            for combination in itertools.product(*groups.values()):
+                mapping = {}
+                for i, key in enumerate(keys):
+                    val = combination[i]
+                    if isinstance(val, dict):
+                        for sub_k, sub_v in val.items():
+                            mapping[f"{key}_{sub_k}"] = sub_v
+                    else:
+                        mapping[key] = val
+                
+                # 4. Split template into context [c] and question [q] and answer [a]
+                # Template format: [c] ... [q] ... [a] ... <eos>
+                try:
+                    parts = re.split(r'\[q\]|\[a\]', template.format(**mapping))
+                    context_q = parts[0].strip() + " [q] " + parts[1].strip()
+                    answer = parts[2].replace('<eos>', '').strip()
+                    
+                    dataset[cat_name].append({
+                        "q": context_q,
+                        "target": f"{answer}"
+                    })
+                except Exception:
+                    continue
+                    
+    return dataset
 
-print("-" * 76)
-print(f"CLEAN SYNTAX ACCURACY : {passed_clean}/{total_clean} ({(passed_clean/total_clean)*100:.1f}%)")
-print(f"NOISY SYNTAX ACCURACY : {passed_noisy}/{total_noisy} ({(passed_noisy/total_noisy)*100:.1f}%)")
-print("=" * 76)
+# Generate and save
+data = generate_dataset()
+with open('config/stress_test.json', 'w') as f:
+    json.dump(data, f, indent=2)
+questionsCount = 0
+for questionCategory in data:
+    l =  len(data[questionCategory])
+    print(f'{questionCategory} - {l}')
+    questionsCount += l
+print(f"Successfully generated {questionsCount}")
