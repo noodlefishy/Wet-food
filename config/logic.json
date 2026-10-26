@@ -7,6 +7,12 @@
     "container": ["box", "bag", "basket", "drawer"]
   },
   "pair_pools": {
+    "mutation": [
+      {"item": "cup", "was": "cold", "now": "hot"},
+      {"item": "cup", "was": "hot", "now": "cold"},
+      {"item": "box", "was": "heavy", "now": "light"},
+      {"item": "box", "was": "light", "now": "heavy"}
+    ],
     "temperature": [
       {"item": "cup", "was": "cold", "now": "hot"},
       {"item": "cup", "was": "hot", "now": "cold"}
@@ -26,7 +32,7 @@
   },
   
 
-  "templates":[
+  "categories":[
     {
       "name": "01: Single Supporting Fact",
       "weight": 1,

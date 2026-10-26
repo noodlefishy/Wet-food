@@ -54,7 +54,16 @@ for target, names in mod_cfg["dataset"]["name_replacements"].items():
     pattern = r"\b(" + "|".join(names) + r")\b"
     raw_stories = re.sub(pattern, target, raw_stories)
 
+
+
+# COMPILE REASONING TASKS & GENERATE EVAL QUESTIONS# ---------------------------------------------------------
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from curriculum import expand_category_templates, instantiate_random, split_qa
+
 TARGET_LOGIC_SAMPLES = mod_cfg["dataset"].get("logic_samples_target", 25000)
+DEFAULT_EVAL_PER_CAT = mod_cfg["dataset"].get("eval_samples_per_category", 15)
+
 print(f"Compiling strictly balanced logic dataset ({TARGET_LOGIC_SAMPLES} targeted)...")
 
 logic_tasks = []
@@ -62,77 +71,40 @@ eval_benchmarks = {}
 pools = log_cfg["pools"]
 pair_pools = log_cfg.get("pair_pools", {})
 
-def instantiate_template(template, p_pools, pp_pools):
-    matches = re.findall(r'\{([a-z]+)(\d+)(?:_([a-z]+))?\}', template)
-    replacements = {}
-    
-    for p_key, p_values in p_pools.items():
-        indices = set(m[1] for m in matches if m[0] == p_key)
-        if indices:
-            sampled = random.sample(p_values, len(indices))
-            for idx, val in zip(sorted(list(indices)), sampled):
-                replacements[f"{p_key}{idx}"] = val
-                
-    for p_key, p_values in pp_pools.items():
-        indices = set(m[1] for m in matches if m[0] == p_key)
-        if indices:
-            sampled = random.sample(p_values, len(indices))
-            for idx, val_dict in zip(sorted(list(indices)), sampled):
-                for sub_key, sub_val in val_dict.items():
-                    replacements[f"{p_key}{idx}_{sub_key}"] = sub_val
-                    
-    return template.format(**replacements)
-
-DEFAULT_EVAL_PER_CAT = mod_cfg["dataset"]['eval_samples_per_category']
-
 total_weight = sum(cat.get("weight", 1.0) for cat in log_cfg["categories"])
 
 for cat in log_cfg["categories"]:
     weight = cat.get("weight", 1.0)
     cat_name = cat["name"]
-    templates = [f"{cat['premise']} [q] {q['q']} [a] {q['a']} . <eos>" for q in cat["queries"]]
-
     eval_benchmarks[cat_name] = [] 
+
+    templates = expand_category_templates(cat)
 
     cat_total_reps = int((weight / total_weight) * TARGET_LOGIC_SAMPLES)
     reps_per_template = cat_total_reps // len(templates)
     remainder = cat_total_reps % len(templates)
-    
-    for i, template in enumerate(templates):
+
+    # 1. Build Training Data
+    for i, tmpl in enumerate(templates):
         reps = reps_per_template + (1 if i < remainder else 0)
         for _ in range(reps):
-            logic_tasks.append(instantiate_template(template, pools, pair_pools))
-            
+            logic_tasks.append(instantiate_random(tmpl, pools, pair_pools))
+
+    # 2. Generate Evaluation Benchmarks
     eval_count = cat.get("eval_samples", DEFAULT_EVAL_PER_CAT)
-    
     for _ in range(eval_count):
-        eval_template = random.choice(templates)
-        eval_str = instantiate_template(eval_template, pools, pair_pools)
-        if " [a] " in eval_str:
-            q_part, a_part = eval_str.split(" [a] ")
-            eval_benchmarks[cat_name].append({
-                "q": q_part + " [a]",
-                "target": a_part.replace("<eos>", "").strip()
-            })
+        eval_tmpl = random.choice(templates)
+        eval_str = instantiate_random(eval_tmpl, pools, pair_pools)
+        prompt, target = split_qa(eval_str)
+        eval_benchmarks[cat_name].append({"q": prompt, "target": target})
 
-cat_identities = log_cfg["personas"]
-all_qa_tasks = logic_tasks + (cat_identities * log_cfg["persona_reps"])
-
-eval_benchmarks["Persona"] = []
-for p in cat_identities:
-    if " answer : " in p:
-        q_part, a_part = p.split(" answer : ")
-        eval_benchmarks["Persona"].append({
-            "q": q_part + " answer :",
-            "target": a_part.replace("<eos>", "").strip()
-        })
-
+# Open-ended storytelling evaluation prompts
 eval_benchmarks["Storytelling"] = []
 story_prompts = [
-    "one day alice and miaou were in the kitchen .",
+    "one day alice and felix were in the kitchen .",
     "once upon a time bob went into the green garden .",
     "the sun was very warm and the little kitten wanted to",
-    "alice and meow found a little box under the tree ."
+    "alice and luna found a little box under the tree ."
 ]
 for sp in story_prompts:
     eval_benchmarks["Storytelling"].append({"q": sp, "target": None})
@@ -143,6 +115,8 @@ with open(QUESTIONS_FILE, "w") as f:
 total_q_count = sum(len(qs) for qs in eval_benchmarks.values())
 print(f"Generated {total_q_count} dynamic evaluation questions -> {QUESTIONS_FILE}")
 
+# Pure reasoning tasks (No hardcoded personas!)
+all_qa_tasks = logic_tasks
 random.seed(42)
 random.shuffle(all_qa_tasks)
 
