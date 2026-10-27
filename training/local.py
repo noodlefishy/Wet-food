@@ -11,10 +11,10 @@ import json
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from curriculum import generate_atomic_sample, split_qa
+from curriculum import generate_atomic_sample
 
 with open("config/model.json", "r") as f: mod_cfg = json.load(f)
-with open("config/logic.json", "r") as f: log_cfg = json.load(f)
+with open("config/world.json", "r") as f: world_cfg = json.load(f)
 
 VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
 BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
@@ -44,23 +44,10 @@ for target, names in mod_cfg["dataset"]["name_replacements"].items():
     raw_stories = re.sub(r"\b(" + "|".join(names) + r")\b", target, raw_stories)
 
 TARGET_LOGIC = mod_cfg["dataset"].get("logic_samples_target", 40000)
-all_qa_tasks = [generate_atomic_sample(log_cfg) for _ in range(TARGET_LOGIC)]
+all_qa_tasks = [generate_atomic_sample(world_cfg) for _ in range(TARGET_LOGIC)]
 
-eval_benchmarks = {}
-for cat in log_cfg["queries"].keys():
-    eval_benchmarks[cat] = []
-    for _ in range(15):
-        p, t = split_qa(generate_atomic_sample(log_cfg, target_category=cat))
-        eval_benchmarks[cat].append({"q": p, "target": t})
 
-eval_benchmarks["Storytelling"] = [{"q": p, "target": None} for p in [
-    "one day alice and felix were in the kitchen .",
-    "once upon a time bob went into the green garden .",
-    "the sun was very warm and the little kitten wanted to",
-    "alice and luna found a little box under the tree ."
-]]
 
-with open(QUESTIONS_FILE, "w") as f: json.dump(eval_benchmarks, f, indent=2)
 
 CAT_CORE_WORDS = mod_cfg["dataset"]["core_words"]
 all_words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", raw_stories + " " + " ".join(all_qa_tasks))
