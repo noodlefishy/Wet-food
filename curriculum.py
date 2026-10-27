@@ -1,3 +1,4 @@
+import json
 import random
 import re
 
@@ -26,67 +27,66 @@ def format_item_list(items, article="the"):
     return ", ".join([f"{prefix}{i}" for i in items[:-1]]) + f" and {prefix}{items[-1]}"
 
 class WorldState:
-    def __init__(self, cfg):
+    def __init__(self, cfg, active_actors):
         self.cfg = cfg
         self.pools = cfg["pools"]
         self.rules = cfg["rules"]
-        self.actor_loc = {a: random.choice(self.pools["locations"]) for a in self.pools["actors"]}
+        self.active_actors = active_actors
+        self.actor_loc = {a: random.choice(self.pools["locations"]) for a in active_actors}
+        # Distribute items only to locations where active actors are, or empty
         self.item_loc = {i: random.choice(self.pools["locations"]) for i in self.pools["items"]}
-        self.actor_state = {a: None for a in self.pools["actors"]}
+        self.actor_state = {a: None for a in active_actors}
+        self.mentioned_items = set()
         self.history = []
 
     def get_inventory(self, actor):
         return [i for i, h in self.item_loc.items() if h == actor]
 
 def act_move(w, cfg):
-    a = random.choice(w.pools["actors"])
+    a = random.choice(w.active_actors)
     curr = w.actor_loc[a]
     new_loc = random.choice([l for l in w.pools["locations"] if l != curr])
     w.actor_loc[a] = new_loc
     w.history.append({"type": "move", "actor": a, "from": curr, "to": new_loc})
-    tmpl = random.choice(cfg["actions"]["move"]["templates"])
-    return tmpl.format(actor=a, location=new_loc)
+    return random.choice(cfg["actions"]["move"]["templates"]).format(actor=a, location=new_loc)
 
 def act_take(w, cfg):
-    a = random.choice(w.pools["actors"])
+    a = random.choice(w.active_actors)
     loc = w.actor_loc[a]
     floor = [i for i, place in w.item_loc.items() if place == loc]
     if not floor or len(w.get_inventory(a)) >= w.rules["max_inventory_per_actor"]:
         return None
     item = random.choice(floor)
     w.item_loc[item] = a
+    w.mentioned_items.add(item)
     w.history.append({"type": "take", "actor": a, "item": item, "loc": loc})
-    tmpl = random.choice(cfg["actions"]["take"]["templates"])
-    return tmpl.format(actor=a, item=item)
+    return random.choice(cfg["actions"]["take"]["templates"]).format(actor=a, item=item)
 
 def act_drop(w, cfg):
-    a = random.choice(w.pools["actors"])
+    a = random.choice(w.active_actors)
     inv = w.get_inventory(a)
     if not inv: return None
     item = random.choice(inv)
     w.item_loc[item] = w.actor_loc[a]
     w.history.append({"type": "drop", "actor": a, "item": item, "loc": w.actor_loc[a]})
-    tmpl = random.choice(cfg["actions"]["drop"]["templates"])
-    return tmpl.format(actor=a, item=item)
+    return random.choice(cfg["actions"]["drop"]["templates"]).format(actor=a, item=item)
 
 def act_give(w, cfg):
-    a = random.choice(w.pools["actors"])
+    a = random.choice(w.active_actors)
     inv = w.get_inventory(a)
-    peers = [p for p in w.pools["actors"] if p != a and w.actor_loc[p] == w.actor_loc[a]]
+    peers = [p for p in w.active_actors if p != a and w.actor_loc[p] == w.actor_loc[a]]
     if not inv or not peers: return None
     receiver, item = random.choice(peers), random.choice(inv)
     w.item_loc[item] = receiver
     w.history.append({"type": "give", "from": a, "to": receiver, "item": item})
-    tmpl = random.choice(cfg["actions"]["give"]["templates"])
-    return tmpl.format(actor=a, receiver=receiver, item=item)
+    return random.choice(cfg["actions"]["give"]["templates"]).format(actor=a, receiver=receiver, item=item)
 
 def act_need(w, cfg):
-    a = random.choice(w.pools["actors"])
+    a = random.choice(w.active_actors)
     if w.actor_state[a] is not None: return None
     need = random.choice(cfg["states"]["needs"])
     w.actor_state[a] = need
-    tmpl = random.choice(cfg["actions"]["need"]["templates"])
-    return tmpl.format(actor=a, state=need["state"])
+    return random.choice(cfg["actions"]["need"]["templates"]).format(actor=a, state=need["state"])
 
 ACTION_HANDLERS = {
     "move": act_move,
@@ -96,16 +96,20 @@ ACTION_HANDLERS = {
     "need": act_need
 }
 
-
 def resolve_actor_location(w, tmpl, actors, cfg):
     a = random.choice(actors)
     return tmpl.format(actor=a), w.actor_loc[a]
 
 def resolve_item_location(w, tmpl, actors, cfg):
-    i = random.choice(w.pools["items"])
-    holder = w.item_loc[i]
-    loc = w.actor_loc[holder] if holder in w.pools["actors"] else holder
-    return tmpl.format(item=i), loc
+    # Only query items that were actually mentioned in the story!
+    if w.mentioned_items:
+        i = random.choice(list(w.mentioned_items))
+        holder = w.item_loc[i]
+        loc = w.actor_loc[holder] if holder in w.active_actors else holder
+        return tmpl.format(item=i), loc
+    # Fallback to actor location if no items appeared
+    a = random.choice(actors)
+    return f"where is {a}", w.actor_loc[a]
 
 def resolve_possession_list(w, tmpl, actors, cfg):
     a = random.choice(actors)
@@ -161,19 +165,22 @@ QUERY_RESOLVERS = {
     "agent_motivation": resolve_agent_motivation
 }
 
-
 def generate_atomic_sample(cfg, target_category=None):
-    w = WorldState(cfg)
+    # Strictly select 2 active actors who will participate in this story
+    active_actors = random.sample(cfg["pools"]["actors"], 2)
+    w = WorldState(cfg, active_actors)
     clauses = []
     
-    active_actors = random.sample(cfg["pools"]["actors"], 2)
+    # 1. State initial locations of ONLY active actors
     for a in active_actors:
         clauses.append(random.choice(cfg["initial_templates"]).format(actor=a, location=w.actor_loc[a]))
 
-    action_keys = list(cfg["actions"].keys())
+    # 2. Run 2 to 3 simulated actions
     target_events = random.randint(cfg["rules"]["min_events"], cfg["rules"]["max_events"])
     events_run, attempts = 0, 0
-    while events_run < target_events and attempts < 30:
+    action_keys = list(cfg["actions"].keys())
+    
+    while events_run < target_events and attempts < 20:
         attempts += 1
         action = random.choice(action_keys)
         narrated = ACTION_HANDLERS[action](w, cfg)
@@ -185,6 +192,7 @@ def generate_atomic_sample(cfg, target_category=None):
 
     premise = " . ".join(clauses)
 
+    # 3. Query selection & resolution
     cat = target_category if target_category else random.choice(list(cfg["queries"].keys()))
     q_meta = cfg["queries"][cat]
     tmpl = random.choice(q_meta["templates"])

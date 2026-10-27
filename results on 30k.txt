@@ -1,205 +1,124 @@
-leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI %  source /Users/leu
-w/dev/python/picoAI/.venv/bin/activate
-(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % /Users/leu
-w/dev/python/picoAI/.venv/bin/python /Users/leuw/dev/python/picoAI/training/local.py
-Loading configurations...
-==================================================
- Training Verified 4L 80-D Engine on: CPU
-==================================================
-Using cached stories.txt...
-Compiling strictly balanced logic dataset (25000 targeted)...
-Generated 334 dynamic evaluation questions -> config/questions.json
-Tokenizing and constructing masked QA tensors...
+Moving to INT8 is the single biggest performance upgrade you can give the RP2040. 
 
-Training for 30000 steps...
-Step     0/30000 | Total: 20.3704 | QA: 7.2961 | Story: 7.1009
-Step   500/30000 | Total: 2.2770 | QA: 0.3733 | Story: 4.4796
-Step  1000/30000 | Total: 1.8999 | QA: 0.3048 | Story: 3.7928
-Step  1500/30000 | Total: 1.9214 | QA: 0.3498 | Story: 3.4894
-Step  2000/30000 | Total: 1.6113 | QA: 0.2154 | Story: 3.5760
-Step  2500/30000 | Total: 1.5159 | QA: 0.1766 | Story: 3.5813
-Step  3000/30000 | Total: 1.2691 | QA: 0.1107 | Story: 3.3082
-Step  3500/30000 | Total: 1.4966 | QA: 0.1943 | Story: 3.3695
-Step  4000/30000 | Total: 1.1993 | QA: 0.1076 | Story: 3.1007
-Step  4500/30000 | Total: 1.1698 | QA: 0.0792 | Story: 3.2393
-Step  5000/30000 | Total: 1.1143 | QA: 0.0689 | Story: 3.1401
-Step  5500/30000 | Total: 1.2559 | QA: 0.1326 | Story: 3.0812
-Step  6000/30000 | Total: 1.4448 | QA: 0.2197 | Story: 2.9855
-Step  6500/30000 | Total: 1.0699 | QA: 0.0561 | Story: 3.0992
-Step  7000/30000 | Total: 1.0264 | QA: 0.0482 | Story: 3.0198
-Step  7500/30000 | Total: 1.0016 | QA: 0.0560 | Story: 2.8723
-Step  8000/30000 | Total: 0.9528 | QA: 0.0083 | Story: 3.1067
-Step  8500/30000 | Total: 0.8907 | QA: 0.0297 | Story: 2.7219
-Step  9000/30000 | Total: 1.0700 | QA: 0.0825 | Story: 2.8793
-Step  9500/30000 | Total: 0.9266 | QA: 0.0263 | Story: 2.8694
-Step 10000/30000 | Total: 0.9435 | QA: 0.0385 | Story: 2.8243
-Step 10500/30000 | Total: 0.8922 | QA: 0.0075 | Story: 2.9114
-Step 11000/30000 | Total: 0.9101 | QA: 0.0165 | Story: 2.8961
-Step 11500/30000 | Total: 0.8862 | QA: 0.0250 | Story: 2.7453
-Step 12000/30000 | Total: 1.0030 | QA: 0.0776 | Story: 2.6965
-Step 12500/30000 | Total: 0.8836 | QA: 0.0003 | Story: 2.9426
-Step 13000/30000 | Total: 0.8003 | QA: 0.0003 | Story: 2.6649
-Step 13500/30000 | Total: 0.8574 | QA: 0.0001 | Story: 2.8575
-Step 14000/30000 | Total: 1.0076 | QA: 0.0374 | Story: 3.0472
-Step 14500/30000 | Total: 0.7832 | QA: 0.0004 | Story: 2.6077
-Step 15000/30000 | Total: 0.9375 | QA: 0.0532 | Story: 2.6814
-Step 15500/30000 | Total: 0.8981 | QA: 0.0248 | Story: 2.7870
-Step 16000/30000 | Total: 0.7380 | QA: 0.0000 | Story: 2.4595
-Step 16500/30000 | Total: 0.7730 | QA: 0.0085 | Story: 2.5055
-Step 17000/30000 | Total: 0.8299 | QA: 0.0095 | Story: 2.6875
-Step 17500/30000 | Total: 0.8426 | QA: 0.0350 | Story: 2.5171
-Step 18000/30000 | Total: 0.8459 | QA: 0.0209 | Story: 2.6455
-Step 18500/30000 | Total: 0.7810 | QA: 0.0023 | Story: 2.5840
-Step 19000/30000 | Total: 0.7443 | QA: 0.0062 | Story: 2.4296
-Step 19500/30000 | Total: 0.7596 | QA: 0.0008 | Story: 2.5255
-Step 20000/30000 | Total: 0.7269 | QA: 0.0000 | Story: 2.4226
-Step 20500/30000 | Total: 0.7496 | QA: 0.0006 | Story: 2.4935
-Step 21000/30000 | Total: 0.7907 | QA: 0.0001 | Story: 2.6347
-Step 21500/30000 | Total: 0.7371 | QA: 0.0001 | Story: 2.6010
-Step 22000/30000 | Total: 0.6864 | QA: 0.0000 | Story: 2.5737
-Step 22500/30000 | Total: 0.6481 | QA: 0.0001 | Story: 2.5914
-Step 23000/30000 | Total: 0.5566 | QA: 0.0020 | Story: 2.3641
-Step 23500/30000 | Total: 0.5455 | QA: 0.0001 | Story: 2.5172
-Step 24000/30000 | Total: 0.4714 | QA: 0.0001 | Story: 2.3561
-Step 24500/30000 | Total: 0.4285 | QA: 0.0000 | Story: 2.3368
-Step 25000/30000 | Total: 0.3815 | QA: 0.0000 | Story: 2.2889
-Step 25500/30000 | Total: 0.3634 | QA: 0.0001 | Story: 2.4209
-Step 26000/30000 | Total: 0.3442 | QA: 0.0000 | Story: 2.5812
-Step 26500/30000 | Total: 0.2944 | QA: 0.0000 | Story: 2.5227
-Step 27000/30000 | Total: 0.2218 | QA: 0.0000 | Story: 2.2173
-Step 27500/30000 | Total: 0.2120 | QA: 0.0000 | Story: 2.5423
-Step 28000/30000 | Total: 0.1602 | QA: 0.0000 | Story: 2.4014
-Step 28500/30000 | Total: 0.1167 | QA: 0.0000 | Story: 2.3329
-Step 29000/30000 | Total: 0.0733 | QA: 0.0000 | Story: 2.1973
-Step 29500/30000 | Total: 0.0392 | QA: 0.0000 | Story: 2.3535
-Step 30000/30000 | Total: 0.0001 | QA: 0.0000 | Story: 2.6328
-Meow Weights (pico1): 948.1 KB -> Saved to models/local/pico1 weights.model
-Miaou Weights (pico2): 932.8 KB -> Saved to models/local/pico2 weights.model
-Vocab List: Saved to ./models/local/vocab.py
+Because the Raspberry Pi Pico's RP2040 has **no hardware floating-point unit (FPU)**, every single float multiplication is emulated in software (taking 50–100 clock cycles per operation). Furthermore, streaming 1.25 MB of float weights over the SPI flash bus every few tokens creates a heavy I/O bottleneck.
 
-Training Complete!
-(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % /Users/leuw/dev/python/picoAI/.venv/bin/python /Users/leuw/dev/python/picoAI/benchmarks/stress_test.py   
-=================================================================
-      GENERATING EXHAUSTIVE NON-COLLIDING STRESS DATASET      
-=================================================================
-01: Single Supporting Fact         :   576 unique tests
-02: Two Supporting Facts           :  1344 unique tests
-03: Three Supporting Facts         :  3072 unique tests
-04: Two Argument Relations         :    96 unique tests
-05: Three Argument Relations       :   576 unique tests
-06: Yes/No Truth Verification      :  1440 unique tests
-07: Counting                       :  1152 unique tests
-07: Counting Inverse Symmetry      :  1152 unique tests
-08: Lists and Sets                 :  1152 unique tests
-08: Sequential Acquisition List    :  1728 unique tests
-09: Simple Negation                :   144 unique tests
-10: Indefinite Knowledge           :   144 unique tests
-11: Basic Coreference              :    96 unique tests
-12: Conjunction                    :  1440 unique tests
-13: Compound Coreference           :   576 unique tests
-14: Time Reasoning                 :    96 unique tests
-15: Basic Deduction                :    16 unique tests
-16: Basic Induction                :  6912 unique tests
-17: Positional Reasoning           :    96 unique tests
-18: Size Reasoning                 :    96 unique tests
-19: Micro Navigation               :    48 unique tests
-20: Agent Motivations              :    60 unique tests
------------------------------------------------------------------
-Successfully generated 22012 mathematically distinct tests!
-Saved to -> config/stress_test.json
+Here is an architectural walkthrough of how INT8 quantization works, from the math to binary layout to the MicroPython inference loop.
 
-(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % /Users/leuw/dev/python/picoAI/.venv/bin/python /Users/leuw/dev/python/picoAI/benchmarks/fast_evaluator.py
-============================================================================
-     PARALLEL BATCH EVALUATOR (EXHAUSTIVE HIGH-THROUGHPUT ENGINE)    
-============================================================================
-Hardware Acceleration : MPS
-Architecture          : 4L 80-D (4 Heads)
-Evaluating Dataset    : config/stress_test.json (22,012 tests)
+---
 
-Evaluating: 22012/22012 (100.0%) | Speed:   790 tests/sec
-Completed in 27.88 seconds! (789.5 tests/sec)
+### 1. The Core Idea: Symmetric Per-Row Quantization
 
-============================================================================
-                   PARALLEL EVALUATION SCORECARD                       
-============================================================================
-01: Single Supporting Fact         : 00576/00576 [##########] 100.0%
-02: Two Supporting Facts           : 01344/01344 [##########] 100.0%
-03: Three Supporting Facts         : 03072/03072 [##########] 100.0%
-04: Two Argument Relations         : 00096/00096 [##########] 100.0%
-05: Three Argument Relations       : 00576/00576 [##########] 100.0%
-06: Yes/No Truth Verification      : 01432/01440 [#########-]  99.4%
-07: Counting                       : 01152/01152 [##########] 100.0%
-07: Counting Inverse Symmetry      : 01152/01152 [##########] 100.0%
-08: Lists and Sets                 : 01152/01152 [##########] 100.0%
-08: Sequential Acquisition List    : 01728/01728 [##########] 100.0%
-09: Simple Negation                : 00144/00144 [##########] 100.0%
-10: Indefinite Knowledge           : 00144/00144 [##########] 100.0%
-11: Basic Coreference              : 00096/00096 [##########] 100.0%
-12: Conjunction                    : 01440/01440 [##########] 100.0%
-13: Compound Coreference           : 00576/00576 [##########] 100.0%
-14: Time Reasoning                 : 00096/00096 [##########] 100.0%
-15: Basic Deduction                : 00016/00016 [##########] 100.0%
-16: Basic Induction                : 06912/06912 [##########] 100.0%
-17: Positional Reasoning           : 00096/00096 [##########] 100.0%
-18: Size Reasoning                 : 00096/00096 [##########] 100.0%
-19: Micro Navigation               : 00048/00048 [##########] 100.0%
-20: Agent Motivations              : 00060/00060 [##########] 100.0%
-----------------------------------------------------------------------------
-TOTAL REASONING SCORE              : 22004/22012 [#########-] 100.0%
-============================================================================
-(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % 
+Instead of storing each weight as a 32-bit float (4 bytes), you map the weights into an 8-bit signed integer (`int8`, ranging from `-127` to `+127`, taking only **1 byte**).
 
+For each row $i$ in a linear layer matrix:
+1. Find the maximum absolute float value in that row:
+   $$\text{max\_val} = \max(|W_{i}|)$$
+2. Compute a single 32-bit float scaling factor:
+   $$\text{scale}_i = \frac{\text{max\_val}}{127.0}$$
+3. Quantize the entire row into 8-bit integers:
+   $$W_{\text{int8}, i, j} = \text{round}\left(\frac{W_{i, j}}{\text{scale}_i}\right)$$
 
+When computing the dot product during inference, you reconstruct the float output by factoring the scale out:
+$$\text{Output}_i = \text{scale}_i \times \sum_{j} \left( W_{\text{int8}, i, j} \times X_j \right) + \text{Bias}_i$$
 
-Type a prompt or 'exit' to quit.
+---
 
-> [c] alice went to the garden . then alice went to the kitchen . [q] did alice go to the park ? [a]
-  kitchen .
+### 2. How the Binary `.model` File Changes
 
-> [c] bob has the box . felix has the book . alice and luna have nothing . [q] who does not have a box or a book ? [a]
-  box and book .
+Right now, your model weights are saved row-by-row as continuous 4-byte floats.
 
-> [c] felix has the box and the cup . luna has the ball . [q] what does luna have ? [a]
-  ball .
+#### Current FP32 Layout (Rows of 80 features):
+```text
+[ Weight 0 (4B) ][ Weight 1 (4B) ] ... [ Weight 79 (4B) ]  --> 320 bytes per row
+```
 
-> [c] felix has the box and the cup . luna has the ball . [q] what does felix have ? [a]
-  box and cup .
+#### New INT8 (W8A32) Layout:
+For each row, you write a 4-byte float `scale`, followed immediately by 80 `int8` bytes:
+```text
+[ Scale (4B float) ][ W0 (1B) ][ W1 (1B) ] ... [ W79 (1B) ] --> 84 bytes per row!
+```
 
-> [c] felix has the cup . luna has the ball and box . [q] what does luna have ? [a]
-  two .
+* **Size Reduction:** From 320 bytes down to 84 bytes per row (**~74% smaller**).
+* **Total File Size:** `pico1 weights.model` drops from **~1.25 MB down to ~330 KB**.
+* **Flash Headroom:** It easily fits in the Pico’s 2 MB flash with massive room to spare.
 
+---
 
-> [c] bob went to the room . felix went to the garden . [q] is bob in the room ? [a] 
-  yes .
+### 3. How the MicroPython Engine Runs It
 
-> [c] bob went to the room . felix went to the garden . [q] is bob in the garden ? [a]
-  no .
+In `meow.py` and `miaou.py`, your inner loop `stream_linear` changes from reading 4-byte floats (`f`) to reading 1-byte signed characters (`b`).
 
-> [c] bob went to the room . felix went to the garden . [q] is felix in the garden ? [a]
-  yes .
+#### Current FP32 `stream_linear`:
+```python
+@micropython.native
+def stream_linear(f, r, c, x):
+    out, bv = [0.0]*r, memoryview(BUF)[:c*4]
+    for i in range(r):
+        f.readinto(bv)
+        row = struct.unpack(f'{c}f', bv)   # Unpacks 4-byte floats
+        out[i] = sum(row[j]*x[j] for j in range(c))
+    # ... add bias ...
+    return out
+```
 
-> bob has the box and the ball . alice has the cup . how many items does bob have ?
-  bob asks . it is not a good friend . it is not a gift . it is not a gift . it is not a
+#### New INT8 `stream_linear`:
+```python
+@micropython.native
+def stream_linear_int8(f, r, c, x):
+    out, bv = [0.0]*r, memoryview(BUF)[:c]  # Buffer is 4x smaller (c bytes instead of c*4)
+    for i in range(r):
+        # 1. Read the 4-byte row scale
+        scale = struct.unpack('f', f.read(4))[0]
+        
+        # 2. Read c bytes directly into buffer (75% less SPI flash traffic!)
+        f.readinto(bv)
+        
+        # 3. Unpack as signed 8-bit integers ('b')
+        row = struct.unpack(f'{c}b', bv)
+        
+        # 4. Multiply integer weights with activations, then scale once per row
+        dot = sum(row[j] * x[j] for j in range(c))
+        out[i] = dot * scale
+        
+    # Read and add FP32 biases at the end
+    bi = 0
+    while bi < r:
+        s = min(64, r - bi)
+        f.readinto(memoryview(BUF)[:s*4])
+        b = struct.unpack(f'{s}f', memoryview(BUF)[:s*4])
+        for i in range(s): out[bi+i] += b[i]
+        bi += s
+    return out
+```
 
-> [c] bob has the box and the ball . alice has the cup . how many items does bob have ?
-  
+---
 
-> [c] bob has the box and the ball . alice has the cup . [q] how many items does bob have ?
-  two .
+### 4. Why This Accelerates the RP2040
 
-> [c] bob has the box and the ball . alice has the cup . [q] how many items does bob have ? [a]
-  two .
+#### A. The SPI Flash Bottleneck (4x Speedup in I/O)
+On the Pico, streaming binary weights from the external Winbond SPI flash chip takes real clock cycles. Because the model file shrinks from 1.25 MB to ~330 KB:
+* `f.readinto()` reads **80 bytes** instead of **320 bytes** per row.
+* SPI bus read time per token drops by **~75%**.
 
-> [c] bob has the box and the ball . alice has the cup . [q] how many items does alice have ? [a]
-  one .
+#### B. Integer Arithmetic via the Hardware Multiplier
+The RP2040's ARM Cortex-M0+ silicon includes a hardware integer multiplier (`MULS`) that executes **32-bit integer multiplication in 1 clock cycle**.
+* In pure FP32, multiplying two software floats calls the Pico bootrom runtime software emulation (`__aeabi_fmul`), which costs dozens of instructions.
+* By quantizing weights to `int8`, you offload multiplication to the integer ALU, saving thousands of cycles per layer.
 
-> [c] bob has the box and the ball . alice has the cup . [q] how many items does luna have ? [a]
-  none .
+---
 
-> [c] bob has the box . alice has the cup and the book . [q] how many items does bob  have ? [a]
-  one .
+### 5. How to Quantize: Post-Training Quantization (PTQ)
 
-> [c] bob has the box . alice has the cup and the book . [q] how many items does alice have ? [a]
-  two .
+You do **not** need to retrain your model from scratch to get INT8 weights. You train normally in PyTorch using FP32, and then run a quantization script on the exported model:
 
-> 
+```python
+def quantize_row_int8(weight_row_tensor):
+    max_val = weight_row_tensor.abs().max().item()
+    scale = max_val / 127.0 if max_val > 0 else 1.0
+    int8_weights = torch.clamp(torch.round(weight_row_tensor / scale), -128, 127).to(torch.int8)
+    return scale, int8_weights.numpy().tobytes()
+```
+
+You write the 4-byte float `scale`, followed by the raw `int8` byte string, straight into the `.model` file.
+
+Because your task universe is closed (1,024 words, bounded state space), **INT8 post-training quantization has virtually zero impact on reasoning accuracy** (typically $<0.2\%$ degradation), while slashing latency and memory usage dramatically.
