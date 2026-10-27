@@ -17,7 +17,7 @@ for _ in range(3):
     led.on(); time.sleep(0.08); led.off(); time.sleep(0.08)
 led.on()
 
-EMBED_DIM = 64
+EMBED_DIM = 80
 BLOCK_SIZE = 64
 NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS
@@ -85,7 +85,7 @@ def recv_exact(sock, n):
     return buf
 
 f_weights = open("pico1 weights.model", "rb")
-kv_caches = [{'k': [], 'v': []}, {'k': [], 'v': []}]
+kv_caches = [{'k': [], 'v': []}, {'k': [], 'v': []},{'k': [], 'v': []}]
 
 def run_layer(f, layer_idx, x):
     ln1_w = read_vec(f, EMBED_DIM)
@@ -150,8 +150,9 @@ def clean_tokenize(text):
 
 def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
     try:
-        kv_caches[0]['k'].clear(); kv_caches[0]['v'].clear()
-        kv_caches[1]['k'].clear(); kv_caches[1]['v'].clear()
+        # Clear all 3 caches cleanly:
+        for c in kv_caches:
+            c['k'].clear(); c['v'].clear()
 
         words = clean_tokenize(prompt_text)
         if not words: words = ["meow", "and", "miaou"]
@@ -159,7 +160,9 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
         is_comprehension = "[a]" in prompt_text or "question" in prompt_text
         reset_temp_flag = 1.0 if is_comprehension else 0.0
 
-        reset_packet = struct.pack('64f', -999.0, reset_temp_flag, *([0.0] * 62))
+        # Dynamic float packing based on EMBED_DIM:
+        reset_payload = [-999.0, reset_temp_flag] + [0.0] * (EMBED_DIM - 2)
+        reset_packet = struct.pack(f'{EMBED_DIM}f', *reset_payload)
         ai_sock.sendall(reset_packet)
         ack = ai_sock.recv(2)
         if ack != b"OK":
@@ -199,6 +202,8 @@ def generate_story_stream(ai_sock, web_client, prompt_text, max_words=50):
             
             x = run_layer(f_weights, 0, x)
             x = run_layer(f_weights, 1, x)
+            x = run_layer(f_weights, 2, x)
+
 
             try:
                 ai_sock.sendall(struct.pack('64f', *x))

@@ -17,7 +17,7 @@ led = Pin("LED", Pin.OUT)
 for _ in range(3):
     led.on(); time.sleep(0.08); led.off(); time.sleep(0.08)
 
-EMBED_DIM = 64
+EMBED_DIM = 80
 BLOCK_SIZE = 64
 NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS
@@ -173,7 +173,7 @@ while True:
         client.settimeout(180.0)
         client.connect(('192.168.4.1', 5000))
         f_weights = open("pico2 weights.model", "rb")
-        kv_caches = [{'k': [], 'v': []}, {'k': [], 'v': []}]
+        kv_caches = [{'k': [], 'v': []}, {'k': [], 'v': []},{'k': [], 'v': []}]
         temp = 0.7
 
         while True:
@@ -183,14 +183,15 @@ while True:
                 continue
                 
             led.on()
-            data = recv_exact(client, 64 * 4)
+            data = recv_exact(client, EMBED_DIM * 4)
             if not data: break
 
-            floats = struct.unpack('64f', data)
+            floats = struct.unpack(f'{EMBED_DIM}f', data)
             
             if floats[0] == -999.0:
-                kv_caches[0]['k'].clear(); kv_caches[0]['v'].clear()
-                kv_caches[1]['k'].clear(); kv_caches[1]['v'].clear()
+                # Clear all 3 caches:
+                for c in kv_caches:
+                    c['k'].clear(); c['v'].clear()
                 temp = 0.05 if floats[1] == 1.0 else 0.7
                 client.sendall(b"OK")
                 gc.collect()
@@ -202,6 +203,8 @@ while True:
             
             x = run_layer(f_weights, 0, x, kv_caches)
             x = run_layer(f_weights, 1, x, kv_caches)
+            x = run_layer(f_weights, 2, x, kv_caches)
+
 
             ln_f_w = read_vec(f_weights, EMBED_DIM)
             ln_f_b = read_vec(f_weights, EMBED_DIM)

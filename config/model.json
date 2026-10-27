@@ -4,7 +4,7 @@
     "block_size": 64,
     "embed_dim": 80,
     "num_heads": 4,
-    "num_layers": 4
+    "num_layers": 6
   },
   "training": {
     "device": "cpu",

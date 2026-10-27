@@ -1,4 +1,3 @@
-import json
 import itertools
 import random
 import re
@@ -9,29 +8,10 @@ def normalize_text(text):
     return re.sub(r'\s+', ' ', t).strip()
 
 def format_qa_sequence(premise, question, answer):
-    """
-    Auto-formats raw text into strict engine tokens:
-    [c] <premise> . [q] <question> ? [a] <answer> . <eos>
-    """
     p = normalize_text(premise.strip().rstrip(". "))
     q = normalize_text(question.strip().rstrip("?.: "))
     a = normalize_text(answer.strip().rstrip(". "))
-
     return f"[c] {p} . [q] {q} ? [a] {a} . <eos>"
-
-def expand_category_templates(category):
-    raw_premise = category["premise"]
-    premises = raw_premise if isinstance(raw_premise, list) else [raw_premise]
-    templates = []
-    
-    for prem in premises:
-        for item in category["queries"]:
-            q_field = item["q"]
-            queries = q_field if isinstance(q_field, list) else [q_field]
-            for single_q in queries:
-                templates.append(format_qa_sequence(prem, single_q, item["a"]))
-                
-    return templates
 
 def get_template_placeholders(template):
     placeholders = re.findall(r'\{([a-z]+)(\d+)(?:_([a-z]+))?\}', template)
@@ -61,7 +41,6 @@ def instantiate_random(template, pools, pair_pools):
 
 def instantiate_all_permutations(template, pools, pair_pools):
     _, groups = get_template_placeholders(template)
-    
     pool_perms = []
     entities_by_pool = []
 
@@ -69,7 +48,6 @@ def instantiate_all_permutations(template, pools, pair_pools):
         vals = pools.get(p_type) or pair_pools.get(p_type)
         if not vals or len(indices) > len(vals):
             return []
-        
         sorted_indices = sorted(list(indices))
         entities_by_pool.append((p_type, sorted_indices))
         perms = list(itertools.permutations(vals, len(indices)))
@@ -86,7 +64,6 @@ def instantiate_all_permutations(template, pools, pair_pools):
                 else:
                     replacements[f"{p_type}{idx}"] = val
         results.append(template.format(**replacements))
-        
     return results
 
 def split_qa(sequence_str):
@@ -94,3 +71,45 @@ def split_qa(sequence_str):
     prompt = parts[0].strip() + " [a]"
     target = parts[1].replace("<eos>", "").strip()
     return prompt, target
+
+
+# =====================================================================
+# THE NEW CLAUSE-COMPOSITION ENGINE
+# =====================================================================
+
+def expand_composition_templates(composition, clauses_dict):
+    """
+    Assembles compound premises from atomic clauses and inherits
+    queries from ALL active clauses to eliminate task silos.
+    """
+    chain = composition.get("chain", [])
+    connector = composition.get("connector", " . ")
+    
+    # 1. Gather all premise template combinations across the chained clauses
+    clause_template_lists = [clauses_dict[c_name]["templates"] for c_name in chain]
+    combined_premises = []
+    for combo in itertools.product(*clause_template_lists):
+        combined_premises.append(connector.join(combo))
+
+    # 2. Gather queries: Inherited from Clause A + Clause B + Relational
+    all_queries = []
+    
+    # Inherit queries from each constituent clause
+    for c_name in chain:
+        for q_item in clauses_dict[c_name]["queries"]:
+            all_queries.append(q_item)
+
+    # Add cross-clause relational queries
+    for q_item in composition.get("relational_queries", []):
+        all_queries.append(q_item)
+
+    # 3. Format into engine tokens: [c] ... [q] ... [a] ... <eos>
+    templates = []
+    for prem in combined_premises:
+        for item in all_queries:
+            q_field = item["q"]
+            queries = q_field if isinstance(q_field, list) else [q_field]
+            for single_q in queries:
+                templates.append(format_qa_sequence(prem, single_q, item["a"]))
+
+    return templates
