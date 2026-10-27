@@ -8,8 +8,8 @@
   },
   "training": {
     "device": "cpu",
-    "total_steps": 7000,
-    "warmup_steps": 300,
+    "total_steps": 30000,
+    "warmup_steps": 1000,
     "base_lr": 0.002,
     "min_lr": 0.0002,
     "half_batch": 16,
@@ -34,8 +34,8 @@
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
       "question", "answer",
 
-      "the", "in", "to", "from", "of", "a", "and", "or",
-      "who", "what", "where", "how", "many",
+      "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
+      "who", "what", "where", "how", "many", "why",
       "is", "are", "was", "were", "does", "did",
 
       "he", "she", "they",
@@ -54,7 +54,8 @@
       "clean", "dirty",
       "open", "closed",
 
-      "north", "south",
+      "north", "south", "left", "right",
+      "bigger", "smaller",
 
       "first", "then", "now", "before", "after",
 
@@ -63,7 +64,7 @@
       "nobody", "nothing", "nowhere",
 
       "went", "gave", "got", "has", "had", "have", "found", "find",
-      "put", "left", "likes", "wants",
+      "put", "left", "likes", "wants", "leads",
 
       "hungry", "tired", "thirsty",
 
