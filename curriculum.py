@@ -20,14 +20,8 @@ def format_qa_sequence(premise, question, answer):
     return f"[c] {p} . [q] {q} ? [a] {a} . <eos>"
 
 def expand_category_templates(category):
-    """
-    Expands Scenario Schema. Supports:
-    - premise: str OR list[str] (Syntactic Premise Jitter)
-    - q: str OR list[str]       (Syntactic Query Jitter)
-    """
     raw_premise = category["premise"]
     premises = raw_premise if isinstance(raw_premise, list) else [raw_premise]
-    
     templates = []
     
     for prem in premises:

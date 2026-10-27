@@ -22,7 +22,7 @@
   },
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
-    "logic_samples_target": 25000,
+    "logic_samples_target": 35000,
     "eval_samples_per_category": 15,
     "name_replacements": {
       "bob": ["timmy", "tom", "jack"],
