@@ -21,18 +21,23 @@
   "categories": [
     {
       "name": "01: Single Supporting Fact",
+      "weight": 3.0,
       "premises": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
-        "{actor1} is in the {location1} . {actor2} is in the {location2}"
+        "{actor2} went to the {location2} . {actor1} went to the {location1}",
+        "{actor1} is in the {location1} . {actor2} is in the {location2}",
+        "{actor2} is in the {location2} . {actor1} is in the {location1}"
       ],
       "queries": [
         {"q": "where is {actor1}", "a": "{location1}"},
         {"q": "where is {actor2}", "a": "{location2}"},
-        {"q": "who is in the {location1}", "a": "{actor1}"}
+        {"q": "who is in the {location1}", "a": "{actor1}"},
+        {"q": "who is in the {location2}", "a": "{actor2}"}
       ]
     },
     {
       "name": "02: Two Supporting Facts (Multi-Hop)",
+      "weight": 3.0,
       "premises": [
         "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}",
         "{actor1} got the {item1} in the {location1} . after that {actor1} went to the {location2}"
@@ -45,6 +50,7 @@
     },
     {
       "name": "04: Two Argument Relations (Compass)",
+      "weight": 2.0,
       "premises": [
         "the {location1} is north of the {location2} . the {location2} is north of the {location3}",
         "the {location2} is north of the {location3} . the {location1} is north of the {location2}"
@@ -57,6 +63,7 @@
     },
     {
       "name": "05: Three Argument Relations (Transfers)",
+      "weight": 2.5,
       "premises": [
         "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}",
         "{actor1} handed the {item1} to {actor2} . then {actor2} handed the {item1} to {actor3}"
@@ -69,20 +76,26 @@
     },
     {
       "name": "06: Yes/No Truth Verification",
+      "weight": 1.5,
       "premises": [
-        "{actor1} went to the {location1} . {actor2} went to the {location2}"
+        "{actor1} went to the {location1} . {actor2} went to the {location2}",
+        "{actor2} went to the {location2} . {actor1} went to the {location1}"
       ],
       "queries": [
         {"q": "is {actor1} in the {location1}", "a": "yes"},
         {"q": "is {actor1} in the {location2}", "a": "no"},
-        {"q": "is {actor2} in the {location1}", "a": "no"}
+        {"q": "is {actor2} in the {location1}", "a": "no"},
+        {"q": "is {actor2} in the {location2}", "a": "yes"}
       ]
     },
     {
       "name": "07: Counting",
+      "weight": 3.5,
       "premises": [
         "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
-        "{actor1} found a {item1} and a {item2} . {actor2} found a {item3}"
+        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}",
+        "{actor1} found a {item1} and a {item2} . {actor2} found a {item3}",
+        "{actor2} found a {item3} . {actor1} found a {item1} and a {item2}"
       ],
       "queries": [
         {"q": "how many items does {actor1} have", "a": "two"},
@@ -92,9 +105,10 @@
     },
     {
       "name": "08: Lists and Sets",
+      "weight": 3.5,
       "premises": [
         "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
-        "{actor1} got the {item1} and the {item2} . {actor2} got the {item3}"
+        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
       ],
       "queries": [
         {"q": "what does {actor1} have", "a": "{item1} and {item2}"},
@@ -104,6 +118,7 @@
     },
     {
       "name": "09: Simple Negation",
+      "weight": 1.5,
       "premises": [
         "{actor1} is not in the {location1} . {actor1} is in the {location2}",
         "{actor1} is in the {location2} . {actor1} is not in the {location1}"
@@ -116,6 +131,7 @@
     },
     {
       "name": "10: Indefinite Knowledge",
+      "weight": 1.5,
       "premises": [
         "{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}",
         "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"
@@ -127,6 +143,7 @@
     },
     {
       "name": "11: Basic Coreference (Pronouns)",
+      "weight": 2.5,
       "premises": [
         "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}",
         "{agent1_name} went to the {location1} . after that {agent1_pronoun} went to the {location2}"
@@ -138,6 +155,7 @@
     },
     {
       "name": "14: Time Reasoning (Before/After)",
+      "weight": 2.0,
       "premises": [
         "first {actor1} was in the {location1} . then {actor1} was in the {location2}",
         "{actor1} was in the {location1} before {actor1} went to the {location2}"
@@ -149,6 +167,7 @@
     },
     {
       "name": "15: Basic Deduction",
+      "weight": 2.0,
       "premises": [
         "cats like the {item1} . {actor1} is a cat",
         "{actor1} is a cat . cats like the {item1}"
@@ -159,6 +178,7 @@
     },
     {
       "name": "18: Size Reasoning",
+      "weight": 2.0,
       "premises": [
         "the {item1} is bigger than the {item2} . the {item2} is bigger than the {item3}",
         "the {item2} is bigger than the {item3} . the {item1} is bigger than the {item2}"
@@ -172,6 +192,7 @@
     },
     {
       "name": "20: Agent Motivations",
+      "weight": 2.0,
       "premises": [
         "{actor1} is hungry . {actor1} went to the kitchen . {actor2} is tired . {actor2} went to the room",
         "{actor1} was hungry and went to the kitchen . {actor2} was tired and went to the room"
@@ -185,9 +206,10 @@
     },
     {
       "name": "22: Polar Possession",
+      "weight": 2.0,
       "premises": [
         "{actor1} has the {item1} . {actor2} has the {item2}",
-        "{actor1} found the {item1} . {actor2} got the {item2}"
+        "{actor2} has the {item2} . {actor1} has the {item1}"
       ],
       "queries": [
         {"q": "does {actor1} have the {item1}", "a": "yes"},

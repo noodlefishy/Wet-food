@@ -22,7 +22,10 @@ def generate_atomic_sample(cfg, target_category=None):
     pair_pools = cfg.get("pair_pools", {})
     categories = cfg["categories"]
     
-    cat = next((c for c in categories if c["name"] == target_category), categories[0]) if target_category else random.choice(categories)
+    weights = [c.get("weight", 2.0) for c in categories]
+    cat = next((c for c in categories if c["name"] == target_category), None) if target_category else random.choices(categories, weights=weights)[0]
+    if cat is None: cat = random.choice(categories)
+    
     premise_tmpl = random.choice(cat["premises"])
     query_obj = random.choice(cat["queries"])
     
