@@ -46,8 +46,8 @@ class BabyStories(nn.Module):
         return self.lm_head(self.ln_f(x))
 
 model = BabyStories().to(device)
-def load_param(f, tensor):
-    if tensor.ndim == 2:
+def load_param(f, tensor, quantized=False):
+    if tensor.ndim == 2 and quantized:
         rows, cols = tensor.shape
         data = np.empty((rows, cols), dtype=np.float32)
         for r in range(rows):
@@ -58,14 +58,17 @@ def load_param(f, tensor):
         tensor.data.copy_(torch.from_numpy(np.fromfile(f, dtype=np.float32, count=tensor.numel())).view_as(tensor))
 
 with open(os.path.join(project_root, "models", "local", "pico1 weights.model"), "rb") as f1:
-    load_param(f1, model.tok_emb.weight); load_param(f1, model.pos_emb.weight)
+    load_param(f1, model.tok_emb.weight, quantized=False)
+    load_param(f1, model.pos_emb.weight, quantized=False)
     for i in [0, 1, 2]:
-        for p in model.layers[i].parameters(): load_param(f1, p)
+        for p in model.layers[i].parameters(): load_param(f1, p, quantized=True)
+
 with open(os.path.join(project_root, "models", "local", "pico2 weights.model"), "rb") as f2:
     for i in [3, 4, 5]:
-        for p in model.layers[i].parameters(): load_param(f2, p)
-    for p in model.ln_f.parameters(): load_param(f2, p)
-    load_param(f2, model.lm_head.weight); load_param(f2, model.lm_head.bias)
+        for p in model.layers[i].parameters(): load_param(f2, p, quantized=True)
+    for p in model.ln_f.parameters(): load_param(f2, p, quantized=True)
+    load_param(f2, model.lm_head.weight, quantized=False)
+    load_param(f2, model.lm_head.bias, quantized=False)
 model.eval()
 
 with open(sys.argv[1] if len(sys.argv) > 1 else "config/stress_test.json", "r") as f:
@@ -76,7 +79,8 @@ cat_stats, total_passed, failures = {}, 0, []
 with torch.no_grad():
     for i in range(0, len(all_tests), 512):
         batch = all_tests[i : i + 512]
-        toks = [[WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", (p + " [a]").lower())][-BLOCK_SIZE:] for _, p, _ in batch]
+        # BUG FIXED HERE: Removed the rogue + " [a]" string appendage
+        toks = [[WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", p.lower())][-BLOCK_SIZE:] for _, p, _ in batch]
         max_len = max(len(t) for t in toks)
         x_tensor = torch.tensor([t + [WORD_TO_ID["<pad>"]] * (max_len - len(t)) for t in toks], dtype=torch.long, device=device)
         logits = model(x_tensor)
@@ -114,8 +118,3 @@ for cat, s in cat_stats.items(): print(f"{cat:<34} : {s['passed']:05d}/{s['total
 print("-" * 76 + f"\nTOTAL SCORE : {total_passed}/{len(all_tests)} ({(total_passed/len(all_tests))*100:5.1f}%)\n" + "="*76)
 
 with open("benchmarks/failures.json", "w") as f: json.dump(failures, f, indent=2)
-print(f"Logged {len(failures)} failures to benchmarks/failures.json")
-if failures:
-    print("\nSAMPLE FAILURES:")
-    for f_item in failures[:4]:
-        print(f"  [{f_item['cat']}]\n    Prompt:   {f_item['prompt'][:75]}...\n    Expected: {f_item['expected']}\n    Got:      {f_item['got']}\n")

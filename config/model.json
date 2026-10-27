@@ -2,14 +2,14 @@
   "architecture": {
     "vocab_size": 1024,
     "block_size": 64,
-    "embed_dim": 96,
+    "embed_dim": 80,
     "num_heads": 4,
     "num_layers": 6
   },
   "training": {
     "device": "cpu",
-    "total_steps": 8000,
-    "warmup_steps": 200,
+    "total_steps": 6000,
+    "warmup_steps": 1000,
     "base_lr": 0.002,
     "min_lr": 0.0002,
     "half_batch": 16,
