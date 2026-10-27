@@ -26,17 +26,18 @@ c = socket.socket(); c.connect(('192.168.4.1', 5000)); led.off()
 f_w = open("pico2 weights.model", "rb"); kv = [{'k':[], 'v':[]} for _ in range(3)]; temp = 0.7
 def run_layer(f, idx, x):
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    qkv = stream_linear(f, 3*EMBED_DIM, EMBED_DIM, nx)
-    q, k, v = qkv[:EMBED_DIM], qkv[EMBED_DIM:2*EMBED_DIM], qkv[2*EMBED_DIM:]
+    qkv = stream_linear(f, EMBED_DIM + 2*HEAD_DIM, EMBED_DIM, nx)
+    q = qkv[:EMBED_DIM]; k = qkv[EMBED_DIM : EMBED_DIM+HEAD_DIM]; v = qkv[EMBED_DIM+HEAD_DIM :]
     kv[idx]['k'].append(array('f', k)); kv[idx]['v'].append(array('f', v))
-    if len(kv[idx]['k'])>BLOCK_SIZE: kv[idx]['k'].pop(0); kv[idx]['v'].pop(0)
+    if len(kv[idx]['k']) > BLOCK_SIZE: kv[idx]['k'].pop(0); kv[idx]['v'].pop(0)
     ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(HEAD_DIM)
     for h in range(NUM_HEADS):
-        ho = h*HEAD_DIM; qh = q[ho:ho+HEAD_DIM]
-        scs = [sum(qh[i]*kv[idx]['k'][t][ho+i] for i in range(HEAD_DIM))*sc for t in range(len(kv[idx]['k']))]
-        ms = max(scs); wts = [math.exp(s-ms) for s in scs]; s_wts = sum(wts); wts = [e/s_wts for e in wts]
+        ho = h * HEAD_DIM;qh = q[ho : ho+HEAD_DIM]
+        scs = [sum(qh[i] * kv[idx]['k'][t][i] for i in range(HEAD_DIM)) * sc for t in range(len(kv[idx]['k']))]
+        ms = max(scs)
+        wts = [math.exp(s-ms) for s in scs];s_wts = sum(wts);wts = [e/s_wts for e in wts]
         for t in range(len(wts)):
-            for i in range(HEAD_DIM): ao[ho+i] += wts[t] * kv[idx]['v'][t][ho+i]
+            for i in range(HEAD_DIM): ao[ho+i] += wts[t] * kv[idx]['v'][t][i]
     x = [x[i] + stream_linear(f, EMBED_DIM, EMBED_DIM, ao)[i] for i in range(EMBED_DIM)]
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
     return [x[i] + stream_linear(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, v) for v in stream_linear(f, 4*EMBED_DIM, EMBED_DIM, nx)])[i] for i in range(EMBED_DIM)]

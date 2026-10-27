@@ -86,6 +86,27 @@ for task in all_qa_tasks:
     qa_tensor_x.append(torch.tensor(x, dtype=torch.long))
     qa_tensor_y.append(torch.tensor(y, dtype=torch.long))
 
+
+class MQA(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.qkv_proj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * (EMBED_DIM // NUM_HEADS))
+        self.out_proj = nn.Linear(EMBED_DIM, EMBED_DIM)
+
+    def forward(self, x):
+        B, T, C = x.shape
+        HEAD_DIM = C // NUM_HEADS
+        qkv = self.qkv_proj(x) # Shape: (B, T, 80 + 20 + 20)
+        q = qkv[:, :, :C].view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2) # (B, 4, T, 20)
+        k = qkv[:, :, C:C+HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2) # (B, 1, T, 20)
+        v = qkv[:, :, C+HEAD_DIM:].view(B, T, 1, HEAD_DIM).transpose(1, 2)  # (B, 1, T, 20)
+        mask = torch.triu(torch.ones(T, T, device=x.device)*float('-inf'), diagonal=1)
+        attn_out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+        
+        attn_out = attn_out.transpose(1, 2).contiguous().view(B, T, C)
+        return self.out_proj(attn_out)
+
+
 qa_x_data = torch.stack(qa_tensor_x)
 qa_y_data = torch.stack(qa_tensor_y)
 story_data = torch.tensor(tokenize_str(raw_stories), dtype=torch.long)
@@ -94,16 +115,13 @@ class Block(nn.Module):
     def __init__(self):
         super().__init__()
         self.ln1 = nn.LayerNorm(EMBED_DIM)
-        self.sa = nn.MultiheadAttention(EMBED_DIM, NUM_HEADS, batch_first=True)
+        self.sa = MQA()
         self.ln2 = nn.LayerNorm(EMBED_DIM)
         self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4 * EMBED_DIM), nn.ReLU(), nn.Linear(4 * EMBED_DIM, EMBED_DIM))
-
     def forward(self, x):
-        T = x.size(1)
-        mask = torch.triu(torch.ones(T, T, device=x.device) * float("-inf"), diagonal=1)
-        norm_x = self.ln1(x)
-        attn_out, _ = self.sa(norm_x, norm_x, norm_x, attn_mask=mask, is_causal=True)
-        return x + attn_out + self.mlp(self.ln2(x + attn_out))
+        x = x + self.sa(self.ln1(x))
+        x = x + self.mlp(self.ln2(x))
+        return x
 
 class BabyStories(nn.Module):
     def __init__(self):
