@@ -1,94 +1,199 @@
 {
   "pools": {
-    "actors": ["alice", "bob", "felix", "luna"],
-    "locations": ["garden", "kitchen", "park", "room"],
-    "items": ["ball", "box", "book", "cup"]
+    "actor": ["alice", "bob", "felix", "luna"],
+    "location": ["garden", "kitchen", "park", "room"],
+    "item": ["ball", "box", "book", "cup"],
+    "colour": ["red", "blue", "yellow", "green"]
   },
-  "rules": {
-    "min_events": 2,
-    "max_events": 3,
-    "max_inventory_per_actor": 2,
-    "transition_probability": 0.5
-  },
-  "states": {
+  "pair_pools": {
+    "agent": [
+      {"name": "alice", "pronoun": "she"},
+      {"name": "luna", "pronoun": "she"},
+      {"name": "bob", "pronoun": "he"},
+      {"name": "felix", "pronoun": "he"}
+    ],
     "needs": [
       {"state": "hungry", "target": "kitchen"},
       {"state": "tired", "target": "room"},
       {"state": "thirsty", "target": "kitchen"}
     ]
   },
-  "connectors": ["then", "after that", "next"],
-  "initial_templates": [
-    "{actor} was in the {location}",
-    "{actor} started in the {location}"
-  ],
-  "actions": {
-    "move": {
-      "templates": [
-        "{actor} went to the {location}",
-        "{actor} walked to the {location}",
-        "{actor} moved to the {location}"
+  "categories": [
+    {
+      "name": "01: Single Supporting Fact",
+      "premises": [
+        "{actor1} went to the {location1} . {actor2} went to the {location2}",
+        "{actor1} is in the {location1} . {actor2} is in the {location2}"
+      ],
+      "queries": [
+        {"q": "where is {actor1}", "a": "{location1}"},
+        {"q": "where is {actor2}", "a": "{location2}"},
+        {"q": "who is in the {location1}", "a": "{actor1}"}
       ]
     },
-    "take": {
-      "templates": [
-        "{actor} picked up the {item}",
-        "{actor} got the {item}",
-        "{actor} found the {item}",
-        "{actor} took the {item}"
+    {
+      "name": "02: Two Supporting Facts (Multi-Hop)",
+      "premises": [
+        "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}",
+        "{actor1} got the {item1} in the {location1} . after that {actor1} went to the {location2}"
+      ],
+      "queries": [
+        {"q": "where is the {item1}", "a": "{location2}"},
+        {"q": "where was the {item1} before", "a": "{location1}"},
+        {"q": "who has the {item1}", "a": "{actor1}"}
       ]
     },
-    "drop": {
-      "templates": [
-        "{actor} dropped the {item}",
-        "{actor} put down the {item}"
+    {
+      "name": "04: Two Argument Relations (Compass)",
+      "premises": [
+        "the {location1} is north of the {location2} . the {location2} is north of the {location3}",
+        "the {location2} is north of the {location3} . the {location1} is north of the {location2}"
+      ],
+      "queries": [
+        {"q": "what is north of the {location2}", "a": "{location1}"},
+        {"q": "what is south of the {location2}", "a": "{location3}"},
+        {"q": "what is north of the {location3}", "a": "{location2}"}
       ]
     },
-    "give": {
-      "templates": [
-        "{actor} gave the {item} to {receiver}",
-        "{actor} handed the {item} to {receiver}"
+    {
+      "name": "05: Three Argument Relations (Transfers)",
+      "premises": [
+        "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}",
+        "{actor1} handed the {item1} to {actor2} . then {actor2} handed the {item1} to {actor3}"
+      ],
+      "queries": [
+        {"q": "who gave the {item1} to {actor2}", "a": "{actor1}"},
+        {"q": "who got the {item1} from {actor1}", "a": "{actor2}"},
+        {"q": "who has the {item1} now", "a": "{actor3}"}
       ]
     },
-    "need": {
-      "templates": [
-        "{actor} was {state}",
-        "{actor} felt {state}"
+    {
+      "name": "06: Yes/No Truth Verification",
+      "premises": [
+        "{actor1} went to the {location1} . {actor2} went to the {location2}"
+      ],
+      "queries": [
+        {"q": "is {actor1} in the {location1}", "a": "yes"},
+        {"q": "is {actor1} in the {location2}", "a": "no"},
+        {"q": "is {actor2} in the {location1}", "a": "no"}
+      ]
+    },
+    {
+      "name": "07: Counting",
+      "premises": [
+        "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+        "{actor1} found a {item1} and a {item2} . {actor2} found a {item3}"
+      ],
+      "queries": [
+        {"q": "how many items does {actor1} have", "a": "two"},
+        {"q": "how many items does {actor2} have", "a": "one"},
+        {"q": "how many items does {actor3} have", "a": "none"}
+      ]
+    },
+    {
+      "name": "08: Lists and Sets",
+      "premises": [
+        "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+        "{actor1} got the {item1} and the {item2} . {actor2} got the {item3}"
+      ],
+      "queries": [
+        {"q": "what does {actor1} have", "a": "{item1} and {item2}"},
+        {"q": "what does {actor2} have", "a": "{item3}"},
+        {"q": "what does {actor3} have", "a": "nothing"}
+      ]
+    },
+    {
+      "name": "09: Simple Negation",
+      "premises": [
+        "{actor1} is not in the {location1} . {actor1} is in the {location2}",
+        "{actor1} is in the {location2} . {actor1} is not in the {location1}"
+      ],
+      "queries": [
+        {"q": "where is {actor1}", "a": "{location2}"},
+        {"q": "is {actor1} in the {location1}", "a": "no"},
+        {"q": "is {actor1} in the {location2}", "a": "yes"}
+      ]
+    },
+    {
+      "name": "10: Indefinite Knowledge",
+      "premises": [
+        "{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}",
+        "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"
+      ],
+      "queries": [
+        {"q": "where is {actor1}", "a": "{location2}"},
+        {"q": "is {actor1} in the {location1}", "a": "no"}
+      ]
+    },
+    {
+      "name": "11: Basic Coreference (Pronouns)",
+      "premises": [
+        "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}",
+        "{agent1_name} went to the {location1} . after that {agent1_pronoun} went to the {location2}"
+      ],
+      "queries": [
+        {"q": "where is {agent1_name}", "a": "{location2}"},
+        {"q": "where was {agent1_name} before", "a": "{location1}"}
+      ]
+    },
+    {
+      "name": "14: Time Reasoning (Before/After)",
+      "premises": [
+        "first {actor1} was in the {location1} . then {actor1} was in the {location2}",
+        "{actor1} was in the {location1} before {actor1} went to the {location2}"
+      ],
+      "queries": [
+        {"q": "where was {actor1} before the {location2}", "a": "{location1}"},
+        {"q": "where was {actor1} first", "a": "{location1}"}
+      ]
+    },
+    {
+      "name": "15: Basic Deduction",
+      "premises": [
+        "cats like the {item1} . {actor1} is a cat",
+        "{actor1} is a cat . cats like the {item1}"
+      ],
+      "queries": [
+        {"q": "what does {actor1} like", "a": "{item1}"}
+      ]
+    },
+    {
+      "name": "18: Size Reasoning",
+      "premises": [
+        "the {item1} is bigger than the {item2} . the {item2} is bigger than the {item3}",
+        "the {item2} is bigger than the {item3} . the {item1} is bigger than the {item2}"
+      ],
+      "queries": [
+        {"q": "what is bigger than the {item2}", "a": "{item1}"},
+        {"q": "what is smaller than the {item2}", "a": "{item3}"},
+        {"q": "is the {item1} bigger than the {item3}", "a": "yes"},
+        {"q": "is the {item3} bigger than the {item1}", "a": "no"}
+      ]
+    },
+    {
+      "name": "20: Agent Motivations",
+      "premises": [
+        "{actor1} is hungry . {actor1} went to the kitchen . {actor2} is tired . {actor2} went to the room",
+        "{actor1} was hungry and went to the kitchen . {actor2} was tired and went to the room"
+      ],
+      "queries": [
+        {"q": "why did {actor1} go to the kitchen", "a": "hungry"},
+        {"q": "why did {actor2} go to the room", "a": "tired"},
+        {"q": "who is hungry", "a": "{actor1}"},
+        {"q": "who is thirsty", "a": "nobody"}
+      ]
+    },
+    {
+      "name": "22: Polar Possession",
+      "premises": [
+        "{actor1} has the {item1} . {actor2} has the {item2}",
+        "{actor1} found the {item1} . {actor2} got the {item2}"
+      ],
+      "queries": [
+        {"q": "does {actor1} have the {item1}", "a": "yes"},
+        {"q": "does {actor1} have the {item2}", "a": "no"},
+        {"q": "does {actor2} have the {item1}", "a": "no"}
       ]
     }
-  },
-  "queries": {
-    "01: Actor Location": {
-      "resolver": "actor_location",
-      "templates": ["where is {actor}", "where is {actor} now"]
-    },
-    "02: Item Multi-Hop Location": {
-      "resolver": "item_location",
-      "templates": ["where is the {item}", "where is the {item} now"]
-    },
-    "03: Possession Lists": {
-      "resolver": "possession_list",
-      "templates": ["what does {actor} have", "what did {actor} find"]
-    },
-    "04: Counting": {
-      "resolver": "possession_count",
-      "templates": ["how many items does {actor} have"]
-    },
-    "05: Yes/No Truth Verification": {
-      "resolver": "actor_location_polar",
-      "templates": ["is {actor} in the {location}"]
-    },
-    "06: Polar Possession Verification": {
-      "resolver": "possession_polar",
-      "templates": ["does {actor} have the {item}"]
-    },
-    "07: Time Reasoning (Before/After)": {
-      "resolver": "past_location",
-      "templates": ["where was {actor} before the {location}"]
-    },
-    "08: Agent Motivations": {
-      "resolver": "agent_motivation",
-      "templates": ["why did {actor} go to the {location}", "who is {state}"]
-    }
-  }
+  ]
 }

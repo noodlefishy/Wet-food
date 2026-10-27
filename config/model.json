@@ -8,8 +8,8 @@
   },
   "training": {
     "device": "cpu",
-    "total_steps": 30000,
-    "warmup_steps": 1000,
+    "total_steps": 8000,
+    "warmup_steps": 200,
     "base_lr": 0.002,
     "min_lr": 0.0002,
     "half_batch": 16,

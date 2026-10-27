@@ -8,6 +8,8 @@ from curriculum import generate_atomic_sample, split_qa
 with open("config/model.json", "r") as f: mod_cfg = json.load(f)
 cfg_path = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
 with open(cfg_path, "r") as f: log_cfg = json.load(f)
+torch.set_num_threads(4)
+
 
 VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
 BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
@@ -41,7 +43,8 @@ TARGET_LOGIC = mod_cfg["dataset"].get("logic_samples_target", 40000)
 all_qa_tasks = [generate_atomic_sample(log_cfg) for _ in range(TARGET_LOGIC)]
 
 eval_benchmarks = {}
-for cat in log_cfg["queries"].keys():
+categories = [c["name"] for c in log_cfg["categories"]] if "categories" in log_cfg else list(log_cfg["queries"].keys())
+for cat in categories:
     eval_benchmarks[cat] = []
     for _ in range(15):
         p, t = split_qa(generate_atomic_sample(log_cfg, target_category=cat))
@@ -127,44 +130,55 @@ class BabyStories(nn.Module):
         return self.lm_head(self.ln_f(x))
 
 model = BabyStories().to(DEVICE)
+compiled_model = torch.compile(model)
 optimizer = torch.optim.AdamW(model.parameters(), lr=mod_cfg["training"]["base_lr"], weight_decay=mod_cfg["training"]["weight_decay"])
+
 
 TOTAL_STEPS = mod_cfg["training"]["total_steps"]
 WARMUP = mod_cfg["training"]["warmup_steps"]
 BASE_LR, MIN_LR = mod_cfg["training"]["base_lr"], mod_cfg["training"]["min_lr"]
 HALF_BATCH = mod_cfg["training"]["half_batch"]
 
+
+num_chunks = (len(story_data) - 1) // BLOCK_SIZE
+story_x_chunks = story_data[:num_chunks * BLOCK_SIZE].view(num_chunks, BLOCK_SIZE)
+story_y_chunks = story_data[1 : num_chunks * BLOCK_SIZE + 1].view(num_chunks, BLOCK_SIZE)
+
+def get_balanced_batch():
+    qa_idx = torch.randint(len(qa_x_data), (HALF_BATCH,))
+    st_idx = torch.randint(num_chunks, (HALF_BATCH,))
+    return qa_x_data[qa_idx].to(DEVICE), qa_y_data[qa_idx].to(DEVICE), story_x_chunks[st_idx].to(DEVICE), story_y_chunks[st_idx].to(DEVICE)
+
 def get_lr(step):
     if step < WARMUP: return BASE_LR * (step + 1) / WARMUP
     return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * (step - WARMUP) / (TOTAL_STEPS - WARMUP))) * (BASE_LR - MIN_LR)
 
-def get_balanced_batch():
-    qa_idx = torch.randint(len(qa_x_data), (HALF_BATCH,))
-    st_idx = torch.randint(len(story_data) - BLOCK_SIZE - 1, (HALF_BATCH,))
-    x_st = torch.stack([story_data[i : i + BLOCK_SIZE] for i in st_idx])
-    y_st = torch.stack([story_data[i + 1 : i + BLOCK_SIZE + 1] for i in st_idx])
-    return qa_x_data[qa_idx].to(DEVICE), qa_y_data[qa_idx].to(DEVICE), x_st.to(DEVICE), y_st.to(DEVICE)
 
 model.train()
-for step in range(TOTAL_STEPS + 1):
-    for p in optimizer.param_groups: p["lr"] = get_lr(step)
+tStep = None
+try:
+    for step in range(TOTAL_STEPS + 1):
+        tStep = step
+        for p in optimizer.param_groups: p["lr"] = get_lr(step)
 
-    x_qa, y_qa, x_st, y_st = get_balanced_batch()
-    logits_all = model(torch.cat([x_qa, x_st], dim=0))
-    loss_qa = F.cross_entropy(logits_all[:HALF_BATCH].view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
-    loss_st = F.cross_entropy(logits_all[HALF_BATCH:].view(-1, VOCAB_SIZE), y_st.view(-1))
+        x_qa, y_qa, x_st, y_st = get_balanced_batch()
+        logits_all = model(torch.cat([x_qa, x_st], dim=0))
+        loss_qa = F.cross_entropy(logits_all[:HALF_BATCH].view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
+        loss_st = F.cross_entropy(logits_all[HALF_BATCH:].view(-1, VOCAB_SIZE), y_st.view(-1))
 
-    decay_start = int(TOTAL_STEPS * 0.70)
-    current_w_st = 0.3 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.25 if step > decay_start else 0.3
-    loss = (2.5 * loss_qa) + (max(current_w_st, 0.05) * loss_st)
+        decay_start = int(TOTAL_STEPS * 0.70)
+        current_w_st = 0.3 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.25 if step > decay_start else 0.3
+        loss = (2.5 * loss_qa) + (max(current_w_st, 0.05) * loss_st)
 
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    torch.nn.utils.clip_grad_norm_(model.parameters(), mod_cfg["training"]["grad_clip"])
-    optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), mod_cfg["training"]["grad_clip"])
+        optimizer.step()
 
-    if step % 500 == 0:
-        print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
+        if step % 500 == 0:
+            print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
+except KeyboardInterrupt:
+    print(f"\n[!] Training stopped early at step {tStep}. Saving current weights...")
 
 def dump_t(t, f):
     d = t.detach().cpu()
