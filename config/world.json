@@ -1,0 +1,95 @@
+{
+  "pools": {
+    "actors": ["alice", "bob", "felix", "luna"],
+    "locations": ["garden", "kitchen", "park", "room"],
+    "items": ["ball", "box", "book", "cup"]
+  },
+  "rules": {
+    "min_events": 3,
+    "max_events": 6,
+    "max_inventory_per_actor": 2,
+    "transition_probability": 0.6
+  },
+  "states": {
+    "needs": [
+      {"state": "hungry", "target": "kitchen"},
+      {"state": "tired", "target": "room"},
+      {"state": "thirsty", "target": "kitchen"}
+    ]
+  },
+  "connectors": ["then", "after that", "next", "and then"],
+  "initial_templates": [
+    "{actor} was in the {location}",
+    "{actor} started in the {location}"
+  ],
+  "actions": {
+    "move": {
+      "templates": [
+        "{actor} went to the {location}",
+        "{actor} walked to the {location}",
+        "{actor} moved to the {location}"
+      ]
+    },
+    "take": {
+      "templates": [
+        "{actor} picked up the {item}",
+        "{actor} got the {item}",
+        "{actor} found the {item}",
+        "{actor} took the {item}"
+      ]
+    },
+    "drop": {
+      "templates": [
+        "{actor} dropped the {item}",
+        "{actor} put down the {item}",
+        "{actor} left the {item} there"
+      ]
+    },
+    "give": {
+      "templates": [
+        "{actor} gave the {item} to {receiver}",
+        "{actor} handed the {item} to {receiver}"
+      ]
+    },
+    "need": {
+      "templates": [
+        "{actor} was {state}",
+        "{actor} felt {state}"
+      ]
+    }
+  },
+  "queries": {
+    "01: Actor Location": {
+      "resolver": "actor_location",
+      "templates": ["where is {actor}", "where is {actor} now"]
+    },
+    "02: Item Multi-Hop Location": {
+      "resolver": "item_location",
+      "templates": ["where is the {item}", "where is the {item} now"]
+    },
+    "03: Possession Lists": {
+      "resolver": "possession_list",
+      "templates": ["what does {actor} have", "what did {actor} find"]
+    },
+    "04: Counting": {
+      "resolver": "possession_count",
+      "templates": ["how many items does {actor} have"]
+    },
+    "05: Yes/No Truth Verification": {
+      "resolver": "actor_location_polar",
+      "templates": ["is {actor} in the {location}"]
+    },
+    "06: Polar Possession Verification": {
+      "resolver": "possession_polar",
+      "templates": ["does {actor} have the {item}"]
+    },
+    "07: Time Reasoning (Before/After)": {
+      "resolver": "past_location",
+      "templates": ["where was {actor} before the {location}"]
+    },
+    "08: Agent Motivations": {
+      "resolver": "agent_motivation",
+      "templates": ["why did {actor} go to the {location}", "who is {state}"]
+    }
+  }
+}

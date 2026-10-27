@@ -7,9 +7,9 @@
     "num_layers": 6
   },
   "training": {
-    "device": "mps",
+    "device": "cpu",
     "total_steps": 30000,
-    "warmup_steps": 1000,
+    "warmup_steps": 200,
     "base_lr": 0.002,
     "min_lr": 0.0002,
     "half_batch": 16,
@@ -28,7 +28,7 @@
       "bob": ["timmy", "tom", "jack"],
       "alice": ["lily", "anna", "sarah"],
       "felix": ["jane", "lucy", "emma"],
-      "luna": ["billy", "sam"]
+      "luna": ["billy", "sam", "ben"]
     },
     "core_words": [
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",

@@ -1,4 +1,3 @@
-import json
 import random
 import re
 
@@ -20,137 +19,188 @@ def split_qa(sequence_str):
     return prompt, target
 
 def format_item_list(items, article="the"):
-    if not items: return ""
-    if len(items) == 1: return f"{article} {items[0]}"
-    if len(items) == 2: return f"{article} {items[0]} and {article} {items[1]}"
-    return ", ".join([f"{article} {i}" for i in items[:-1]]) + f" and {article} {items[-1]}"
+    if not items: return "nothing"
+    prefix = f"{article} " if article else ""
+    if len(items) == 1: return f"{prefix}{items[0]}"
+    if len(items) == 2: return f"{prefix}{items[0]} and {prefix}{items[1]}"
+    return ", ".join([f"{prefix}{i}" for i in items[:-1]]) + f" and {prefix}{items[-1]}"
 
-def generate_atomic_sample(log_cfg, target_category=None):
-    pools = log_cfg["pools"]
-    rules = log_cfg.get("world_rules", {})
-    preds = log_cfg["predicates"]
-    queries = log_cfg["queries"]
-    needs = log_cfg.get("states", {}).get("needs", [])
+class WorldState:
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.pools = cfg["pools"]
+        self.rules = cfg["rules"]
+        self.actor_loc = {a: random.choice(self.pools["locations"]) for a in self.pools["actors"]}
+        self.item_loc = {i: random.choice(self.pools["locations"]) for i in self.pools["items"]}
+        self.actor_state = {a: None for a in self.pools["actors"]}
+        self.history = []
 
-    num_actors = random.choice(rules.get("actors_per_story", [1, 2]))
-    active_actors = random.sample(pools["actor"], num_actors)
-    avail_items = list(pools["item"])
-    random.shuffle(avail_items)
+    def get_inventory(self, actor):
+        return [i for i, h in self.item_loc.items() if h == actor]
 
-    world = {}
-    story_clauses = []
+def act_move(w, cfg):
+    a = random.choice(w.pools["actors"])
+    curr = w.actor_loc[a]
+    new_loc = random.choice([l for l in w.pools["locations"] if l != curr])
+    w.actor_loc[a] = new_loc
+    w.history.append({"type": "move", "actor": a, "from": curr, "to": new_loc})
+    tmpl = random.choice(cfg["actions"]["move"]["templates"])
+    return tmpl.format(actor=a, location=new_loc)
 
-    for actor in active_actors:
-        world[actor] = {"location": None, "state": None, "items": []}
-        actor_sentences = []
+def act_take(w, cfg):
+    a = random.choice(w.pools["actors"])
+    loc = w.actor_loc[a]
+    floor = [i for i, place in w.item_loc.items() if place == loc]
+    if not floor or len(w.get_inventory(a)) >= w.rules["max_inventory_per_actor"]:
+        return None
+    item = random.choice(floor)
+    w.item_loc[item] = a
+    w.history.append({"type": "take", "actor": a, "item": item, "loc": loc})
+    tmpl = random.choice(cfg["actions"]["take"]["templates"])
+    return tmpl.format(actor=a, item=item)
 
-        if needs and random.random() < rules.get("state_probability", 0.5):
-            need = random.choice(needs)
-            world[actor]["state"] = need["state"]
-            world[actor]["location"] = need["target"]
-            actor_sentences.append(random.choice(preds["state"]).format(actor=actor, state=need["state"]))
-            actor_sentences.append(random.choice(preds["motion"]).format(actor=actor, location=need["target"]))
-        else:
-            loc = random.choice(pools["location"])
-            world[actor]["location"] = loc
-            actor_sentences.append(random.choice(preds["motion"]).format(actor=actor, location=loc))
+def act_drop(w, cfg):
+    a = random.choice(w.pools["actors"])
+    inv = w.get_inventory(a)
+    if not inv: return None
+    item = random.choice(inv)
+    w.item_loc[item] = w.actor_loc[a]
+    w.history.append({"type": "drop", "actor": a, "item": item, "loc": w.actor_loc[a]})
+    tmpl = random.choice(cfg["actions"]["drop"]["templates"])
+    return tmpl.format(actor=a, item=item)
 
-        k_items = random.choice(rules.get("items_per_actor", [0, 1, 2]))
-        assigned = [avail_items.pop() for _ in range(min(k_items, len(avail_items)))]
-        world[actor]["items"] = assigned
+def act_give(w, cfg):
+    a = random.choice(w.pools["actors"])
+    inv = w.get_inventory(a)
+    peers = [p for p in w.pools["actors"] if p != a and w.actor_loc[p] == w.actor_loc[a]]
+    if not inv or not peers: return None
+    receiver, item = random.choice(peers), random.choice(inv)
+    w.item_loc[item] = receiver
+    w.history.append({"type": "give", "from": a, "to": receiver, "item": item})
+    tmpl = random.choice(cfg["actions"]["give"]["templates"])
+    return tmpl.format(actor=a, receiver=receiver, item=item)
 
-        if assigned:
-            item_str = format_item_list(assigned, article=random.choice(["a", "the"]))
-            actor_sentences.append(random.choice(preds["possession"]).format(actor=actor, items=item_str))
+def act_need(w, cfg):
+    a = random.choice(w.pools["actors"])
+    if w.actor_state[a] is not None: return None
+    need = random.choice(cfg["states"]["needs"])
+    w.actor_state[a] = need
+    tmpl = random.choice(cfg["actions"]["need"]["templates"])
+    return tmpl.format(actor=a, state=need["state"])
 
-        if len(actor_sentences) > 1 and world[actor]["state"]:
-            story_clauses.append(" . then ".join(actor_sentences[:2]) + (" . " + actor_sentences[2] if len(actor_sentences) > 2 else ""))
-        else:
-            story_clauses.append(" . ".join(actor_sentences))
+ACTION_HANDLERS = {
+    "move": act_move,
+    "take": act_take,
+    "drop": act_drop,
+    "give": act_give,
+    "need": act_need
+}
 
-    premise = " . ".join(story_clauses)
-    if target_category is None:
-        target_category = random.choice(list(queries.keys()))
-        
-    q_tmpl = random.choice(queries[target_category])
-    t_actor = random.choice(active_actors)
-    absent_actors = [a for a in pools["actor"] if a not in active_actors]
-    unmentioned = random.choice(absent_actors) if absent_actors else "nobody"
 
-    q_str, a_str = "", ""
+def resolve_actor_location(w, tmpl, actors, cfg):
+    a = random.choice(actors)
+    return tmpl.format(actor=a), w.actor_loc[a]
 
-    if "location" in target_category or "Single" in target_category or "Frame" in target_category:
-        if "who" in q_tmpl:
-            q_str = q_tmpl.format(location=world[t_actor]["location"])
-            a_str = t_actor
-        else:
-            q_str = q_tmpl.format(actor=t_actor)
-            a_str = world[t_actor]["location"]
+def resolve_item_location(w, tmpl, actors, cfg):
+    i = random.choice(w.pools["items"])
+    holder = w.item_loc[i]
+    loc = w.actor_loc[holder] if holder in w.pools["actors"] else holder
+    return tmpl.format(item=i), loc
 
-    elif "Lists" in target_category:
-        if random.random() < 0.2 and unmentioned != "nobody":
-            q_str = q_tmpl.format(actor=unmentioned)
-            a_str = "nothing"
-        else:
-            q_str = q_tmpl.format(actor=t_actor)
-            items = world[t_actor]["items"]
-            a_str = "nothing" if not items else format_item_list(items, article="")
+def resolve_possession_list(w, tmpl, actors, cfg):
+    a = random.choice(actors)
+    inv = w.get_inventory(a)
+    return tmpl.format(actor=a), format_item_list(inv, article="")
 
-    elif "Counting" in target_category:
-        if random.random() < 0.2 and unmentioned != "nobody":
-            q_str = q_tmpl.format(actor=unmentioned)
-            a_str = "none"
-        else:
-            q_str = q_tmpl.format(actor=t_actor)
-            count_map = {0: "none", 1: "one", 2: "two"}
-            a_str = count_map[len(world[t_actor]["items"])]
+def resolve_possession_count(w, tmpl, actors, cfg):
+    a = random.choice(actors)
+    count_map = {0: "none", 1: "one", 2: "two"}
+    return tmpl.format(actor=a), count_map.get(len(w.get_inventory(a)), "none")
 
-    elif "Truth" in target_category:
-        loc = world[t_actor]["location"]
-        if random.random() < 0.5:
-            q_str = q_tmpl.format(actor=t_actor, location=loc)
-            a_str = "yes"
-        else:
-            wrong_loc = random.choice([l for l in pools["location"] if l != loc])
-            q_str = q_tmpl.format(actor=t_actor, location=wrong_loc)
-            a_str = "no"
+def resolve_actor_location_polar(w, tmpl, actors, cfg):
+    a = random.choice(actors)
+    loc = w.actor_loc[a]
+    if random.random() < 0.5:
+        return tmpl.format(actor=a, location=loc), "yes"
+    wrong_loc = random.choice([l for l in w.pools["locations"] if l != loc])
+    return tmpl.format(actor=a, location=wrong_loc), "no"
 
-    elif "Polar Possession" in target_category:
-        held = world[t_actor]["items"]
-        if held and random.random() < 0.5:
-            q_str = q_tmpl.format(actor=t_actor, item=random.choice(held))
-            a_str = "yes"
-        else:
-            not_held = [i for i in pools["item"] if i not in held]
-            q_str = q_tmpl.format(actor=t_actor, item=random.choice(not_held))
-            a_str = "no"
+def resolve_possession_polar(w, tmpl, actors, cfg):
+    a = random.choice(actors)
+    inv = w.get_inventory(a)
+    if inv and random.random() < 0.5:
+        return tmpl.format(actor=a, item=random.choice(inv)), "yes"
+    not_held = [i for i in w.pools["items"] if i not in inv]
+    return tmpl.format(actor=a, item=random.choice(not_held)), "no"
 
-    elif "Motivations" in target_category:
-        st = world[t_actor]["state"]
-        if st and "why" in q_tmpl:
-            q_str = q_tmpl.format(actor=t_actor, location=world[t_actor]["location"])
-            a_str = st
-        else:
-            active_with_state = [a for a in active_actors if world[a]["state"]]
-            if active_with_state:
-                ch = random.choice(active_with_state)
-                q_str = q_tmpl.format(state=world[ch]["state"], actor=ch, location="")
-                a_str = ch
-            else:
-                q_str = q_tmpl.format(state=random.choice(needs)["state"], actor="", location="")
-                a_str = "nobody"
+def resolve_past_location(w, tmpl, actors, cfg):
+    moves = [h for h in w.history if h["type"] == "move"]
+    if moves:
+        m = random.choice(moves)
+        return tmpl.format(actor=m["actor"], location=m["to"]), m["from"]
+    a = random.choice(actors)
+    return f"where is {a}", w.actor_loc[a]
+
+def resolve_agent_motivation(w, tmpl, actors, cfg):
+    a = random.choice(actors)
+    st = w.actor_state[a]
+    if st and "why" in tmpl:
+        return tmpl.format(actor=a, location=st["target"]), st["state"]
+    need_state = random.choice(cfg["states"]["needs"])["state"]
+    matched = [act for act, s in w.actor_state.items() if s and s["state"] == need_state]
+    return tmpl.format(state=need_state, actor="", location=""), matched[0] if matched else "nobody"
+
+QUERY_RESOLVERS = {
+    "actor_location": resolve_actor_location,
+    "item_location": resolve_item_location,
+    "possession_list": resolve_possession_list,
+    "possession_count": resolve_possession_count,
+    "actor_location_polar": resolve_actor_location_polar,
+    "possession_polar": resolve_possession_polar,
+    "past_location": resolve_past_location,
+    "agent_motivation": resolve_agent_motivation
+}
+
+
+def generate_atomic_sample(cfg, target_category=None):
+    w = WorldState(cfg)
+    clauses = []
+    
+    active_actors = random.sample(cfg["pools"]["actors"], 2)
+    for a in active_actors:
+        clauses.append(random.choice(cfg["initial_templates"]).format(actor=a, location=w.actor_loc[a]))
+
+    action_keys = list(cfg["actions"].keys())
+    target_events = random.randint(cfg["rules"]["min_events"], cfg["rules"]["max_events"])
+    events_run, attempts = 0, 0
+    while events_run < target_events and attempts < 30:
+        attempts += 1
+        action = random.choice(action_keys)
+        narrated = ACTION_HANDLERS[action](w, cfg)
+        if narrated:
+            if events_run > 0 and random.random() < cfg["rules"]["transition_probability"]:
+                narrated = f"{random.choice(cfg['connectors'])} {narrated}"
+            clauses.append(narrated)
+            events_run += 1
+
+    premise = " . ".join(clauses)
+
+    cat = target_category if target_category else random.choice(list(cfg["queries"].keys()))
+    q_meta = cfg["queries"][cat]
+    tmpl = random.choice(q_meta["templates"])
+    q_str, a_str = QUERY_RESOLVERS[q_meta["resolver"]](w, tmpl, active_actors, cfg)
 
     return format_qa_sequence(premise, q_str, a_str)
 
-def generate_benchmark_suite(log_cfg, samples_per_category=400):
+def generate_benchmark_suite(cfg, samples_per_category=400):
     dataset = {}
-    for cat in log_cfg["queries"].keys():
+    for cat in cfg["queries"].keys():
         dataset[cat] = []
         seen = set()
         attempts = 0
-        while len(dataset[cat]) < samples_per_category and attempts < samples_per_category * 15:
+        while len(dataset[cat]) < samples_per_category and attempts < samples_per_category * 12:
             attempts += 1
-            seq = generate_atomic_sample(log_cfg, target_category=cat)
+            seq = generate_atomic_sample(cfg, target_category=cat)
             p, t = split_qa(seq)
             if p not in seen:
                 seen.add(p)
