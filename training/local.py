@@ -66,25 +66,22 @@ WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 def tokenize_str(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", s.lower())]
 
-qa_tensor_x, qa_tensor_y, qa_tensor_w = [], [], []
+qa_tensor_x, qa_tensor_y = [], []
 pad_id, a_token_id = WORD_TO_ID["<pad>"], WORD_TO_ID["[a]"]
 
 for task in all_qa_tasks:
     toks = tokenize_str(task)
     if len(toks) > BLOCK_SIZE: continue
     x = toks + [pad_id] * (BLOCK_SIZE - len(toks))
-    y, w = [-100] * BLOCK_SIZE, [0.0] * BLOCK_SIZE
-    ans_start = next((idx for idx, t in enumerate(toks) if t == a_token_id), len(toks) - 1)
-    for idx in range(len(toks) - 1):
-        y[idx] = toks[idx + 1]
-        w[idx] = 2.5 if idx >= ans_start else 0.2
+    y = [-100] * BLOCK_SIZE
+    ans_start = next((idx for idx, t in enumerate(toks) if t == a_token_id), -1)
+    if ans_start != -1:
+        for idx in range(ans_start, len(toks) - 1): y[idx] = toks[idx + 1]
     qa_tensor_x.append(torch.tensor(x, dtype=torch.long))
     qa_tensor_y.append(torch.tensor(y, dtype=torch.long))
-    qa_tensor_w.append(torch.tensor(w, dtype=torch.float))
 
 qa_x_data = torch.stack(qa_tensor_x)
 qa_y_data = torch.stack(qa_tensor_y)
-qa_w_data = torch.stack(qa_tensor_w)
 story_data = torch.tensor(tokenize_str(raw_stories), dtype=torch.long)
 
 class MQA(nn.Module):
@@ -135,35 +132,31 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=mod_cfg["training"]["base_l
 TOTAL_STEPS = mod_cfg["training"]["total_steps"]
 WARMUP = mod_cfg["training"]["warmup_steps"]
 BASE_LR, MIN_LR = mod_cfg["training"]["base_lr"], mod_cfg["training"]["min_lr"]
-BATCH_QA, BATCH_ST = 14, 2
+HALF_BATCH = mod_cfg["training"]["half_batch"]
 
 def get_lr(step):
     if step < WARMUP: return BASE_LR * (step + 1) / WARMUP
     return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * (step - WARMUP) / (TOTAL_STEPS - WARMUP))) * (BASE_LR - MIN_LR)
 
 def get_balanced_batch():
-    qa_idx = torch.randint(len(qa_x_data), (BATCH_QA,))
-    st_idx = torch.randint(len(story_data) - BLOCK_SIZE - 1, (BATCH_ST,))
-    x_qa, y_qa, w_qa = qa_x_data[qa_idx].to(DEVICE), qa_y_data[qa_idx].to(DEVICE), qa_w_data[qa_idx].to(DEVICE)
-    x_st = torch.stack([story_data[i : i + BLOCK_SIZE] for i in st_idx]).to(DEVICE)
-    y_st = torch.stack([story_data[i + 1 : i + BLOCK_SIZE + 1] for i in st_idx]).to(DEVICE)
-    return x_qa, y_qa, w_qa, x_st, y_st
+    qa_idx = torch.randint(len(qa_x_data), (HALF_BATCH,))
+    st_idx = torch.randint(len(story_data) - BLOCK_SIZE - 1, (HALF_BATCH,))
+    x_st = torch.stack([story_data[i : i + BLOCK_SIZE] for i in st_idx])
+    y_st = torch.stack([story_data[i + 1 : i + BLOCK_SIZE + 1] for i in st_idx])
+    return qa_x_data[qa_idx].to(DEVICE), qa_y_data[qa_idx].to(DEVICE), x_st.to(DEVICE), y_st.to(DEVICE)
 
 model.train()
 for step in range(TOTAL_STEPS + 1):
     for p in optimizer.param_groups: p["lr"] = get_lr(step)
 
-    x_qa, y_qa, w_qa, x_st, y_st = get_balanced_batch()
-    logits_qa = model(x_qa)
-    loss_qa_all = F.cross_entropy(logits_qa.view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100, reduction="none")
-    loss_qa = (loss_qa_all * w_qa.view(-1)).sum() / (w_qa.view(-1) > 0).sum().clamp(min=1)
-
-    logits_st = model(x_st)
-    loss_st = F.cross_entropy(logits_st.view(-1, VOCAB_SIZE), y_st.view(-1))
+    x_qa, y_qa, x_st, y_st = get_balanced_batch()
+    logits_all = model(torch.cat([x_qa, x_st], dim=0))
+    loss_qa = F.cross_entropy(logits_all[:HALF_BATCH].view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
+    loss_st = F.cross_entropy(logits_all[HALF_BATCH:].view(-1, VOCAB_SIZE), y_st.view(-1))
 
     decay_start = int(TOTAL_STEPS * 0.70)
-    current_w_st = 0.15 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.10 if step > decay_start else 0.15
-    loss = loss_qa + (max(current_w_st, 0.05) * loss_st)
+    current_w_st = 0.3 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.25 if step > decay_start else 0.3
+    loss = (2.5 * loss_qa) + (max(current_w_st, 0.05) * loss_st)
 
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
@@ -183,6 +176,7 @@ def dump_t(t, f):
             f.write(torch.clamp(torch.round(r / s), -128, 127).to(torch.int8).numpy().tobytes())
     else:
         f.write(d.to(torch.float32).numpy().tobytes())
+
 with open(os.path.join(MODELS_DIR, "pico1 weights.model"), "wb") as f:
     dump_t(model.tok_emb.weight, f); dump_t(model.pos_emb.weight, f)
     for i in [0, 1, 2]:

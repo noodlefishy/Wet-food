@@ -1,498 +1,498 @@
 {
   "01: Actor Location": [
     {
-      "q": "[c] felix was playing happily in the park . luna was playing happily in the park . then felix ran to the room . then then luna ran to the room . later that morning felix went into the park . [q] where is felix now ? [a]",
+      "q": "[c] felix started in the park . bob was in the garden . felix picked up the box . bob was thirsty . after that felix dropped the box . [q] where is bob now ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] bob started in the kitchen . alice started in the park . alice moved to the garden . alice felt tired . alice moved to the park . [q] where is alice now ? [a]",
       "target": "park ."
     },
     {
-      "q": "[c] bob was playing happily in the park . alice was playing happily in the room . then alice ran to the kitchen . later that morning bob picked up the little box . next alice got the book . [q] where is alice now ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] luna started in the cozy park . felix was playing happily in the room . felix picked up the little cup . luna walked happily to the room . [q] where is felix ? [a]",
+      "q": "[c] felix started in the park . bob was in the kitchen . bob walked to the room . bob got the ball . [q] where is bob now ? [a]",
       "target": "room ."
     },
     {
-      "q": "[c] luna started in the cozy kitchen . felix was playing happily in the room . felix picked up the little ball . one sunny day felix walked happily to the garden . [q] where is felix now ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] bob was playing happily in the park . luna was playing happily in the kitchen . bob picked up the little box . next luna went into the garden . [q] where is luna ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] one day luna was in the kitchen . felix was playing happily in the room . luna picked up the little ball . felix picked up the little cup . [q] where is felix ? [a]",
-      "target": "room ."
-    },
-    {
-      "q": "[c] felix started in the cozy garden . one day bob was in the garden . felix walked happily to the kitchen . later that morning then bob ran to the park . [q] where is bob now ? [a]",
+      "q": "[c] bob started in the park . felix was in the park . felix went to the kitchen . after that felix felt hungry . [q] where is bob now ? [a]",
       "target": "park ."
     },
     {
-      "q": "[c] felix was playing happily in the room . luna was playing happily in the kitchen . luna went into the room . luna picked up the little box . [q] where is luna now ? [a]",
-      "target": "room ."
-    },
-    {
-      "q": "[c] felix started in the cozy garden . alice started in the cozy room . alice went into the garden . then felix ran to the room . one sunny day felix went into the park . [q] where is felix ? [a]",
+      "q": "[c] felix was in the kitchen . alice started in the park . alice felt hungry . after that felix moved to the room . then felix walked to the garden . [q] where is alice now ? [a]",
       "target": "park ."
     },
     {
-      "q": "[c] one day alice was in the room . bob started in the cozy park . alice got the book . next alice went into the kitchen . after that bob walked happily to the garden . [q] where is bob now ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] luna started in the cozy kitchen . alice was playing happily in the kitchen . alice found a nice box . after that alice went into the park . after that alice went into the kitchen . [q] where is luna now ? [a]",
+      "q": "[c] alice started in the kitchen . luna was in the kitchen . alice was tired . after that alice walked to the room . [q] where is luna now ? [a]",
       "target": "kitchen ."
     },
     {
-      "q": "[c] one day alice was in the park . one day bob was in the kitchen . then bob ran to the park . bob went into the room . after that then bob ran to the kitchen . [q] where is bob ? [a]",
+      "q": "[c] luna started in the park . alice was in the garden . alice felt hungry . next luna got the box . [q] where is alice ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] felix started in the park . alice started in the room . felix felt tired . felix moved to the garden . [q] where is felix now ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] alice started in the room . felix started in the kitchen . alice found the book . felix was hungry . next alice went to the garden . [q] where is felix ? [a]",
       "target": "kitchen ."
     },
     {
-      "q": "[c] felix was playing happily in the room . one day bob was in the garden . bob walked happily to the kitchen . felix went into the garden . later that morning bob picked up the little ball . [q] where is felix now ? [a]",
+      "q": "[c] luna was in the kitchen . alice started in the garden . luna moved to the park . next alice felt tired . then alice walked to the room . [q] where is alice now ? [a]",
+      "target": "room ."
+    },
+    {
+      "q": "[c] alice started in the room . luna started in the garden . luna felt thirsty . alice was thirsty . [q] where is alice now ? [a]",
+      "target": "room ."
+    },
+    {
+      "q": "[c] alice started in the garden . bob started in the kitchen . alice got the cup . after that alice put down the cup . bob moved to the garden . [q] where is alice now ? [a]",
       "target": "garden ."
     },
     {
-      "q": "[c] luna started in the cozy garden . alice started in the cozy park . then alice ran to the garden . next alice found a nice box . [q] where is luna ? [a]",
-      "target": "garden ."
+      "q": "[c] felix was in the park . bob started in the kitchen . bob walked to the garden . bob walked to the park . bob was thirsty . [q] where is bob now ? [a]",
+      "target": "park ."
     },
     {
-      "q": "[c] luna was playing happily in the park . alice started in the cozy park . alice walked happily to the kitchen . luna walked happily to the garden . [q] where is luna ? [a]",
-      "target": "garden ."
+      "q": "[c] felix was in the room . alice started in the room . felix picked up the book . then alice was thirsty . [q] where is felix ? [a]",
+      "target": "room ."
+    },
+    {
+      "q": "[c] luna was in the kitchen . bob started in the garden . luna was tired . after that luna moved to the park . after that bob went to the room . [q] where is bob ? [a]",
+      "target": "room ."
     }
   ],
   "02: Item Multi-Hop Location": [
     {
-      "q": "[c] bob was playing happily in the kitchen . luna was playing happily in the garden . luna picked up the little book . one sunny day bob went into the garden . [q] where is the book now ? [a]",
+      "q": "[c] alice started in the garden . bob started in the garden . alice took the cup . alice dropped the cup . next alice went to the kitchen . [q] where is the cup now ? [a]",
       "target": "garden ."
     },
     {
-      "q": "[c] luna was playing happily in the garden . one day bob was in the room . luna went into the kitchen . then luna picked up the little ball . after that then bob ran to the kitchen . [q] where is the ball ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] luna was playing happily in the kitchen . one day alice was in the room . alice walked happily to the garden . then then luna ran to the park . [q] where is luna ? [a]",
+      "q": "[c] felix was in the park . bob was in the park . bob felt thirsty . felix took the ball . [q] where is the ball now ? [a]",
       "target": "park ."
     },
     {
-      "q": "[c] bob started in the cozy garden . luna was playing happily in the kitchen . luna walked happily to the garden . bob walked happily to the park . after that luna walked happily to the room . [q] where is bob ? [a]",
+      "q": "[c] alice was in the kitchen . bob started in the garden . bob moved to the park . alice walked to the park . [q] where is alice ? [a]",
       "target": "park ."
     },
     {
-      "q": "[c] one day felix was in the room . alice started in the cozy kitchen . felix picked up the little cup . later that morning then felix ran to the park . [q] where is the cup ? [a]",
+      "q": "[c] bob was in the park . felix started in the room . felix moved to the garden . felix moved to the park . [q] where is felix ? [a]",
       "target": "park ."
     },
     {
-      "q": "[c] luna started in the cozy garden . felix was playing happily in the garden . felix went into the kitchen . luna got the ball . luna went into the kitchen . [q] where is the ball ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] one day felix was in the park . one day alice was in the room . then alice ran to the park . felix got the book . [q] where is the book ? [a]",
-      "target": "park ."
-    },
-    {
-      "q": "[c] one day bob was in the garden . felix started in the cozy park . then bob ran to the kitchen . after that bob picked up the little book . [q] where is the book ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] luna started in the cozy garden . one day alice was in the kitchen . alice got the ball . after that luna found a nice box . later that morning luna got the cup . [q] where is the cup now ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] bob started in the cozy park . felix started in the cozy kitchen . bob walked happily to the kitchen . felix walked happily to the garden . [q] where is bob ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] bob started in the cozy park . one day felix was in the garden . then felix ran to the room . one sunny day felix found a nice ball . [q] where is the ball now ? [a]",
+      "q": "[c] alice started in the park . luna was in the room . luna got the box . luna was tired . [q] where is the box now ? [a]",
       "target": "room ."
     },
     {
-      "q": "[c] one day bob was in the park . one day luna was in the garden . bob went into the kitchen . one sunny day bob went into the park . then bob ran to the kitchen . [q] where is bob ? [a]",
-      "target": "kitchen ."
+      "q": "[c] felix was in the room . alice started in the room . felix felt hungry . alice was thirsty . [q] where is felix ? [a]",
+      "target": "room ."
     },
     {
-      "q": "[c] one day alice was in the park . one day felix was in the park . felix went into the kitchen . one sunny day alice went into the kitchen . [q] where is felix ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] felix was playing happily in the room . alice started in the cozy kitchen . then alice ran to the garden . next alice got the cup . [q] where is the cup ? [a]",
+      "q": "[c] alice started in the kitchen . felix started in the kitchen . felix felt hungry . felix walked to the garden . [q] where is felix ? [a]",
       "target": "garden ."
     },
     {
-      "q": "[c] bob started in the cozy garden . alice was playing happily in the garden . bob found a nice ball . bob walked happily to the park . then bob walked happily to the garden . [q] where is the ball now ? [a]",
+      "q": "[c] luna started in the room . bob started in the room . luna felt thirsty . bob was tired . after that bob moved to the park . [q] where is bob ? [a]",
+      "target": "park ."
+    },
+    {
+      "q": "[c] felix was in the room . bob started in the park . bob went to the room . felix felt tired . bob felt hungry . [q] where is bob ? [a]",
+      "target": "room ."
+    },
+    {
+      "q": "[c] luna was in the kitchen . felix started in the park . luna felt tired . felix was thirsty . next felix moved to the kitchen . [q] where is luna ? [a]",
+      "target": "kitchen ."
+    },
+    {
+      "q": "[c] felix was in the park . alice was in the park . felix went to the kitchen . next felix picked up the book . next alice moved to the kitchen . [q] where is the book ? [a]",
+      "target": "kitchen ."
+    },
+    {
+      "q": "[c] alice started in the park . felix was in the room . felix went to the garden . then alice went to the garden . [q] where is alice ? [a]",
       "target": "garden ."
+    },
+    {
+      "q": "[c] bob was in the kitchen . alice started in the park . bob walked to the room . after that bob got the ball . [q] where is the ball ? [a]",
+      "target": "room ."
+    },
+    {
+      "q": "[c] felix was in the kitchen . alice started in the room . alice felt thirsty . after that felix felt hungry . next felix picked up the box . [q] where is the box ? [a]",
+      "target": "kitchen ."
+    },
+    {
+      "q": "[c] alice started in the kitchen . luna started in the garden . luna felt thirsty . after that luna moved to the kitchen . [q] where is alice ? [a]",
+      "target": "kitchen ."
     }
   ],
   "03: Possession Lists": [
     {
-      "q": "[c] one day alice was in the kitchen . one day bob was in the kitchen . alice found a nice book . one sunny day bob walked happily to the park . bob found a nice ball . [q] what did alice find ? [a]",
-      "target": "book ."
-    },
-    {
-      "q": "[c] alice started in the cozy room . bob was playing happily in the room . bob went into the garden . then bob found a nice box . bob went into the kitchen . [q] what does bob have ? [a]",
-      "target": "box ."
-    },
-    {
-      "q": "[c] bob started in the cozy park . felix started in the cozy park . bob went into the room . one sunny day then bob ran to the garden . [q] what did felix find ? [a]",
+      "q": "[c] alice was in the park . luna was in the kitchen . alice picked up the ball . alice found the book . [q] what does luna have ? [a]",
       "target": "nothing ."
     },
     {
-      "q": "[c] bob was playing happily in the garden . alice was playing happily in the room . alice found a nice box . later that morning bob walked happily to the kitchen . [q] what did alice find ? [a]",
+      "q": "[c] felix was in the room . alice started in the room . felix was hungry . alice was thirsty . after that felix moved to the garden . [q] what did felix find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] luna started in the garden . felix started in the room . luna picked up the book . felix felt thirsty . [q] what does luna have ? [a]",
+      "target": "book ."
+    },
+    {
+      "q": "[c] bob started in the park . alice started in the park . bob felt thirsty . after that alice was hungry . next alice walked to the kitchen . [q] what did alice find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] luna started in the park . alice started in the kitchen . alice walked to the park . alice was tired . next luna walked to the garden . [q] what does alice have ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] felix started in the kitchen . bob was in the garden . felix was thirsty . after that bob got the ball . bob was hungry . [q] what does felix have ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] felix started in the park . luna started in the garden . felix went to the room . after that felix picked up the box . then felix went to the kitchen . [q] what did luna find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] bob started in the room . felix started in the park . felix was hungry . bob felt hungry . [q] what did bob find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] alice started in the room . luna started in the room . luna was tired . next alice moved to the park . [q] what did alice find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] luna started in the park . bob started in the garden . bob was thirsty . then bob walked to the room . [q] what did bob find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] felix was in the park . alice was in the room . felix was tired . then felix went to the kitchen . [q] what did felix find ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] bob was in the room . alice was in the park . alice was thirsty . bob took the box . bob went to the kitchen . [q] what does bob have ? [a]",
       "target": "box ."
     },
     {
-      "q": "[c] luna started in the cozy kitchen . bob was playing happily in the kitchen . bob walked happily to the park . bob found a nice cup . [q] what did bob find ? [a]",
+      "q": "[c] bob started in the room . alice was in the kitchen . bob was hungry . after that alice picked up the box . alice dropped the box . [q] what does bob have ? [a]",
+      "target": "nothing ."
+    },
+    {
+      "q": "[c] bob was in the kitchen . alice was in the kitchen . bob walked to the garden . then bob found the cup . [q] what does bob have ? [a]",
       "target": "cup ."
     },
     {
-      "q": "[c] luna was playing happily in the room . one day felix was in the kitchen . felix went into the garden . luna went into the garden . [q] what did felix find ? [a]",
-      "target": "nothing ."
-    },
-    {
-      "q": "[c] luna was playing happily in the garden . alice was playing happily in the kitchen . alice went into the garden . later that morning luna found a nice book . [q] what did luna find ? [a]",
-      "target": "book ."
-    },
-    {
-      "q": "[c] bob started in the cozy room . one day luna was in the kitchen . then luna ran to the park . after that then luna ran to the kitchen . [q] what does luna have ? [a]",
-      "target": "nothing ."
-    },
-    {
-      "q": "[c] one day alice was in the garden . luna started in the cozy garden . alice walked happily to the room . luna walked happily to the room . [q] what did luna find ? [a]",
-      "target": "nothing ."
-    },
-    {
-      "q": "[c] felix started in the cozy room . one day alice was in the kitchen . then felix ran to the park . felix found a nice ball . felix went into the garden . [q] what does felix have ? [a]",
-      "target": "ball ."
-    },
-    {
-      "q": "[c] felix started in the cozy kitchen . one day alice was in the kitchen . alice picked up the little ball . one sunny day then felix ran to the room . felix walked happily to the kitchen . [q] what did felix find ? [a]",
-      "target": "nothing ."
-    },
-    {
-      "q": "[c] alice was playing happily in the room . one day bob was in the park . bob walked happily to the garden . alice went into the park . [q] what did bob find ? [a]",
-      "target": "nothing ."
-    },
-    {
-      "q": "[c] one day felix was in the kitchen . alice was playing happily in the park . then felix ran to the park . then felix ran to the kitchen . then alice ran to the room . [q] what does felix have ? [a]",
-      "target": "nothing ."
-    },
-    {
-      "q": "[c] felix started in the cozy room . luna started in the cozy kitchen . then felix ran to the garden . luna got the box . then felix ran to the park . [q] what does luna have ? [a]",
-      "target": "box ."
-    },
-    {
-      "q": "[c] luna started in the cozy kitchen . one day felix was in the room . luna picked up the little ball . one sunny day luna found a nice box . after that luna walked happily to the garden . [q] what did felix find ? [a]",
+      "q": "[c] bob started in the park . felix started in the kitchen . bob felt tired . bob got the cup . after that felix was hungry . [q] what did felix find ? [a]",
       "target": "nothing ."
     }
   ],
   "04: Counting": [
     {
-      "q": "[c] one day luna was in the kitchen . alice was playing happily in the garden . alice walked happily to the kitchen . luna picked up the little book . [q] how many items does luna have ? [a]",
+      "q": "[c] alice was in the garden . felix was in the garden . alice was tired . alice went to the room . next felix felt hungry . [q] how many items does felix have ? [a]",
+      "target": "none ."
+    },
+    {
+      "q": "[c] bob started in the room . felix started in the room . felix was tired . next felix got the cup . bob walked to the garden . [q] how many items does felix have ? [a]",
       "target": "one ."
     },
     {
-      "q": "[c] bob was playing happily in the park . alice was playing happily in the room . then bob ran to the garden . one sunny day bob got the book . [q] how many items does bob have ? [a]",
+      "q": "[c] alice started in the room . bob was in the room . bob went to the kitchen . next bob moved to the park . [q] how many items does bob have ? [a]",
+      "target": "none ."
+    },
+    {
+      "q": "[c] felix started in the kitchen . alice started in the room . felix moved to the park . felix was tired . felix walked to the room . [q] how many items does felix have ? [a]",
+      "target": "none ."
+    },
+    {
+      "q": "[c] luna was in the kitchen . felix started in the room . felix took the ball . felix was hungry . luna walked to the garden . [q] how many items does felix have ? [a]",
       "target": "one ."
     },
     {
-      "q": "[c] alice started in the cozy park . bob started in the cozy room . bob walked happily to the park . then alice walked happily to the garden . [q] how many items does bob have ? [a]",
-      "target": "none ."
-    },
-    {
-      "q": "[c] bob was playing happily in the park . one day luna was in the garden . luna went into the room . luna went into the park . [q] how many items does bob have ? [a]",
-      "target": "none ."
-    },
-    {
-      "q": "[c] bob was playing happily in the kitchen . one day luna was in the garden . then bob ran to the garden . next bob went into the kitchen . luna went into the room . [q] how many items does bob have ? [a]",
-      "target": "none ."
-    },
-    {
-      "q": "[c] one day alice was in the kitchen . luna was playing happily in the garden . alice went into the room . one sunny day luna walked happily to the park . [q] how many items does alice have ? [a]",
-      "target": "none ."
-    },
-    {
-      "q": "[c] alice started in the cozy kitchen . luna started in the cozy garden . then luna ran to the room . alice went into the park . [q] how many items does alice have ? [a]",
-      "target": "none ."
-    },
-    {
-      "q": "[c] one day luna was in the park . felix was playing happily in the park . felix went into the kitchen . luna got the book . [q] how many items does luna have ? [a]",
+      "q": "[c] felix was in the park . alice started in the garden . alice was hungry . alice got the book . next felix picked up the box . [q] how many items does alice have ? [a]",
       "target": "one ."
     },
     {
-      "q": "[c] one day alice was in the room . one day felix was in the park . alice found a nice cup . felix walked happily to the garden . after that alice walked happily to the garden . [q] how many items does felix have ? [a]",
+      "q": "[c] alice was in the kitchen . luna started in the garden . alice was hungry . then alice found the cup . [q] how many items does luna have ? [a]",
       "target": "none ."
     },
     {
-      "q": "[c] felix was playing happily in the room . alice started in the cozy kitchen . alice found a nice book . after that then felix ran to the park . then alice ran to the room . [q] how many items does felix have ? [a]",
+      "q": "[c] felix started in the room . luna started in the park . felix felt thirsty . luna walked to the garden . felix got the ball . [q] how many items does felix have ? [a]",
+      "target": "one ."
+    },
+    {
+      "q": "[c] bob was in the garden . alice started in the kitchen . alice felt hungry . next bob moved to the room . [q] how many items does bob have ? [a]",
       "target": "none ."
     },
     {
-      "q": "[c] one day felix was in the room . bob was playing happily in the kitchen . bob found a nice cup . after that bob walked happily to the garden . felix found a nice book . [q] how many items does bob have ? [a]",
-      "target": "one ."
-    },
-    {
-      "q": "[c] bob was playing happily in the kitchen . luna started in the cozy room . luna walked happily to the kitchen . then bob ran to the park . later that morning luna got the cup . [q] how many items does luna have ? [a]",
-      "target": "one ."
-    },
-    {
-      "q": "[c] luna was playing happily in the park . one day felix was in the park . felix went into the kitchen . then luna ran to the garden . [q] how many items does luna have ? [a]",
+      "q": "[c] felix was in the room . alice was in the kitchen . alice felt thirsty . felix was thirsty . [q] how many items does alice have ? [a]",
       "target": "none ."
     },
     {
-      "q": "[c] alice was playing happily in the room . luna was playing happily in the garden . luna picked up the little cup . one sunny day alice went into the garden . luna walked happily to the kitchen . [q] how many items does luna have ? [a]",
+      "q": "[c] felix started in the kitchen . alice started in the park . felix felt thirsty . then alice was tired . after that alice went to the room . [q] how many items does alice have ? [a]",
+      "target": "none ."
+    },
+    {
+      "q": "[c] felix was in the room . luna was in the garden . felix felt thirsty . next luna moved to the room . [q] how many items does felix have ? [a]",
+      "target": "none ."
+    },
+    {
+      "q": "[c] luna started in the room . alice was in the garden . luna felt thirsty . alice walked to the kitchen . next alice found the ball . [q] how many items does alice have ? [a]",
       "target": "one ."
     },
     {
-      "q": "[c] alice was playing happily in the kitchen . felix was playing happily in the garden . felix walked happily to the kitchen . after that then alice ran to the garden . alice went into the kitchen . [q] how many items does alice have ? [a]",
+      "q": "[c] alice started in the park . felix was in the kitchen . alice moved to the kitchen . alice felt hungry . [q] how many items does alice have ? [a]",
+      "target": "none ."
+    },
+    {
+      "q": "[c] bob started in the kitchen . alice was in the garden . alice walked to the room . alice went to the park . [q] how many items does bob have ? [a]",
       "target": "none ."
     }
   ],
   "05: Yes/No Truth Verification": [
     {
-      "q": "[c] felix started in the cozy garden . alice started in the cozy room . felix got the box . then felix went into the room . later that morning felix picked up the little ball . [q] is felix in the room ? [a]",
+      "q": "[c] bob started in the room . luna started in the room . bob felt thirsty . luna went to the kitchen . after that luna walked to the park . [q] is luna in the park ? [a]",
       "target": "yes ."
     },
     {
-      "q": "[c] bob was playing happily in the room . alice was playing happily in the kitchen . alice got the cup . after that alice went into the room . [q] is bob in the garden ? [a]",
+      "q": "[c] bob was in the room . felix started in the room . felix went to the garden . bob was hungry . bob went to the kitchen . [q] is bob in the room ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] luna started in the cozy park . felix was playing happily in the park . then felix ran to the room . luna walked happily to the room . then then felix ran to the kitchen . [q] is luna in the garden ? [a]",
+      "q": "[c] bob was in the room . felix started in the park . felix felt thirsty . bob was tired . after that bob walked to the garden . [q] is felix in the park ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] alice started in the garden . luna started in the room . alice moved to the park . then alice went to the kitchen . luna was thirsty . [q] is luna in the room ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] felix started in the kitchen . alice was in the kitchen . felix moved to the room . felix felt thirsty . felix went to the kitchen . [q] is felix in the kitchen ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] alice started in the garden . luna started in the room . luna walked to the park . after that alice was thirsty . after that alice moved to the room . [q] is luna in the kitchen ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] alice started in the cozy garden . luna was playing happily in the park . alice found a nice book . later that morning luna went into the garden . luna picked up the little cup . [q] is luna in the room ? [a]",
+      "q": "[c] felix was in the park . alice started in the garden . felix got the cup . felix moved to the room . alice moved to the park . [q] is felix in the garden ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] felix was playing happily in the park . one day bob was in the room . bob picked up the little book . then bob found a nice ball . felix went into the kitchen . [q] is bob in the park ? [a]",
+      "q": "[c] luna started in the kitchen . alice started in the kitchen . luna walked to the park . next alice moved to the park . [q] is alice in the kitchen ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] bob started in the cozy garden . one day felix was in the kitchen . bob picked up the little cup . bob walked happily to the park . [q] is bob in the park ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] bob started in the cozy park . one day luna was in the park . bob went into the kitchen . luna got the ball . [q] is bob in the kitchen ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] felix started in the cozy room . bob was playing happily in the garden . bob got the cup . next bob walked happily to the kitchen . then bob ran to the room . [q] is felix in the room ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] luna started in the cozy room . bob started in the cozy garden . luna found a nice cup . bob picked up the little box . [q] is luna in the room ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] alice was playing happily in the kitchen . bob started in the cozy park . bob walked happily to the kitchen . bob got the cup . [q] is alice in the kitchen ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] one day luna was in the park . alice was playing happily in the garden . luna walked happily to the room . luna went into the kitchen . [q] is luna in the room ? [a]",
+      "q": "[c] felix started in the room . alice was in the room . alice moved to the kitchen . after that alice felt tired . then alice got the box . [q] is alice in the garden ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] one day alice was in the room . luna started in the cozy park . alice went into the kitchen . luna picked up the little box . [q] is alice in the park ? [a]",
+      "q": "[c] alice started in the park . luna started in the park . alice moved to the room . after that alice was tired . [q] is alice in the room ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] luna was in the garden . alice started in the room . luna got the book . alice walked to the park . after that alice walked to the garden . [q] is alice in the garden ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] bob was in the park . alice was in the room . alice picked up the box . bob felt tired . alice felt hungry . [q] is alice in the room ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] luna was in the garden . alice was in the kitchen . luna walked to the park . then luna moved to the room . [q] is luna in the room ? [a]",
+      "target": "yes ."
+    },
+    {
+      "q": "[c] alice started in the kitchen . felix was in the room . alice was hungry . alice went to the room . [q] is felix in the park ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] felix was playing happily in the kitchen . one day alice was in the park . then alice ran to the garden . one sunny day felix got the box . [q] is felix in the kitchen ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] alice was playing happily in the garden . felix started in the cozy garden . alice found a nice book . one sunny day then felix ran to the kitchen . [q] is felix in the kitchen ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] one day bob was in the kitchen . luna was playing happily in the park . luna went into the room . luna walked happily to the kitchen . [q] is luna in the kitchen ? [a]",
-      "target": "yes ."
+      "q": "[c] luna started in the room . alice was in the garden . alice went to the kitchen . after that luna was hungry . then alice walked to the garden . [q] is alice in the park ? [a]",
+      "target": "no ."
     }
   ],
   "06: Polar Possession Verification": [
     {
-      "q": "[c] alice started in the cozy park . one day felix was in the park . then alice ran to the garden . then felix went into the garden . felix got the cup . [q] does alice have the book ? [a]",
+      "q": "[c] luna was in the room . alice started in the garden . alice felt tired . after that luna felt hungry . [q] does luna have the book ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] one day luna was in the room . felix started in the cozy room . then luna ran to the park . one sunny day luna walked happily to the room . then luna picked up the little box . [q] does felix have the ball ? [a]",
+      "q": "[c] luna was in the kitchen . alice was in the garden . alice was thirsty . after that luna picked up the cup . luna was tired . [q] does luna have the ball ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] alice started in the cozy kitchen . bob started in the cozy garden . bob walked happily to the room . then alice ran to the room . alice went into the park . [q] does bob have the cup ? [a]",
+      "q": "[c] felix was in the garden . bob started in the kitchen . bob walked to the garden . felix moved to the room . [q] does felix have the ball ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] one day luna was in the garden . bob started in the cozy kitchen . luna walked happily to the room . bob walked happily to the park . one sunny day bob found a nice box . [q] does bob have the ball ? [a]",
+      "q": "[c] alice was in the garden . felix started in the kitchen . felix took the cup . then felix felt tired . [q] does felix have the book ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] alice started in the cozy garden . felix was playing happily in the room . then felix ran to the park . felix got the cup . one sunny day felix went into the kitchen . [q] does felix have the box ? [a]",
+      "q": "[c] bob started in the kitchen . felix started in the kitchen . felix walked to the room . next felix felt tired . next bob got the cup . [q] does felix have the box ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] one day alice was in the garden . one day bob was in the garden . bob found a nice cup . alice went into the kitchen . then bob walked happily to the park . [q] does alice have the box ? [a]",
+      "q": "[c] alice started in the room . luna started in the room . luna felt thirsty . after that luna moved to the park . luna walked to the room . [q] does luna have the ball ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] alice started in the cozy kitchen . one day felix was in the park . felix found a nice ball . after that alice picked up the little book . alice walked happily to the garden . [q] does felix have the cup ? [a]",
+      "q": "[c] felix was in the park . luna started in the garden . luna moved to the park . after that felix was hungry . [q] does felix have the box ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] felix started in the cozy room . luna was playing happily in the kitchen . then luna ran to the garden . felix went into the garden . luna found a nice cup . [q] does luna have the cup ? [a]",
-      "target": "yes ."
-    },
-    {
-      "q": "[c] bob started in the cozy kitchen . alice started in the cozy kitchen . bob got the book . one sunny day then alice ran to the garden . bob walked happily to the park . [q] does bob have the box ? [a]",
+      "q": "[c] felix was in the room . bob started in the kitchen . bob was hungry . next bob walked to the garden . then felix moved to the kitchen . [q] does bob have the cup ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] one day bob was in the room . one day alice was in the park . alice found a nice ball . alice picked up the little box . [q] does alice have the book ? [a]",
+      "q": "[c] alice started in the kitchen . luna was in the park . alice felt tired . luna moved to the room . luna moved to the park . [q] does alice have the box ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] alice started in the cozy park . one day luna was in the room . luna walked happily to the garden . then luna ran to the park . [q] does alice have the cup ? [a]",
+      "q": "[c] bob was in the room . felix was in the garden . felix picked up the box . then felix was thirsty . bob moved to the park . [q] does felix have the cup ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] felix was playing happily in the kitchen . alice started in the cozy garden . then alice ran to the room . then alice walked happily to the kitchen . [q] does felix have the box ? [a]",
+      "q": "[c] felix started in the room . alice started in the garden . alice was hungry . next felix found the cup . [q] does alice have the box ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] bob started in the cozy garden . one day alice was in the park . alice found a nice ball . bob walked happily to the park . alice walked happily to the room . [q] does alice have the box ? [a]",
+      "q": "[c] bob started in the garden . alice was in the kitchen . bob felt hungry . after that alice walked to the room . [q] does bob have the cup ? [a]",
       "target": "no ."
     },
     {
-      "q": "[c] one day luna was in the garden . felix started in the cozy kitchen . luna walked happily to the room . luna found a nice ball . [q] does luna have the ball ? [a]",
-      "target": "yes ."
+      "q": "[c] luna was in the garden . alice was in the kitchen . luna picked up the book . after that luna felt tired . luna dropped the book . [q] does luna have the book ? [a]",
+      "target": "no ."
     },
     {
-      "q": "[c] one day felix was in the garden . bob started in the cozy park . then bob ran to the garden . one sunny day bob picked up the little ball . felix walked happily to the room . [q] does felix have the cup ? [a]",
+      "q": "[c] felix was in the park . luna was in the garden . luna was thirsty . after that luna found the ball . [q] does felix have the ball ? [a]",
+      "target": "no ."
+    },
+    {
+      "q": "[c] alice was in the room . bob was in the garden . bob went to the park . bob took the cup . [q] does alice have the cup ? [a]",
       "target": "no ."
     }
   ],
   "07: Time Reasoning (Before/After)": [
     {
-      "q": "[c] luna started in the cozy kitchen . alice started in the cozy park . luna picked up the little cup . alice got the book . later that morning luna went into the park . [q] where was luna before the park ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] alice started in the cozy park . luna was playing happily in the room . alice found a nice cup . next alice walked happily to the kitchen . after that alice went into the garden . [q] where was alice before the kitchen ? [a]",
-      "target": "park ."
-    },
-    {
-      "q": "[c] luna was playing happily in the kitchen . alice was playing happily in the kitchen . then luna ran to the garden . luna picked up the little box . later that morning luna got the ball . [q] where was luna before the garden ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] one day bob was in the room . felix started in the cozy garden . felix picked up the little box . next then felix ran to the room . [q] where was felix before the room ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] felix started in the cozy garden . luna was playing happily in the garden . felix found a nice book . felix went into the kitchen . [q] where was felix before the kitchen ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] one day alice was in the kitchen . felix started in the cozy kitchen . then alice ran to the park . felix went into the garden . [q] where was felix before the garden ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] bob started in the cozy garden . luna started in the cozy room . bob went into the park . one sunny day then luna ran to the park . [q] where was bob before the park ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] one day luna was in the room . felix started in the cozy garden . luna picked up the little book . one sunny day luna walked happily to the garden . then felix ran to the kitchen . [q] where was felix before the kitchen ? [a]",
-      "target": "garden ."
-    },
-    {
-      "q": "[c] one day luna was in the room . alice started in the cozy kitchen . luna picked up the little cup . luna found a nice book . [q] where is luna ? [a]",
+      "q": "[c] felix started in the garden . bob was in the room . bob was hungry . felix was tired . [q] where is bob ? [a]",
       "target": "room ."
     },
     {
-      "q": "[c] alice was playing happily in the park . one day luna was in the kitchen . alice walked happily to the kitchen . next then luna ran to the room . then then alice ran to the park . [q] where was luna before the room ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] felix was playing happily in the garden . bob was playing happily in the room . felix went into the park . later that morning felix walked happily to the room . later that morning felix walked happily to the garden . [q] where was felix before the park ? [a]",
+      "q": "[c] alice started in the garden . luna started in the room . alice went to the room . luna was tired . [q] where was alice before the room ? [a]",
       "target": "garden ."
     },
     {
-      "q": "[c] felix was playing happily in the kitchen . one day bob was in the room . bob went into the kitchen . one sunny day bob went into the park . bob walked happily to the kitchen . [q] where was bob before the park ? [a]",
-      "target": "kitchen ."
-    },
-    {
-      "q": "[c] one day bob was in the garden . one day alice was in the garden . bob walked happily to the room . then alice ran to the park . [q] where was bob before the room ? [a]",
+      "q": "[c] luna started in the garden . alice started in the garden . alice went to the kitchen . luna walked to the kitchen . [q] where was luna before the kitchen ? [a]",
       "target": "garden ."
     },
     {
-      "q": "[c] one day bob was in the kitchen . one day alice was in the garden . then alice ran to the kitchen . next then bob ran to the room . [q] where was bob before the room ? [a]",
+      "q": "[c] alice started in the garden . luna was in the garden . luna was hungry . alice went to the kitchen . [q] where was alice before the kitchen ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] luna was in the kitchen . felix started in the park . felix got the ball . next luna picked up the book . [q] where is felix ? [a]",
+      "target": "park ."
+    },
+    {
+      "q": "[c] felix was in the garden . alice started in the garden . felix felt tired . then alice walked to the room . [q] where was alice before the room ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] felix started in the park . luna started in the room . luna moved to the park . next luna got the book . luna dropped the book . [q] where was luna before the park ? [a]",
+      "target": "room ."
+    },
+    {
+      "q": "[c] bob started in the garden . alice was in the garden . bob took the cup . bob handed the cup to alice . [q] where is alice ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] alice started in the kitchen . luna was in the park . alice was hungry . luna got the book . [q] where is alice ? [a]",
       "target": "kitchen ."
     },
     {
-      "q": "[c] felix started in the cozy garden . luna was playing happily in the park . felix went into the room . felix walked happily to the garden . after that then luna ran to the kitchen . [q] where was luna before the kitchen ? [a]",
+      "q": "[c] alice started in the garden . bob started in the garden . bob was thirsty . alice felt thirsty . [q] where is bob ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] felix started in the garden . alice was in the park . alice found the cup . next felix went to the room . after that alice felt tired . [q] where was felix before the room ? [a]",
+      "target": "garden ."
+    },
+    {
+      "q": "[c] felix was in the park . luna was in the kitchen . felix picked up the cup . then felix picked up the book . [q] where is luna ? [a]",
+      "target": "kitchen ."
+    },
+    {
+      "q": "[c] luna started in the park . felix started in the park . luna found the book . felix walked to the kitchen . [q] where was felix before the kitchen ? [a]",
+      "target": "park ."
+    },
+    {
+      "q": "[c] bob was in the kitchen . alice started in the kitchen . alice was thirsty . bob found the ball . bob moved to the garden . [q] where was bob before the garden ? [a]",
+      "target": "kitchen ."
+    },
+    {
+      "q": "[c] bob was in the park . felix started in the kitchen . bob went to the room . after that bob found the cup . then bob was thirsty . [q] where was bob before the room ? [a]",
       "target": "park ."
     }
   ],
   "08: Agent Motivations": [
     {
-      "q": "[c] alice was playing happily in the park . bob started in the cozy kitchen . alice got the cup . alice walked happily to the kitchen . [q] why did go to the ? [a]",
+      "q": "[c] felix started in the room . luna was in the park . luna went to the garden . luna was hungry . [q] why did go to the ? [a]",
+      "target": "luna ."
+    },
+    {
+      "q": "[c] luna was in the kitchen . alice started in the room . alice felt tired . luna felt tired . [q] why did luna go to the room ? [a]",
+      "target": "tired ."
+    },
+    {
+      "q": "[c] alice was in the garden . felix started in the park . alice moved to the park . then alice walked to the garden . felix was hungry . [q] why did felix go to the kitchen ? [a]",
+      "target": "hungry ."
+    },
+    {
+      "q": "[c] felix was in the park . luna started in the kitchen . felix felt hungry . then luna was thirsty . luna went to the garden . [q] who is tired ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] bob was playing happily in the park . luna was playing happily in the room . then bob ran to the kitchen . after that bob picked up the little box . luna got the ball . [q] who is thirsty ? [a]",
+      "q": "[c] luna started in the garden . felix was in the kitchen . luna felt hungry . luna moved to the kitchen . next felix got the ball . [q] why did luna go to the kitchen ? [a]",
+      "target": "hungry ."
+    },
+    {
+      "q": "[c] felix started in the kitchen . bob started in the kitchen . felix took the book . after that felix put down the book . then felix went to the park . [q] why did go to the ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] bob was playing happily in the park . luna started in the cozy kitchen . then bob ran to the room . later that morning luna walked happily to the garden . next bob went into the kitchen . [q] who is hungry ? [a]",
+      "q": "[c] bob started in the garden . luna started in the kitchen . bob walked to the kitchen . bob was tired . [q] why did bob go to the room ? [a]",
+      "target": "tired ."
+    },
+    {
+      "q": "[c] felix started in the kitchen . luna started in the garden . luna was tired . next felix felt tired . after that luna moved to the room . [q] why did felix go to the room ? [a]",
+      "target": "tired ."
+    },
+    {
+      "q": "[c] bob was in the room . luna was in the room . luna took the cup . then luna walked to the garden . [q] why did go to the ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] one day bob was in the kitchen . alice started in the cozy room . bob went into the room . alice picked up the little book . [q] who is hungry ? [a]",
+      "q": "[c] felix was in the room . luna started in the kitchen . felix walked to the park . felix walked to the kitchen . [q] why did go to the ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] felix started in the cozy kitchen . one day alice was in the room . felix got the box . then then alice ran to the garden . [q] who is tired ? [a]",
+      "q": "[c] bob was in the park . alice was in the park . bob took the cup . bob felt thirsty . then alice went to the garden . [q] who is hungry ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] one day alice was in the park . one day felix was in the park . alice went into the room . alice went into the kitchen . [q] who is thirsty ? [a]",
+      "q": "[c] luna started in the park . bob was in the room . luna found the box . bob felt hungry . [q] who is hungry ? [a]",
+      "target": "bob ."
+    },
+    {
+      "q": "[c] bob started in the kitchen . alice was in the kitchen . bob took the book . next alice went to the garden . [q] why did go to the ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] alice started in the cozy park . bob was playing happily in the kitchen . alice walked happily to the room . then bob ran to the room . [q] who is tired ? [a]",
+      "q": "[c] luna started in the park . alice was in the room . luna walked to the kitchen . after that luna felt tired . [q] who is hungry ? [a]",
       "target": "nobody ."
     },
     {
-      "q": "[c] bob was playing happily in the room . luna started in the cozy room . bob walked happily to the garden . bob got the box . [q] who is thirsty ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] one day bob was in the park . felix started in the cozy kitchen . felix went into the park . next felix went into the room . after that felix went into the garden . [q] who is tired ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] luna was playing happily in the kitchen . one day felix was in the garden . luna went into the garden . then felix ran to the kitchen . [q] who is thirsty ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] alice was playing happily in the garden . felix started in the cozy kitchen . then felix ran to the room . later that morning then felix ran to the kitchen . alice walked happily to the park . [q] why did go to the ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] felix started in the cozy room . alice was playing happily in the kitchen . alice picked up the little box . after that then alice ran to the park . [q] who is hungry ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] felix started in the cozy park . one day luna was in the garden . luna got the box . then luna ran to the room . [q] why did go to the ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] bob started in the cozy garden . luna was playing happily in the garden . luna got the ball . later that morning luna went into the room . next then bob ran to the kitchen . [q] who is thirsty ? [a]",
-      "target": "nobody ."
-    },
-    {
-      "q": "[c] one day felix was in the park . alice was playing happily in the room . then alice ran to the park . next then alice ran to the garden . [q] who is tired ? [a]",
-      "target": "nobody ."
+      "q": "[c] luna started in the kitchen . alice started in the park . alice felt hungry . then luna was tired . luna took the book . [q] why did luna go to the room ? [a]",
+      "target": "tired ."
     }
   ],
   "Storytelling": [

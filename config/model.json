@@ -2,14 +2,14 @@
   "architecture": {
     "vocab_size": 1024,
     "block_size": 64,
-    "embed_dim": 80,
+    "embed_dim": 96,
     "num_heads": 4,
     "num_layers": 6
   },
   "training": {
     "device": "cpu",
-    "total_steps": 8000,
-    "warmup_steps": 200,
+    "total_steps": 30000,
+    "warmup_steps": 1000,
     "base_lr": 0.002,
     "min_lr": 0.0002,
     "half_batch": 16,
@@ -28,7 +28,7 @@
       "bob": ["timmy", "tom", "jack"],
       "alice": ["lily", "anna", "sarah"],
       "felix": ["jane", "lucy", "emma"],
-      "luna": ["billy", "sam", "ben"]
+      "luna": ["billy", "sam"]
     },
     "core_words": [
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",

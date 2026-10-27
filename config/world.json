@@ -17,28 +17,27 @@
       {"state": "thirsty", "target": "kitchen"}
     ]
   },
-"connectors": ["then", "after that", "one sunny day", "later that morning", "next"],
+  "connectors": ["then", "after that", "next"],
   "initial_templates": [
-    "one day {actor} was in the {location}",
-    "{actor} was playing happily in the {location}",
-    "{actor} started in the cozy {location}"
+    "{actor} was in the {location}",
+    "{actor} started in the {location}"
   ],
   "actions": {
     "move": {
       "templates": [
-        "{actor} walked happily to the {location}",
-        "{actor} went into the {location}",
-        "then {actor} ran to the {location}"
+        "{actor} went to the {location}",
+        "{actor} walked to the {location}",
+        "{actor} moved to the {location}"
       ]
     },
     "take": {
       "templates": [
-        "{actor} found a nice {item}",
-        "{actor} picked up the little {item}",
-        "{actor} got the {item}"
+        "{actor} picked up the {item}",
+        "{actor} got the {item}",
+        "{actor} found the {item}",
+        "{actor} took the {item}"
       ]
-    }
-  },
+    },
     "drop": {
       "templates": [
         "{actor} dropped the {item}",
@@ -56,7 +55,8 @@
         "{actor} was {state}",
         "{actor} felt {state}"
       ]
-    },
+    }
+  },
   "queries": {
     "01: Actor Location": {
       "resolver": "actor_location",

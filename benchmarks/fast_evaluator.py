@@ -1,4 +1,4 @@
-import os, sys, json, re, time, torch, numpy as np, torch.nn as nn
+import os, sys, json, re, time, torch, numpy as np, torch.nn as nn, struct
 from torch.nn import functional as F
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
@@ -47,7 +47,15 @@ class BabyStories(nn.Module):
 
 model = BabyStories().to(device)
 def load_param(f, tensor):
-    tensor.data.copy_(torch.from_numpy(np.fromfile(f, dtype=np.float32, count=tensor.numel())).view_as(tensor))
+    if tensor.ndim == 2:
+        rows, cols = tensor.shape
+        data = np.empty((rows, cols), dtype=np.float32)
+        for r in range(rows):
+            s = struct.unpack('f', f.read(4))[0]
+            data[r] = np.fromfile(f, dtype=np.int8, count=cols).astype(np.float32) * s
+        tensor.data.copy_(torch.from_numpy(data))
+    else:
+        tensor.data.copy_(torch.from_numpy(np.fromfile(f, dtype=np.float32, count=tensor.numel())).view_as(tensor))
 
 with open(os.path.join(project_root, "models", "local", "pico1 weights.model"), "rb") as f1:
     load_param(f1, model.tok_emb.weight); load_param(f1, model.pos_emb.weight)
@@ -64,24 +72,25 @@ with open(sys.argv[1] if len(sys.argv) > 1 else "config/stress_test.json", "r") 
     raw_data = json.load(f)
 all_tests = [(cat, item["q"], item["target"]) for cat, items in raw_data.items() for item in items]
 
-cat_stats, total_passed = {}, 0
+cat_stats, total_passed, failures = {}, 0, []
 with torch.no_grad():
     for i in range(0, len(all_tests), 512):
         batch = all_tests[i : i + 512]
-        # Clamp tokens to BLOCK_SIZE so sequences never exceed positional embedding limit
         toks = [[WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", (p + " [a]").lower())][-BLOCK_SIZE:] for _, p, _ in batch]
         max_len = max(len(t) for t in toks)
         x_tensor = torch.tensor([t + [WORD_TO_ID["<pad>"]] * (max_len - len(t)) for t in toks], dtype=torch.long, device=device)
         logits = model(x_tensor)
         logits[:, :, WORD_TO_ID["<unk>"]] = logits[:, :, WORD_TO_ID["<pad>"]] = -1e9
         
-        for b_idx, (cat, _, target) in enumerate(batch):
+        for b_idx, (cat, p, target) in enumerate(batch):
             if cat not in cat_stats: cat_stats[cat] = {"passed": 0, "total": 0}
             cat_stats[cat]["total"] += 1
             pred_word = VOCAB[logits[b_idx, len(toks[b_idx]) - 1].argmax().item()]
             expected = [w for w in re.findall(r"\w+", target.lower())]
             
-            if len(expected) == 1: is_correct = (pred_word == expected[0])
+            if len(expected) == 1:
+                is_correct = (pred_word == expected[0])
+                predicted_str = pred_word
             else:
                 gen, curr = [pred_word], toks[b_idx] + [logits[b_idx, len(toks[b_idx]) - 1].argmax().item()]
                 while len(gen) < len(expected) + 2:
@@ -91,8 +100,22 @@ with torch.no_grad():
                     if nw in ("<eos>", "<pad>", "."): break
                     gen.append(nw); curr.append(out.argmax().item())
                 is_correct = (gen == expected)
-            if is_correct: cat_stats[cat]["passed"] += 1; total_passed += 1
+                predicted_str = " ".join(gen)
+                
+            if is_correct:
+                cat_stats[cat]["passed"] += 1
+                total_passed += 1
+            else:
+                failures.append({"cat": cat, "prompt": p, "expected": target, "got": predicted_str})
         print(f"\rEvaluating: {min(i+512, len(all_tests))}/{len(all_tests)}", end="")
 
-print("\n" + "="*76 + "\nSCORECARD\n" + "="*76); cat_stats['!!! TOTAL SCORE !!!'] = {'passed':total_passed,'total':len(all_tests)}
+print("\n" + "="*76 + "\nSCORECARD\n" + "="*76)
 for cat, s in cat_stats.items(): print(f"{cat:<34} : {s['passed']:05d}/{s['total']:05d} [{('#'*int((s['passed']/s['total'])*10)).ljust(10, '-')}] {(s['passed']/s['total'])*100:5.1f}%")
+print("-" * 76 + f"\nTOTAL SCORE : {total_passed}/{len(all_tests)} ({(total_passed/len(all_tests))*100:5.1f}%)\n" + "="*76)
+
+with open("benchmarks/failures.json", "w") as f: json.dump(failures, f, indent=2)
+print(f"Logged {len(failures)} failures to benchmarks/failures.json")
+if failures:
+    print("\nSAMPLE FAILURES:")
+    for f_item in failures[:4]:
+        print(f"  [{f_item['cat']}]\n    Prompt:   {f_item['prompt'][:75]}...\n    Expected: {f_item['expected']}\n    Got:      {f_item['got']}\n")
