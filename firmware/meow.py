@@ -8,15 +8,21 @@ except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w"+str(i) for i in range(1021)]
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}; L0_OFF = (VOCAB_SIZE*EMBED_DIM + BLOCK_SIZE*EMBED_DIM)*4
 def read_vec(f, c): return struct.unpack(f'{c}f', f.read(c * 4))
 @micropython.native
-def stream_linear(f, r, c, x):
-    out, bv = [0.0]*r, memoryview(BUF)[:c*4]
+def stream_linear_int8(f, r, c, x):
+    out, bv = [0.0]*r, memoryview(BUF)[:c] 
     for i in range(r):
-        f.readinto(bv); row = struct.unpack(f'{c}f', bv); out[i] = sum(row[j]*x[j] for j in range(c))
-    bi=0
-    while bi<r:
-        s=min(64, r-bi); f.readinto(memoryview(BUF)[:s*4]); b=struct.unpack(f'{s}f', memoryview(BUF)[:s*4])
-        for i in range(s): out[bi+i]+=b[i]
-        bi+=s
+        scale = struct.unpack('f', f.read(4))[0]
+        f.readinto(bv)
+        row = struct.unpack(f'{c}b', bv)
+        dot = sum(row[j] * x[j] for j in range(c))
+        out[i] = dot * scale
+    bi = 0
+    while bi < r:
+        s = min(64, r - bi)
+        f.readinto(memoryview(BUF)[:s*4])
+        b = struct.unpack(f'{s}f', memoryview(BUF)[:s*4])
+        for i in range(s): out[bi+i] += b[i]
+        bi += s
     return out
 def layer_norm(x, w, b):
     m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v+1e-5)

@@ -5,10 +5,10 @@
     "items": ["ball", "box", "book", "cup"]
   },
   "rules": {
-    "min_events": 3,
-    "max_events": 6,
+    "min_events": 2,
+    "max_events": 3,
     "max_inventory_per_actor": 2,
-    "transition_probability": 0.6
+    "transition_probability": 0.5
   },
   "states": {
     "needs": [
@@ -17,32 +17,32 @@
       {"state": "thirsty", "target": "kitchen"}
     ]
   },
-  "connectors": ["then", "after that", "next", "and then"],
+"connectors": ["then", "after that", "one sunny day", "later that morning", "next"],
   "initial_templates": [
-    "{actor} was in the {location}",
-    "{actor} started in the {location}"
+    "one day {actor} was in the {location}",
+    "{actor} was playing happily in the {location}",
+    "{actor} started in the cozy {location}"
   ],
   "actions": {
     "move": {
       "templates": [
-        "{actor} went to the {location}",
-        "{actor} walked to the {location}",
-        "{actor} moved to the {location}"
+        "{actor} walked happily to the {location}",
+        "{actor} went into the {location}",
+        "then {actor} ran to the {location}"
       ]
     },
     "take": {
       "templates": [
-        "{actor} picked up the {item}",
-        "{actor} got the {item}",
-        "{actor} found the {item}",
-        "{actor} took the {item}"
+        "{actor} found a nice {item}",
+        "{actor} picked up the little {item}",
+        "{actor} got the {item}"
       ]
-    },
+    }
+  },
     "drop": {
       "templates": [
         "{actor} dropped the {item}",
-        "{actor} put down the {item}",
-        "{actor} left the {item} there"
+        "{actor} put down the {item}"
       ]
     },
     "give": {
@@ -56,8 +56,7 @@
         "{actor} was {state}",
         "{actor} felt {state}"
       ]
-    }
-  },
+    },
   "queries": {
     "01: Actor Location": {
       "resolver": "actor_location",

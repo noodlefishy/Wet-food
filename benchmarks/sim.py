@@ -5,7 +5,9 @@ with open(os.path.join(project_root, "config", "model.json"), "r") as f: mod_cfg
 from models.local import vocab
 VOCAB = vocab.VOCAB; WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 EMBED_DIM = mod_cfg["architecture"]["embed_dim"]
-L0_OFF = (1024 * EMBED_DIM + 64 * EMBED_DIM) * 4
+BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
+HEAD_DIM = EMBED_DIM // 4
+L0_OFF = (1024 * EMBED_DIM + BLOCK_SIZE * EMBED_DIM) * 4
 f1, f2 = open(os.path.join(project_root, "models", "local", "pico1 weights.model"), "rb"), open(os.path.join(project_root, "models", "local", "pico2 weights.model"), "rb")
 
 def rv(f, c): return struct.unpack(f"{c}f", f.read(c * 4))
@@ -19,18 +21,17 @@ def ln(x, w, b):
     return [((x[i]-m)/s)*w[i] + b[i] for i in range(len(x))]
 def rl(f, x, kv):
     nx = ln(x, rv(f, EMBED_DIM), rv(f, EMBED_DIM))
-    qkv = sl(f, 3*EMBED_DIM, EMBED_DIM, nx)
-    q, k, v = qkv[:EMBED_DIM], qkv[EMBED_DIM:2*EMBED_DIM], qkv[2*EMBED_DIM:]
+    qkv = sl(f, EMBED_DIM + 2*HEAD_DIM, EMBED_DIM, nx)
+    q, k, v = qkv[:EMBED_DIM], qkv[EMBED_DIM:EMBED_DIM+HEAD_DIM], qkv[EMBED_DIM+HEAD_DIM:]
     kv["k"].append(k); kv["v"].append(v)
-    if len(kv["k"]) > 64: kv["k"].pop(0); kv["v"].pop(0)
-    ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(EMBED_DIM//4)
+    if len(kv["k"]) > BLOCK_SIZE: kv["k"].pop(0); kv["v"].pop(0)
+    ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(HEAD_DIM)
     for h in range(4):
-        ho = h*(EMBED_DIM//4)
-        qh = q[ho:ho+(EMBED_DIM//4)]
-        scs = [sum(qh[i]*kv["k"][t][ho+i] for i in range(EMBED_DIM//4))*sc for t in range(len(kv["k"]))]
+        ho = h * HEAD_DIM; qh = q[ho:ho+HEAD_DIM]
+        scs = [sum(qh[i]*kv["k"][t][i] for i in range(HEAD_DIM))*sc for t in range(len(kv["k"]))]
         ms = max(scs); exps = [math.exp(s-ms) for s in scs]; wts = [e/sum(exps) for e in exps]
         for t in range(len(kv["k"])):
-            for i in range(EMBED_DIM//4): ao[ho+i] += wts[t] * kv["v"][t][ho+i]
+            for i in range(HEAD_DIM): ao[ho+i] += wts[t] * kv["v"][t][i]
     x = [x[i] + sl(f, EMBED_DIM, EMBED_DIM, ao)[i] for i in range(EMBED_DIM)]
     nx = ln(x, rv(f, EMBED_DIM), rv(f, EMBED_DIM))
     return [x[i] + sl(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, v) for v in sl(f, 4*EMBED_DIM, EMBED_DIM, nx)])[i] for i in range(EMBED_DIM)]
@@ -47,7 +48,7 @@ def generate(p_txt, max_t=30):
     for step in range(len(toks) + max_t):
         tid = toks[step] if step < len(toks) else curr
         f1.seek(tid * EMBED_DIM * 4); tv = rv(f1, EMBED_DIM)
-        f1.seek((1024 * EMBED_DIM + min(step, 63) * EMBED_DIM) * 4); pv = rv(f1, EMBED_DIM)
+        f1.seek((1024 * EMBED_DIM + min(step, BLOCK_SIZE - 1) * EMBED_DIM) * 4); pv = rv(f1, EMBED_DIM)
         x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
         f1.seek(L0_OFF)
         for l in range(3): x = rl(f1, x, m_kv[l])
