@@ -1,0 +1,205 @@
+leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI %  source /Users/leu
+w/dev/python/picoAI/.venv/bin/activate
+(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % /Users/leu
+w/dev/python/picoAI/.venv/bin/python /Users/leuw/dev/python/picoAI/training/local.py
+Loading configurations...
+==================================================
+ Training Verified 4L 80-D Engine on: CPU
+==================================================
+Using cached stories.txt...
+Compiling strictly balanced logic dataset (25000 targeted)...
+Generated 334 dynamic evaluation questions -> config/questions.json
+Tokenizing and constructing masked QA tensors...
+
+Training for 30000 steps...
+Step     0/30000 | Total: 20.3704 | QA: 7.2961 | Story: 7.1009
+Step   500/30000 | Total: 2.2770 | QA: 0.3733 | Story: 4.4796
+Step  1000/30000 | Total: 1.8999 | QA: 0.3048 | Story: 3.7928
+Step  1500/30000 | Total: 1.9214 | QA: 0.3498 | Story: 3.4894
+Step  2000/30000 | Total: 1.6113 | QA: 0.2154 | Story: 3.5760
+Step  2500/30000 | Total: 1.5159 | QA: 0.1766 | Story: 3.5813
+Step  3000/30000 | Total: 1.2691 | QA: 0.1107 | Story: 3.3082
+Step  3500/30000 | Total: 1.4966 | QA: 0.1943 | Story: 3.3695
+Step  4000/30000 | Total: 1.1993 | QA: 0.1076 | Story: 3.1007
+Step  4500/30000 | Total: 1.1698 | QA: 0.0792 | Story: 3.2393
+Step  5000/30000 | Total: 1.1143 | QA: 0.0689 | Story: 3.1401
+Step  5500/30000 | Total: 1.2559 | QA: 0.1326 | Story: 3.0812
+Step  6000/30000 | Total: 1.4448 | QA: 0.2197 | Story: 2.9855
+Step  6500/30000 | Total: 1.0699 | QA: 0.0561 | Story: 3.0992
+Step  7000/30000 | Total: 1.0264 | QA: 0.0482 | Story: 3.0198
+Step  7500/30000 | Total: 1.0016 | QA: 0.0560 | Story: 2.8723
+Step  8000/30000 | Total: 0.9528 | QA: 0.0083 | Story: 3.1067
+Step  8500/30000 | Total: 0.8907 | QA: 0.0297 | Story: 2.7219
+Step  9000/30000 | Total: 1.0700 | QA: 0.0825 | Story: 2.8793
+Step  9500/30000 | Total: 0.9266 | QA: 0.0263 | Story: 2.8694
+Step 10000/30000 | Total: 0.9435 | QA: 0.0385 | Story: 2.8243
+Step 10500/30000 | Total: 0.8922 | QA: 0.0075 | Story: 2.9114
+Step 11000/30000 | Total: 0.9101 | QA: 0.0165 | Story: 2.8961
+Step 11500/30000 | Total: 0.8862 | QA: 0.0250 | Story: 2.7453
+Step 12000/30000 | Total: 1.0030 | QA: 0.0776 | Story: 2.6965
+Step 12500/30000 | Total: 0.8836 | QA: 0.0003 | Story: 2.9426
+Step 13000/30000 | Total: 0.8003 | QA: 0.0003 | Story: 2.6649
+Step 13500/30000 | Total: 0.8574 | QA: 0.0001 | Story: 2.8575
+Step 14000/30000 | Total: 1.0076 | QA: 0.0374 | Story: 3.0472
+Step 14500/30000 | Total: 0.7832 | QA: 0.0004 | Story: 2.6077
+Step 15000/30000 | Total: 0.9375 | QA: 0.0532 | Story: 2.6814
+Step 15500/30000 | Total: 0.8981 | QA: 0.0248 | Story: 2.7870
+Step 16000/30000 | Total: 0.7380 | QA: 0.0000 | Story: 2.4595
+Step 16500/30000 | Total: 0.7730 | QA: 0.0085 | Story: 2.5055
+Step 17000/30000 | Total: 0.8299 | QA: 0.0095 | Story: 2.6875
+Step 17500/30000 | Total: 0.8426 | QA: 0.0350 | Story: 2.5171
+Step 18000/30000 | Total: 0.8459 | QA: 0.0209 | Story: 2.6455
+Step 18500/30000 | Total: 0.7810 | QA: 0.0023 | Story: 2.5840
+Step 19000/30000 | Total: 0.7443 | QA: 0.0062 | Story: 2.4296
+Step 19500/30000 | Total: 0.7596 | QA: 0.0008 | Story: 2.5255
+Step 20000/30000 | Total: 0.7269 | QA: 0.0000 | Story: 2.4226
+Step 20500/30000 | Total: 0.7496 | QA: 0.0006 | Story: 2.4935
+Step 21000/30000 | Total: 0.7907 | QA: 0.0001 | Story: 2.6347
+Step 21500/30000 | Total: 0.7371 | QA: 0.0001 | Story: 2.6010
+Step 22000/30000 | Total: 0.6864 | QA: 0.0000 | Story: 2.5737
+Step 22500/30000 | Total: 0.6481 | QA: 0.0001 | Story: 2.5914
+Step 23000/30000 | Total: 0.5566 | QA: 0.0020 | Story: 2.3641
+Step 23500/30000 | Total: 0.5455 | QA: 0.0001 | Story: 2.5172
+Step 24000/30000 | Total: 0.4714 | QA: 0.0001 | Story: 2.3561
+Step 24500/30000 | Total: 0.4285 | QA: 0.0000 | Story: 2.3368
+Step 25000/30000 | Total: 0.3815 | QA: 0.0000 | Story: 2.2889
+Step 25500/30000 | Total: 0.3634 | QA: 0.0001 | Story: 2.4209
+Step 26000/30000 | Total: 0.3442 | QA: 0.0000 | Story: 2.5812
+Step 26500/30000 | Total: 0.2944 | QA: 0.0000 | Story: 2.5227
+Step 27000/30000 | Total: 0.2218 | QA: 0.0000 | Story: 2.2173
+Step 27500/30000 | Total: 0.2120 | QA: 0.0000 | Story: 2.5423
+Step 28000/30000 | Total: 0.1602 | QA: 0.0000 | Story: 2.4014
+Step 28500/30000 | Total: 0.1167 | QA: 0.0000 | Story: 2.3329
+Step 29000/30000 | Total: 0.0733 | QA: 0.0000 | Story: 2.1973
+Step 29500/30000 | Total: 0.0392 | QA: 0.0000 | Story: 2.3535
+Step 30000/30000 | Total: 0.0001 | QA: 0.0000 | Story: 2.6328
+Meow Weights (pico1): 948.1 KB -> Saved to models/local/pico1 weights.model
+Miaou Weights (pico2): 932.8 KB -> Saved to models/local/pico2 weights.model
+Vocab List: Saved to ./models/local/vocab.py
+
+Training Complete!
+(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % /Users/leuw/dev/python/picoAI/.venv/bin/python /Users/leuw/dev/python/picoAI/benchmarks/stress_test.py   
+=================================================================
+      GENERATING EXHAUSTIVE NON-COLLIDING STRESS DATASET      
+=================================================================
+01: Single Supporting Fact         :   576 unique tests
+02: Two Supporting Facts           :  1344 unique tests
+03: Three Supporting Facts         :  3072 unique tests
+04: Two Argument Relations         :    96 unique tests
+05: Three Argument Relations       :   576 unique tests
+06: Yes/No Truth Verification      :  1440 unique tests
+07: Counting                       :  1152 unique tests
+07: Counting Inverse Symmetry      :  1152 unique tests
+08: Lists and Sets                 :  1152 unique tests
+08: Sequential Acquisition List    :  1728 unique tests
+09: Simple Negation                :   144 unique tests
+10: Indefinite Knowledge           :   144 unique tests
+11: Basic Coreference              :    96 unique tests
+12: Conjunction                    :  1440 unique tests
+13: Compound Coreference           :   576 unique tests
+14: Time Reasoning                 :    96 unique tests
+15: Basic Deduction                :    16 unique tests
+16: Basic Induction                :  6912 unique tests
+17: Positional Reasoning           :    96 unique tests
+18: Size Reasoning                 :    96 unique tests
+19: Micro Navigation               :    48 unique tests
+20: Agent Motivations              :    60 unique tests
+-----------------------------------------------------------------
+Successfully generated 22012 mathematically distinct tests!
+Saved to -> config/stress_test.json
+
+(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % /Users/leuw/dev/python/picoAI/.venv/bin/python /Users/leuw/dev/python/picoAI/benchmarks/fast_evaluator.py
+============================================================================
+     PARALLEL BATCH EVALUATOR (EXHAUSTIVE HIGH-THROUGHPUT ENGINE)    
+============================================================================
+Hardware Acceleration : MPS
+Architecture          : 4L 80-D (4 Heads)
+Evaluating Dataset    : config/stress_test.json (22,012 tests)
+
+Evaluating: 22012/22012 (100.0%) | Speed:   790 tests/sec
+Completed in 27.88 seconds! (789.5 tests/sec)
+
+============================================================================
+                   PARALLEL EVALUATION SCORECARD                       
+============================================================================
+01: Single Supporting Fact         : 00576/00576 [##########] 100.0%
+02: Two Supporting Facts           : 01344/01344 [##########] 100.0%
+03: Three Supporting Facts         : 03072/03072 [##########] 100.0%
+04: Two Argument Relations         : 00096/00096 [##########] 100.0%
+05: Three Argument Relations       : 00576/00576 [##########] 100.0%
+06: Yes/No Truth Verification      : 01432/01440 [#########-]  99.4%
+07: Counting                       : 01152/01152 [##########] 100.0%
+07: Counting Inverse Symmetry      : 01152/01152 [##########] 100.0%
+08: Lists and Sets                 : 01152/01152 [##########] 100.0%
+08: Sequential Acquisition List    : 01728/01728 [##########] 100.0%
+09: Simple Negation                : 00144/00144 [##########] 100.0%
+10: Indefinite Knowledge           : 00144/00144 [##########] 100.0%
+11: Basic Coreference              : 00096/00096 [##########] 100.0%
+12: Conjunction                    : 01440/01440 [##########] 100.0%
+13: Compound Coreference           : 00576/00576 [##########] 100.0%
+14: Time Reasoning                 : 00096/00096 [##########] 100.0%
+15: Basic Deduction                : 00016/00016 [##########] 100.0%
+16: Basic Induction                : 06912/06912 [##########] 100.0%
+17: Positional Reasoning           : 00096/00096 [##########] 100.0%
+18: Size Reasoning                 : 00096/00096 [##########] 100.0%
+19: Micro Navigation               : 00048/00048 [##########] 100.0%
+20: Agent Motivations              : 00060/00060 [##########] 100.0%
+----------------------------------------------------------------------------
+TOTAL REASONING SCORE              : 22004/22012 [#########-] 100.0%
+============================================================================
+(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % 
+
+
+
+Type a prompt or 'exit' to quit.
+
+> [c] alice went to the garden . then alice went to the kitchen . [q] did alice go to the park ? [a]
+  kitchen .
+
+> [c] bob has the box . felix has the book . alice and luna have nothing . [q] who does not have a box or a book ? [a]
+  box and book .
+
+> [c] felix has the box and the cup . luna has the ball . [q] what does luna have ? [a]
+  ball .
+
+> [c] felix has the box and the cup . luna has the ball . [q] what does felix have ? [a]
+  box and cup .
+
+> [c] felix has the cup . luna has the ball and box . [q] what does luna have ? [a]
+  two .
+
+
+> [c] bob went to the room . felix went to the garden . [q] is bob in the room ? [a] 
+  yes .
+
+> [c] bob went to the room . felix went to the garden . [q] is bob in the garden ? [a]
+  no .
+
+> [c] bob went to the room . felix went to the garden . [q] is felix in the garden ? [a]
+  yes .
+
+> bob has the box and the ball . alice has the cup . how many items does bob have ?
+  bob asks . it is not a good friend . it is not a gift . it is not a gift . it is not a
+
+> [c] bob has the box and the ball . alice has the cup . how many items does bob have ?
+  
+
+> [c] bob has the box and the ball . alice has the cup . [q] how many items does bob have ?
+  two .
+
+> [c] bob has the box and the ball . alice has the cup . [q] how many items does bob have ? [a]
+  two .
+
+> [c] bob has the box and the ball . alice has the cup . [q] how many items does alice have ? [a]
+  one .
+
+> [c] bob has the box and the ball . alice has the cup . [q] how many items does luna have ? [a]
+  none .
+
+> [c] bob has the box . alice has the cup and the book . [q] how many items does bob  have ? [a]
+  one .
+
+> [c] bob has the box . alice has the cup and the book . [q] how many items does alice have ? [a]
+  two .
+
+> 

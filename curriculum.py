@@ -21,14 +21,23 @@ def format_qa_sequence(premise, question, answer):
 
 def expand_category_templates(category):
     """
-    Strict Scenario Schema: 
-    Every category must define 'premise' and a list of 'queries'.
+    Expands Scenario Schema. Supports:
+    - premise: str OR list[str] (Syntactic Premise Jitter)
+    - q: str OR list[str]       (Syntactic Query Jitter)
     """
-    premise = category["premise"]
-    return [
-        format_qa_sequence(premise, item["q"], item["a"])
-        for item in category["queries"]
-    ]
+    raw_premise = category["premise"]
+    premises = raw_premise if isinstance(raw_premise, list) else [raw_premise]
+    
+    templates = []
+    
+    for prem in premises:
+        for item in category["queries"]:
+            q_field = item["q"]
+            queries = q_field if isinstance(q_field, list) else [q_field]
+            for single_q in queries:
+                templates.append(format_qa_sequence(prem, single_q, item["a"]))
+                
+    return templates
 
 def get_template_placeholders(template):
     placeholders = re.findall(r'\{([a-z]+)(\d+)(?:_([a-z]+))?\}', template)

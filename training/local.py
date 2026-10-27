@@ -243,8 +243,10 @@ for step in range(TOTAL_STEPS + 1):
     base_w_st = mod_cfg["training"]["loss_weights"]["story"]
     
     decay_start = int(TOTAL_STEPS * 0.70)
+    min_w_st = 0.05  # Retain a baseline 5% weight on general English stories
     if step > decay_start:
-        current_w_st = base_w_st * (1.0 - (step - decay_start) / (TOTAL_STEPS - decay_start))
+        progress = (step - decay_start) / (TOTAL_STEPS - decay_start)
+        current_w_st = base_w_st - progress * (base_w_st - min_w_st)
     else:
         current_w_st = base_w_st
 
