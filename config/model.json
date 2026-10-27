@@ -7,7 +7,7 @@
     "num_layers": 6
   },
   "training": {
-    "device": "cpu",
+    "device": "mps",
     "total_steps": 30000,
     "warmup_steps": 1000,
     "base_lr": 0.002,
@@ -22,53 +22,25 @@
   },
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
-    "logic_samples_target": 35000,
+    "logic_samples_target": 40000,
     "eval_samples_per_category": 15,
     "name_replacements": {
       "bob": ["timmy", "tom", "jack"],
       "alice": ["lily", "anna", "sarah"],
-      "felix": [ "jane", "lucy", "emma"],
-      "luna": ["billy", "sam", "billy"]
+      "felix": ["jane", "lucy", "emma"],
+      "luna": ["billy", "sam"]
     },
-"core_words": [
+    "core_words": [
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
-      "question", "answer",
-
-      "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
-      "who", "what", "where", "how", "many", "why",
-      "is", "are", "was", "were", "does", "did",
-
-      "he", "she", "they",
-
-      "alice", "bob", "felix", "luna",
-      "cat", "cats",
-
-      "garden", "kitchen", "park", "room",
-
-      "ball", "box", "book", "cup", "key", "bag",
-
-      "red", "blue", "yellow", "green", "colour",
-
-      "hot", "cold",
-      "heavy", "light",
-      "clean", "dirty",
-      "open", "closed",
-
-      "north", "south", "left", "right",
-      "bigger", "smaller",
-
-      "first", "then", "now", "before", "after",
-
-      "yes", "no",
-      "one", "two", "three", "none",
-      "nobody", "nothing", "nowhere",
-
-      "went", "gave", "got", "has", "had", "have", "found", "find",
-      "put", "left", "likes", "wants", "leads",
-
-      "hungry", "tired", "thirsty",
-
-      "pico", "wifi"
+      "question", "answer", "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
+      "who", "what", "where", "how", "many", "why", "is", "are", "was", "were", "does", "did",
+      "he", "she", "they", "alice", "bob", "felix", "luna", "cat", "cats",
+      "garden", "kitchen", "park", "room", "ball", "box", "book", "cup", "key", "bag",
+      "red", "blue", "yellow", "green", "colour", "hot", "cold", "heavy", "light",
+      "clean", "dirty", "open", "closed", "north", "south", "left", "right", "bigger", "smaller",
+      "first", "then", "now", "before", "after", "yes", "no", "one", "two", "three", "none",
+      "nobody", "nothing", "nowhere", "went", "gave", "got", "has", "had", "have", "found", "find",
+      "put", "left", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
     ]
   },
   "paths": {

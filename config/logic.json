@@ -1,51 +1,45 @@
 {
-  "architecture": {
-    "vocab_size": 1024,
-    "block_size": 64,
-    "embed_dim": 80,
-    "num_heads": 4,
-    "num_layers": 6
+  "pools": {
+    "actor": ["alice", "bob", "felix", "luna"],
+    "location": ["garden", "kitchen", "park", "room"],
+    "item": ["ball", "box", "book", "cup"],
+    "colour": ["red", "blue", "yellow", "green"]
   },
-  "training": {
-    "device": "mps",
-    "total_steps": 30000,
-    "warmup_steps": 1000,
-    "base_lr": 0.002,
-    "min_lr": 0.0002,
-    "half_batch": 16,
-    "weight_decay": 0.01,
-    "grad_clip": 1.0,
-    "loss_weights": {
-      "qa": 2.5,
-      "story": 0.3
-    }
-  },
-  "dataset": {
-    "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
-    "logic_samples_target": 40000,
-    "eval_samples_per_category": 15,
-    "name_replacements": {
-      "bob": ["timmy", "tom", "jack"],
-      "alice": ["lily", "anna", "sarah"],
-      "felix": ["jane", "lucy", "emma"],
-      "luna": ["billy", "sam"]
-    },
-    "core_words": [
-      "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
-      "question", "answer", "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
-      "who", "what", "where", "how", "many", "why", "is", "are", "was", "were", "does", "did",
-      "he", "she", "they", "alice", "bob", "felix", "luna", "cat", "cats",
-      "garden", "kitchen", "park", "room", "ball", "box", "book", "cup", "key", "bag",
-      "red", "blue", "yellow", "green", "colour", "hot", "cold", "heavy", "light",
-      "clean", "dirty", "open", "closed", "north", "south", "left", "right", "bigger", "smaller",
-      "first", "then", "now", "before", "after", "yes", "no", "one", "two", "three", "none",
-      "nobody", "nothing", "nowhere", "went", "gave", "got", "has", "had", "have", "found", "find",
-      "put", "left", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
+  "states": {
+    "needs": [
+      {"state": "hungry", "target": "kitchen", "noun": "food"},
+      {"state": "tired", "target": "room", "noun": "sleep"},
+      {"state": "thirsty", "target": "kitchen", "noun": "water"}
     ]
   },
-  "paths": {
-    "models_dir": "models/local",
-    "stories_file": "stories.txt",
-    "questions_file": "config/questions.json"
+  "world_rules": {
+    "actors_per_story": [1, 2],
+    "items_per_actor": [0, 1, 2],
+    "state_probability": 0.5
+  },
+  "predicates": {
+    "motion": [
+      "{actor} went to the {location}",
+      "{actor} is in the {location}",
+      "{actor} was in the {location}"
+    ],
+    "state": [
+      "{actor} is {state}",
+      "{actor} was {state}"
+    ],
+    "possession": [
+      "{actor} has {items}",
+      "{actor} found {items}",
+      "{actor} got {items}"
+    ]
+  },
+  "queries": {
+    "01: Single Supporting Fact": ["where is {actor}", "who is in the {location}"],
+    "06: Yes/No Truth Verification": ["is {actor} in the {location}"],
+    "07: Counting": ["how many items does {actor} have"],
+    "08: Lists and Sets": ["what does {actor} have", "what did {actor} find"],
+    "20: Agent Motivations": ["who is {state}", "why did {actor} go to the {location}"],
+    "22: Polar Possession Verification": ["does {actor} have the {item}"],
+    "23: Selective Departure (The Frame Problem)": ["where is {actor}", "where did {actor} stay"]
   }
 }
