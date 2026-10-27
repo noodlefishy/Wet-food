@@ -190,7 +190,7 @@ class BabyStories(nn.Module):
 
     def forward(self, idx):
         B, T = idx.shape
-        x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=DEVICE))
+        x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=idx.device))
         for layer in self.layers:
             x = layer(x)
         return self.lm_head(self.ln_f(x))
