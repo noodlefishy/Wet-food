@@ -1,160 +1,112 @@
 # A 2-Node Distributed Neural Engine on Raspberry Pi Pico W's
 
-Have you ever wanted to run transformer models on two tiny micorcontrollers that distribute layers over wifi? Im so glad you asked!!! Meet **Meow** and **Miaou**, two eletconic kittens made with custom tensor weights, stealing on google colab, a lot of will power and, love and micropython.
+Have you ever wanted to run transformer models on two tiny microcontrollers that distribute layers over wifi? I'm so glad you asked!!! Meet **Meow** and **Miaou**, two electronic kittens made with custom tensor weights, a lot of willpower, love, and MicroPython.
 
-Instead of using one board for everything, this project splits a 4-layer transformer model in half. **Meow** does the first half of the brain and hosts the kawaii telemetry screen, **Miaou** handles the second half of the generation over wifi (way more useless than **Meow**).
+Instead of using one board for everything, this project splits a 6-layer transformer model in half. **Meow** does the first half of the brain and hosts the kawaii telemetry screen, and **Miaou** handles the second half of the generation over wifi (way more useless than **Meow**).
 
-The repo is called **Wet Food** because cats _love_ wet food, and this project you know, feeds raw neural network streams between two cats, so pretty similar.
-
-
----
-
-## What's New (The Brain Expansion & Logic Update!)
-
-The kittens got a serious brain upgrade:
-- **Upgraded to 64-D:** Bumped the embedding dimensions from 48-D to 64-D so the attention heads actually have room to think without overwriting their own thoughts.
-- **Doubled Context Window (64 Tokens):** The context went from 32 to 64 tokens so they can read long premises without instant amnesia.
-- **Two-Hop Transitive Reasoning:** It doesnt just autocomplete stories anymore, it can figure out indirect logic like "Alice is with Bob, Bob is in the kitchen -> Alice is in the kitchen" without being told directly.
-- **Theory of Mind & Functional Needs:** Understands that being hungry means wanting food, and being cold means needing a blanket.
-- **Zero-Dependency Local Engine:** Fixed `benchmarks/local.py` and `evaluator.py` so they simulate the exact 64-D split brain locally on your Mac or PC using pure standard python. Zero pytorch, zero numpy, pure standard library math and structs.
-- **Live Thought Vector Visualizer:** The web screen previews the actual 64-D float numbers flying through the air between Meow and Miaou along with real-time latency and top-5 word candidate rankings.
-- **Soft Reset System:** The boards no longer sever their wifi socket after every run, eliminating the annoying "Miaou is sleeping / offline" bug.
-
+The repo is called **Wet Food** because cats _love_ wet food, and this project, you know, feeds raw neural network streams between two cats, so pretty similar.
 
 ---
 
 ## Meet the Crew
 
-- **Meow (The RP pico wh):** The Master Host. Meow initialises its own open access point (named `Meow-Net`) and serves a green phosphor terminal page on port 80. It crunches through layers 0 and 1 of the transformer, handles punctuation tokenization, coordinates the thought vectors, and streams telemetry!
-- **Miaou (The RP pico w):** The Slave Worker. It connects to Meow's network, workers(whoosh whoosh) through layers 2 and 3 over wifi, evaluates all 1,024 logits, and performs zero-RAM top-k token sampling.
-
+- **Meow (The Master Host):** Initializes its own open access point (named `Meow-Net`) and serves a green phosphor terminal page on port 80. It crunches through Layers 0, 1, and 2 of the transformer, coordinates the thought vectors, and streams telemetry!
+- **Miaou (The Slave Worker):** Connects to Meow's network and worker-threads through Layers 3, 4, and 5 over wifi. It evaluates all 1,024 logits and performs zero-RAM top-k token sampling, sending the final thought back to Meow.
 
 ---
 
-## Specs
-Even with extremely humble hardware clocked at 240 MHz, this model has a real transformer architecture.
-- **Model Size:** Split into two binary files, ~**660 KB - 670 KB** each (in `/models/`)
-- **Embedding Dimension:** 64-D
-- **Layers:** 4 (2 per microcontroller)
-- **Attention Heads:** 4 heads (16 scalars per head)
-- **Vocabulary:** 1 024 words (fairy tales, cat lore, physical states, and logical reasoning syntax)
+## The Hardware Specs
+Even with extremely humble hardware clocked at 240 MHz, this model runs a legitimate, mathematically exact transformer architecture.
+
+- **Model Size:** Split into two binary files, ~**1.25 MB** each (running direct Flash XIP streaming)
+- **Embedding Dimension:** 80-D
+- **Layers:** 6 (3 per microcontroller)
+- **Attention Heads:** 4 heads (20 scalars per head)
+- **Vocabulary:** 1,024 words (fairy tales, cat lore, physical states, and logical reasoning syntax)
 - **Context Block Size:** 64 tokens
-- **Clock Speed:** 240 MHz (tuned down slightly from 250 MHz so the chips stay rock-solid and stop dropping wifi)
-- **Weights Execution:** Direct Flash XIP streaming (less than 15 KB RAM used during execution)
-
+- **Execution:** Pure standard-library math. Zero dependencies.
 
 ---
 
-## What Kind of Questions Can You Ask? (Prompt Book)
+## Atomic World-State Reasoning
 
-Because this is a 64-D micro-transformer, it doesnt know the whole internet, but it is an absolute genius at **in-context reasoning, entity tracking, and cat trivia**.
+Because this is an 80-D micro-transformer, it doesn't know the whole internet, but it is an absolute genius at **in-context reasoning, entity tracking, and theory of mind** 
 
-Here is the exact handbook of prompt formats that Meow and Miaou understand:
+Unlike standard benchmarks that use rigid, memorizable templates, this engine was trained using a **dynamic atomic world-state generator**. Actors randomly hold 0, 1, or 2 items, have overlapping emotions and locations, and form compound sentences without fixed slot positions. 
 
-### 1. Two-Hop Transitive Reasoning (Chained Logic)
-The model can link relationships through a middle person:
-* `[c] alice is with bob . bob is in the kitchen . [q] where is alice ? [a]`
+Here is what the kittens can understand:
+
+### 1. Compositional Cross-Tasking & Motivations
+The model doesn't just match keywords; it tracks physical locations even inside emotional stories.
+* `[c] alice is hungry . alice went to the kitchen . bob is tired . bob went to the room . [q] where is alice ? [a]`
   -> `kitchen .`
-* `[c] meow is with miaou . miaou is in the garden . [q] where is meow ? [a]`
-  -> `garden .`
+* `[c] alice is hungry . alice went to the kitchen . bob is tired . bob went to the room . [q] who is thirsty ? [a]`
+  -> `nobody .`
 
-### 2. Functional Needs & Theory of Mind
-Associates internal biological states with their logical fixes:
-* `[c] alice is hungry . bob is tired . [q] who wants to eat ? [a]`
-  -> `alice .`
-* `[c] alice is hungry . bob is tired . [q] who wants to sleep ? [a]`
+### 2. Variable Cardinality & Possession
+Items are dynamically assigned. The model actually has to count and read, preventing positional cheating.
+* `[c] felix has the cup . luna has the ball and the book . [q] how many items does luna have ? [a]`
+  -> `two .`
+* `[c] felix has the cup . luna has the ball and the book . [q] what does felix have ? [a]`
+  -> `cup .`
+* `[c] alice has the ball . bob has the cup . [q] does alice have the ball ? [a]`
+  -> `yes .`
+
+### 3. The Frame Problem (Selective Departure)
+Understands that if two people are in a room and one leaves, the other is still there.
+* `[c] alice and bob were in the room . then alice went to the garden . [q] where is bob ? [a]`
+  -> `room .`
+
+### 4. Transferred Attribute Preservation
+Binds adjectives to objects and preserves them across multi-hop ownership transfers.
+* `[c] alice had a red ball . alice gave the red ball to bob . [q] who has the red ball ? [a]`
   -> `bob .`
-* `[c] meow is cold . miaou is happy . [q] who needs a blanket ? [a]`
-  -> `meow .`
-* `[c] bob is thirsty . alice is warm . [q] who wants water ? [a]`
-  -> `bob .`
-
-### 3. Action Affordances & Capabilities
-Knows what creatures are physically capable of doing:
-* `[c] the bird can fly . the cat can climb . [q] who can fly ? [a]`
-  -> `bird .`
-* `[c] the fish can swim . the rabbit can hop . [q] who can hop ? [a]`
-  -> `rabbit .`
-
-### 4. Physical States & Opposites
-Tracks conflicting adjectives across objects:
-* `[c] the milk is hot . the water is cold . [q] what is hot ? [a]`
-  -> `milk .`
-* `[c] the box is heavy . the ball is soft . [q] what is soft ? [a]`
-  -> `ball .`
-
-### 5. Movement & Actor Location Tracking
-Tracks who moved where across sentences:
-* `[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]`
-  -> `kitchen .`
-* `[c] alice went to the kitchen . then alice went to the garden . [q] where is alice ? [a]`
-  -> `garden .`
-
-### 6. Possession & Object Transfers
-Tracks items changing hands:
-* `[c] alice has the ball . bob has the fish . [q] what does bob have ? [a]`
-  -> `fish .`
-* `[c] bob had the ball . bob gave the ball to alice . [q] who has the ball ? [a]`
-  -> `alice .`
-* `[c] alice gave the ball to miaou . bob gave the box to meow . [q] who got the ball ? [a]`
-  -> `miaou .`
-
-### 7.colour Binding (Adjective-Noun Pairing)
-Bindscolours to specific objects without mixing them up:
-* `[c] alice has a red box . bob has a blue ball . [q] whatcolour is the box ? [a]`
+* `[c] alice had a red ball . alice gave the red ball to bob . [q] what colour is the ball ? [a]`
   -> `red .`
-* `[c] meow has a yellow ball . miaou has a pink box . [q] whatcolour is the box ? [a]`
-  -> `pink .`
 
-### 8. Feline Persona & Hardware Identity
-You can use natural questions or the formal format:
-* `what are your names?`
-  -> `we are meow and miaou .`
-* `who is meow?`
-  -> `meow is the pico wh who talks to you on the web .`
-* `who is miaou?`
-  -> `miaou is the pico w who calculates the words .`
-* `what hardware do you run on?`
-  -> `we run on two raspberry pi pico chips over wifi .`
-* `can you purr?`
-  -> `purr purr purr yes we are purring right now .`
+### 5. Relational Symmetry & Inversion
+Understands reciprocal truths in polar constraints.
+* `[c] the box is bigger than the ball . the ball is bigger than the cup . [q] is the cup smaller than the box ? [a]`
+  -> `yes .`
 
-### 9. Storytelling Mode (Open-Ended Fiction)
-Start a story sentence and let them write:
+### 6. Storytelling Mode (Open-Ended Fiction)
+Start a story sentence without logic tags and let them write. (Uses temperature scaling to prevent loops!)
 * `once upon a time bob went into the green garden .`
-* `the sun was very warm and the little kitten wanted to`
-* `alice and meow found a little box under the tree .`
-
-### What Breaks the Brain (What NOT to ask):
-- **Words outside the 1,024 vocabulary:** If you ask about *"quantum physics"* or *"dinosaurs"*, the words turn into `<unk>` and the cats will hallucinate.
-- **Run-on prompts longer than 64 tokens:** The context window is strictly 64 tokens. Anything longer gets chopped.
-- **Raw arithmetic without Python interceptor:** Neural arithmetic still requires symbolic assistance for numbers past ten.
-
+* `one day alice and felix were in the kitchen .`
 
 ---
 
-## Benchmark Scorecard (The 85-Question Battery)
+## Benchmark Scorecard (125,000+ Tests)
 
-Ran using `evaluator.py` with pure standard python (deterministic argmax on logic benchmarks, creative multinomial on stories):
+The model is evaluated against a deterministic, mathematically exhaustive combinatorial stress suite generated dynamically from its atomic logic configurations.
 
 ```text
 ============================================================================
-                           CATEGORY SCORECARD                          
+                   PARALLEL EVALUATION SCORECARD                       
 ============================================================================
-Actor Location               : 09/10 [#########-]  90.0%
-Object Location              : 08/08 [##########] 100.0%
-Possession (has)             : 06/06 [##########] 100.0%
-Possession (found)           : 07/07 [##########] 100.0%
-Object Transfer              : 06/06 [##########] 100.0%
-Giving (IOI)                 : 06/08 [#######---]  75.0%
-Color Binding                : 08/08 [##########] 100.0%
-Persona                      : 08/08 [##########] 100.0%
-Transitive                   : 04/04 [##########] 100.0%
-Functional Needs             : 04/04 [##########] 100.0%
-Action Affordance            : 04/04 [##########] 100.0%
-Physical States              : 04/04 [##########] 100.0%
-Temporal Order               : 02/04 [#####-----]  50.0%
-Inverted / Negation          : 01/04 [##--------]  25.0%
+Single/Multi Supporting Facts      : 053909/060096 [#########-]  89.7%
+Argument/Positional Relations      : 001248/001248 [##########] 100.0%
+Yes/No Truth Verification          : 000384/000384 [##########] 100.0%
+Counting & Inverse Symmetry        : 010368/010368 [##########] 100.0%
+Lists and Sets                     : 010368/010368 [##########] 100.0%
+Negation & Indefinite Knowledge    : 000576/000576 [##########] 100.0%
+Basic & Compound Coreference       : 003795/004368 [########--]  86.9%
+Time Reasoning (Before/After)      : 000420/000480 [########--]  87.5%
+Agent Motivations & Needs          : 002201/002208 [#########-]  99.7%
+Cross-Task Query Transfer          : 002009/002016 [#########-]  99.7%
+Polar Possession (does... have)    : 016390/016416 [#########-]  99.8%
+Selective Departure (Frame Prob)   : 004145/004752 [########--]  87.2%
+Transferred Attribute (Colour)     : 009812/010368 [#########-]  94.6%
+Relational Symmetry Inversion      : 000288/000288 [##########] 100.0%
 ----------------------------------------------------------------------------
-TOTAL REASONING SCORE        : 77/85 [#########-]  90.6%
+TOTAL REASONING SCORE              : 117262/125312 [#########-]  93.6%
 ============================================================================
+```
+
+## Future Plans & Roadmap
+
+We have pushed pure FP32 float math on these microcontrollers to their absolute limits. To scale the engine further, the following upgrades are planned:
+
+* **INT8 Post-Training Quantization (W8A32):** The RP2040 has no hardware FPU, meaning float math is emulated and slow. By quantizing the weights to 8-bit integers, we can unlock the Pico's 1-cycle hardware `MULS` instruction. This will slash the `.model` file sizes from 1.25 MB to ~315 KB, vastly speeding up SPI Flash reads.
+* **Multi-Query Attention (MQA):** To free up SRAM, we plan to shift from standard Multi-Head Attention to MQA. By sharing a single Key and Value head across all 4 Query heads, the KV cache footprint will drop by 4x (from 123 KB down to ~30 KB), completely eliminating memory fragmentation risks.
+* **Dual-Core Pipelining:** Currently, Core 0 handles matrix math, web serving, and the WiFi TCP stack. We plan to use the RP2040's hardware FIFOs to offload the `cyw43` WiFi driver and HTTP server to Core 1, allowing Core 0 to compute neural layers at 100% duty cycle without network interrupts.

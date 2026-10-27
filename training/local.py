@@ -8,41 +8,31 @@ import random
 from collections import Counter
 import os
 import json
+import sys
 
-print("Loading configurations...")
-with open("config/model.json", "r") as f:
-    mod_cfg = json.load(f)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from curriculum import generate_atomic_sample, split_qa
 
-with open("config/logic.json", "r") as f:
-    log_cfg = json.load(f)
+with open("config/model.json", "r") as f: mod_cfg = json.load(f)
+with open("config/logic.json", "r") as f: log_cfg = json.load(f)
 
 VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
 BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
 EMBED_DIM  = mod_cfg["architecture"]["embed_dim"]
 NUM_HEADS  = mod_cfg["architecture"]["num_heads"]
 NUM_LAYERS = mod_cfg["architecture"]["num_layers"]
+DEVICE = mod_cfg["training"]["device"]
 
 MODELS_DIR = mod_cfg["paths"]["models_dir"]
 STORIES_FILE = mod_cfg["paths"]["stories_file"]
 QUESTIONS_FILE = mod_cfg["paths"]["questions_file"]
-DEVICE = mod_cfg["training"]["device"]
-
 os.makedirs(MODELS_DIR, exist_ok=True)
-os.makedirs("models", exist_ok=True)
-
-print("==================================================")
-print(f" Training Verified {NUM_LAYERS}L {EMBED_DIM}-D Engine on: {DEVICE.upper()}")
-print("==================================================")
 
 if os.path.exists(STORIES_FILE):
-    print(f"Using cached {STORIES_FILE}...")
     with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f:
         raw_stories = f.read().lower()
 else:
-    print("Downloading TinyStories...")
-    url = mod_cfg["dataset"]["url"]
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers, stream=True)
+    response = requests.get(mod_cfg["dataset"]["url"], headers={"User-Agent": "Mozilla/5.0"}, stream=True)
     with open(STORIES_FILE, "wb") as f:
         for chunk in response.iter_content(chunk_size=512 * 1024):
             f.write(chunk)
@@ -51,121 +41,54 @@ else:
         raw_stories = f.read().lower()
 
 for target, names in mod_cfg["dataset"]["name_replacements"].items():
-    pattern = r"\b(" + "|".join(names) + r")\b"
-    raw_stories = re.sub(pattern, target, raw_stories)
+    raw_stories = re.sub(r"\b(" + "|".join(names) + r")\b", target, raw_stories)
 
+TARGET_LOGIC = mod_cfg["dataset"].get("logic_samples_target", 40000)
+all_qa_tasks = [generate_atomic_sample(log_cfg) for _ in range(TARGET_LOGIC)]
 
-
-# COMPILE REASONING TASKS & GENERATE EVAL QUESTIONS# ---------------------------------------------------------
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-TARGET_LOGIC_SAMPLES = mod_cfg["dataset"].get("logic_samples_target", 25000)
-DEFAULT_EVAL_PER_CAT = mod_cfg["dataset"].get("eval_samples_per_category", 15)
-
-logic_tasks = []
 eval_benchmarks = {}
-pools = log_cfg["pools"]
-pair_pools = log_cfg.get("pair_pools", {})
+for cat in log_cfg["queries"].keys():
+    eval_benchmarks[cat] = []
+    for _ in range(15):
+        p, t = split_qa(generate_atomic_sample(log_cfg, target_category=cat))
+        eval_benchmarks[cat].append({"q": p, "target": t})
 
-from curriculum import expand_composition_templates, instantiate_random, split_qa
-
-clauses = log_cfg["clauses"]
-compositions = log_cfg["compositions"]
-
-total_weight = sum(comp.get("weight", 1.0) for comp in compositions)
-
-for comp in compositions:
-    comp_name = comp["name"]
-    weight = comp.get("weight", 1.0)
-    eval_benchmarks[comp_name] = []
-
-    # Assemble modular templates across chained clauses
-    templates = expand_composition_templates(comp, clauses)
-    
-    # (The rest of local.py remains 100% untouched!)
-
-    cat_total_reps = int((weight / total_weight) * TARGET_LOGIC_SAMPLES)
-    reps_per_template = cat_total_reps // len(templates)
-    remainder = cat_total_reps % len(templates)
-
-    # 1. Build Training Data
-    for i, tmpl in enumerate(templates):
-        reps = reps_per_template + (1 if i < remainder else 0)
-        for _ in range(reps):
-            logic_tasks.append(instantiate_random(tmpl, pools, pair_pools))
-
-    # 2. Generate Evaluation Benchmarks
-    eval_count = comp.get("eval_samples", DEFAULT_EVAL_PER_CAT)
-    for _ in range(eval_count):
-        eval_tmpl = random.choice(templates)
-        eval_str = instantiate_random(eval_tmpl, pools, pair_pools)
-        prompt, target = split_qa(eval_str)
-        eval_benchmarks[comp_name].append({"q": prompt, "target": target})
-
-# Open-ended storytelling evaluation prompts
-eval_benchmarks["Storytelling"] = []
-story_prompts = [
+eval_benchmarks["Storytelling"] = [{"q": p, "target": None} for p in [
     "one day alice and felix were in the kitchen .",
     "once upon a time bob went into the green garden .",
     "the sun was very warm and the little kitten wanted to",
     "alice and luna found a little box under the tree ."
-]
-for sp in story_prompts:
-    eval_benchmarks["Storytelling"].append({"q": sp, "target": None})
+]]
 
-with open(QUESTIONS_FILE, "w") as f:
-    json.dump(eval_benchmarks, f, indent=2)
-
-total_q_count = sum(len(qs) for qs in eval_benchmarks.values())
-print(f"Generated {total_q_count} dynamic evaluation questions -> {QUESTIONS_FILE}")
-
-# Pure reasoning tasks (No hardcoded personas!)
-all_qa_tasks = logic_tasks
-random.seed(42)
-random.shuffle(all_qa_tasks)
+with open(QUESTIONS_FILE, "w") as f: json.dump(eval_benchmarks, f, indent=2)
 
 CAT_CORE_WORDS = mod_cfg["dataset"]["core_words"]
-
 all_words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", raw_stories + " " + " ".join(all_qa_tasks))
 counts = Counter(all_words)
-for w in CAT_CORE_WORDS:
-    counts.pop(w, None)
-remaining = VOCAB_SIZE - len(CAT_CORE_WORDS)
-top_words = [w for w, _ in counts.most_common(remaining)]
-VOCAB = CAT_CORE_WORDS + top_words
+for w in CAT_CORE_WORDS: counts.pop(w, None)
+VOCAB = CAT_CORE_WORDS + [w for w, _ in counts.most_common(VOCAB_SIZE - len(CAT_CORE_WORDS))]
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-print("Tokenizing and constructing masked QA tensors...")
 def tokenize_str(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", s.lower())]
 
 qa_tensor_x, qa_tensor_y = [], []
-pad_id = WORD_TO_ID["<pad>"]
-a_token_id = WORD_TO_ID["[a]"]
-ans_token_id = WORD_TO_ID["answer"]
+pad_id, a_token_id = WORD_TO_ID["<pad>"], WORD_TO_ID["[a]"]
 
 for task in all_qa_tasks:
     toks = tokenize_str(task)
     if len(toks) > BLOCK_SIZE: continue
     x = toks + [pad_id] * (BLOCK_SIZE - len(toks))
     y = [-100] * BLOCK_SIZE
-    ans_start = -1
-    for idx, t in enumerate(toks):
-        if t in (a_token_id, ans_token_id):
-            ans_start = idx
-            break
+    ans_start = next((idx for idx, t in enumerate(toks) if t == a_token_id), -1)
     if ans_start != -1:
-        for idx in range(ans_start, len(toks) - 1):
-            y[idx] = toks[idx + 1]
+        for idx in range(ans_start, len(toks) - 1): y[idx] = toks[idx + 1]
     qa_tensor_x.append(torch.tensor(x, dtype=torch.long))
     qa_tensor_y.append(torch.tensor(y, dtype=torch.long))
 
 qa_x_data = torch.stack(qa_tensor_x)
 qa_y_data = torch.stack(qa_tensor_y)
-
-story_tokens = tokenize_str(raw_stories)
-story_data = torch.tensor(story_tokens, dtype=torch.long)
+story_data = torch.tensor(tokenize_str(raw_stories), dtype=torch.long)
 
 class Block(nn.Module):
     def __init__(self):
@@ -194,99 +117,60 @@ class BabyStories(nn.Module):
     def forward(self, idx):
         B, T = idx.shape
         x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=idx.device))
-        for layer in self.layers:
-            x = layer(x)
+        for layer in self.layers: x = layer(x)
         return self.lm_head(self.ln_f(x))
 
 model = BabyStories().to(DEVICE)
+optimizer = torch.optim.AdamW(model.parameters(), lr=mod_cfg["training"]["base_lr"], weight_decay=mod_cfg["training"]["weight_decay"])
 
 TOTAL_STEPS = mod_cfg["training"]["total_steps"]
 WARMUP = mod_cfg["training"]["warmup_steps"]
-BASE_LR = mod_cfg["training"]["base_lr"]
-MIN_LR = mod_cfg["training"]["min_lr"]
+BASE_LR, MIN_LR = mod_cfg["training"]["base_lr"], mod_cfg["training"]["min_lr"]
 HALF_BATCH = mod_cfg["training"]["half_batch"]
-W_DECAY = mod_cfg["training"]["weight_decay"]
-G_CLIP = mod_cfg["training"]["grad_clip"]
-
-optimizer = torch.optim.AdamW(model.parameters(), lr=BASE_LR, weight_decay=W_DECAY)
 
 def get_lr(step):
     if step < WARMUP: return BASE_LR * (step + 1) / WARMUP
-    ratio = (step - WARMUP) / (TOTAL_STEPS - WARMUP)
-    return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * ratio)) * (BASE_LR - MIN_LR)
+    return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * (step - WARMUP) / (TOTAL_STEPS - WARMUP))) * (BASE_LR - MIN_LR)
 
 def get_balanced_batch():
     qa_idx = torch.randint(len(qa_x_data), (HALF_BATCH,))
-    x_qa = qa_x_data[qa_idx]
-    y_qa = qa_y_data[qa_idx]
-
     st_idx = torch.randint(len(story_data) - BLOCK_SIZE - 1, (HALF_BATCH,))
     x_st = torch.stack([story_data[i : i + BLOCK_SIZE] for i in st_idx])
     y_st = torch.stack([story_data[i + 1 : i + BLOCK_SIZE + 1] for i in st_idx])
-    
-    return x_qa.to(DEVICE), y_qa.to(DEVICE), x_st.to(DEVICE), y_st.to(DEVICE)
+    return qa_x_data[qa_idx].to(DEVICE), qa_y_data[qa_idx].to(DEVICE), x_st.to(DEVICE), y_st.to(DEVICE)
 
-print(f"\nTraining for {TOTAL_STEPS} steps...")
 model.train()
 for step in range(TOTAL_STEPS + 1):
-    lr = get_lr(step)
-    for p in optimizer.param_groups: p["lr"] = lr
+    for p in optimizer.param_groups: p["lr"] = get_lr(step)
 
     x_qa, y_qa, x_st, y_st = get_balanced_batch()
-    x_all = torch.cat([x_qa, x_st], dim=0)
-    logits_all = model(x_all)
-    
-    logits_qa = logits_all[:HALF_BATCH]
-    logits_st = logits_all[HALF_BATCH:]
-
-    loss_qa = F.cross_entropy(logits_qa.view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
-    loss_st = F.cross_entropy(logits_st.view(-1, VOCAB_SIZE), y_st.view(-1))
-    
-    w_qa = mod_cfg["training"]["loss_weights"]["qa"]
-    base_w_st = mod_cfg["training"]["loss_weights"]["story"]
+    logits_all = model(torch.cat([x_qa, x_st], dim=0))
+    loss_qa = F.cross_entropy(logits_all[:HALF_BATCH].view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
+    loss_st = F.cross_entropy(logits_all[HALF_BATCH:].view(-1, VOCAB_SIZE), y_st.view(-1))
     
     decay_start = int(TOTAL_STEPS * 0.70)
-    min_w_st = 0.05  # Retain a baseline 5% weight on general English stories
-    if step > decay_start:
-        progress = (step - decay_start) / (TOTAL_STEPS - decay_start)
-        current_w_st = base_w_st - progress * (base_w_st - min_w_st)
-    else:
-        current_w_st = base_w_st
-
-    loss = (w_qa * loss_qa) + (current_w_st * loss_st)
+    current_w_st = 0.3 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.25 if step > decay_start else 0.3
+    loss = (2.5 * loss_qa) + (max(current_w_st, 0.05) * loss_st)
 
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(model.parameters(), G_CLIP)
+    torch.nn.utils.clip_grad_norm_(model.parameters(), mod_cfg["training"]["grad_clip"])
     optimizer.step()
 
     if step % 500 == 0:
         print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
 
-def dump_t(t, f): 
-    f.write(t.detach().cpu().to(torch.float32).numpy().tobytes())
+def dump_t(t, f): f.write(t.detach().cpu().to(torch.float32).numpy().tobytes())
 
-path1 = os.path.join(MODELS_DIR, "pico1 weights.model")
-path2 = os.path.join(MODELS_DIR, "pico2 weights.model")
-
-with open(path1, "wb") as f:
-    dump_t(model.tok_emb.weight, f)
-    dump_t(model.pos_emb.weight, f)
+with open(os.path.join(MODELS_DIR, "pico1 weights.model"), "wb") as f:
+    dump_t(model.tok_emb.weight, f); dump_t(model.pos_emb.weight, f)
     for i in [0, 1, 2]:
         for p in model.layers[i].parameters(): dump_t(p, f)
 
-with open(path2, "wb") as f:
+with open(os.path.join(MODELS_DIR, "pico2 weights.model"), "wb") as f:
     for i in [3, 4, 5]:
         for p in model.layers[i].parameters(): dump_t(p, f)
     for p in model.ln_f.parameters(): dump_t(p, f)
-    dump_t(model.lm_head.weight, f)
-    dump_t(model.lm_head.bias, f)
+    dump_t(model.lm_head.weight, f); dump_t(model.lm_head.bias, f)
 
-vocab_path = os.path.join(MODELS_DIR, "vocab.py")
-with open(vocab_path, "w") as f: 
-    f.write(f"VOCAB = {repr(VOCAB)}\n")
-
-print(f"Meow Weights (pico1): {os.path.getsize(path1)/1024:.1f} KB -> Saved to {path1}")
-print(f"Miaou Weights (pico2): {os.path.getsize(path2)/1024:.1f} KB -> Saved to {path2}")
-print(f"Vocab List: Saved to ./{vocab_path}")
-print("\nTraining Complete!")
+with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: f.write(f"VOCAB = {repr(VOCAB)}\n")

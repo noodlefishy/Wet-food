@@ -1,4 +1,4 @@
-import itertools
+import json
 import random
 import re
 
@@ -13,103 +13,146 @@ def format_qa_sequence(premise, question, answer):
     a = normalize_text(answer.strip().rstrip(". "))
     return f"[c] {p} . [q] {q} ? [a] {a} . <eos>"
 
-def get_template_placeholders(template):
-    placeholders = re.findall(r'\{([a-z]+)(\d+)(?:_([a-z]+))?\}', template)
-    groups = {}
-    for p_type, p_idx, _ in placeholders:
-        groups.setdefault(p_type, set()).add(p_idx)
-    return placeholders, groups
-
-def instantiate_random(template, pools, pair_pools):
-    _, groups = get_template_placeholders(template)
-    replacements = {}
-
-    for p_type, indices in groups.items():
-        if p_type in pools:
-            sampled = random.sample(pools[p_type], len(indices))
-            for idx, val in zip(sorted(list(indices)), sampled):
-                replacements[f"{p_type}{idx}"] = val
-
-    for p_type, indices in groups.items():
-        if p_type in pair_pools:
-            sampled = random.sample(pair_pools[p_type], len(indices))
-            for idx, val_dict in zip(sorted(list(indices)), sampled):
-                for sub_k, sub_v in val_dict.items():
-                    replacements[f"{p_type}{idx}_{sub_k}"] = sub_v
-
-    return template.format(**replacements)
-
-def instantiate_all_permutations(template, pools, pair_pools):
-    _, groups = get_template_placeholders(template)
-    pool_perms = []
-    entities_by_pool = []
-
-    for p_type, indices in groups.items():
-        vals = pools.get(p_type) or pair_pools.get(p_type)
-        if not vals or len(indices) > len(vals):
-            return []
-        sorted_indices = sorted(list(indices))
-        entities_by_pool.append((p_type, sorted_indices))
-        perms = list(itertools.permutations(vals, len(indices)))
-        pool_perms.append(perms)
-
-    results = []
-    for combo in itertools.product(*pool_perms):
-        replacements = {}
-        for (p_type, indices), assigned_vals in zip(entities_by_pool, combo):
-            for idx, val in zip(indices, assigned_vals):
-                if isinstance(val, dict):
-                    for sub_k, sub_v in val.items():
-                        replacements[f"{p_type}{idx}_{sub_k}"] = sub_v
-                else:
-                    replacements[f"{p_type}{idx}"] = val
-        results.append(template.format(**replacements))
-    return results
-
 def split_qa(sequence_str):
     parts = sequence_str.split(" [a] ")
     prompt = parts[0].strip() + " [a]"
     target = parts[1].replace("<eos>", "").strip()
     return prompt, target
 
+def format_item_list(items, article="the"):
+    if not items: return ""
+    if len(items) == 1: return f"{article} {items[0]}"
+    if len(items) == 2: return f"{article} {items[0]} and {article} {items[1]}"
+    return ", ".join([f"{article} {i}" for i in items[:-1]]) + f" and {article} {items[-1]}"
 
-# =====================================================================
-# THE NEW CLAUSE-COMPOSITION ENGINE
-# =====================================================================
+def generate_atomic_sample(log_cfg, target_category=None):
+    pools = log_cfg["pools"]
+    rules = log_cfg.get("world_rules", {})
+    preds = log_cfg["predicates"]
+    queries = log_cfg["queries"]
+    needs = log_cfg.get("states", {}).get("needs", [])
 
-def expand_composition_templates(composition, clauses_dict):
-    """
-    Assembles compound premises from atomic clauses and inherits
-    queries from ALL active clauses to eliminate task silos.
-    """
-    chain = composition.get("chain", [])
-    connector = composition.get("connector", " . ")
-    
-    # 1. Gather all premise template combinations across the chained clauses
-    clause_template_lists = [clauses_dict[c_name]["templates"] for c_name in chain]
-    combined_premises = []
-    for combo in itertools.product(*clause_template_lists):
-        combined_premises.append(connector.join(combo))
+    num_actors = random.choice(rules.get("actors_per_story", [1, 2]))
+    active_actors = random.sample(pools["actor"], num_actors)
+    avail_items = list(pools["item"])
+    random.shuffle(avail_items)
 
-    # 2. Gather queries: Inherited from Clause A + Clause B + Relational
-    all_queries = []
-    
-    # Inherit queries from each constituent clause
-    for c_name in chain:
-        for q_item in clauses_dict[c_name]["queries"]:
-            all_queries.append(q_item)
+    world = {}
+    story_clauses = []
 
-    # Add cross-clause relational queries
-    for q_item in composition.get("relational_queries", []):
-        all_queries.append(q_item)
+    for actor in active_actors:
+        world[actor] = {"location": None, "state": None, "items": []}
+        actor_sentences = []
 
-    # 3. Format into engine tokens: [c] ... [q] ... [a] ... <eos>
-    templates = []
-    for prem in combined_premises:
-        for item in all_queries:
-            q_field = item["q"]
-            queries = q_field if isinstance(q_field, list) else [q_field]
-            for single_q in queries:
-                templates.append(format_qa_sequence(prem, single_q, item["a"]))
+        if needs and random.random() < rules.get("state_probability", 0.5):
+            need = random.choice(needs)
+            world[actor]["state"] = need["state"]
+            world[actor]["location"] = need["target"]
+            actor_sentences.append(random.choice(preds["state"]).format(actor=actor, state=need["state"]))
+            actor_sentences.append(random.choice(preds["motion"]).format(actor=actor, location=need["target"]))
+        else:
+            loc = random.choice(pools["location"])
+            world[actor]["location"] = loc
+            actor_sentences.append(random.choice(preds["motion"]).format(actor=actor, location=loc))
 
-    return templates
+        k_items = random.choice(rules.get("items_per_actor", [0, 1, 2]))
+        assigned = [avail_items.pop() for _ in range(min(k_items, len(avail_items)))]
+        world[actor]["items"] = assigned
+
+        if assigned:
+            item_str = format_item_list(assigned, article=random.choice(["a", "the"]))
+            actor_sentences.append(random.choice(preds["possession"]).format(actor=actor, items=item_str))
+
+        if len(actor_sentences) > 1 and world[actor]["state"]:
+            story_clauses.append(" . then ".join(actor_sentences[:2]) + (" . " + actor_sentences[2] if len(actor_sentences) > 2 else ""))
+        else:
+            story_clauses.append(" . ".join(actor_sentences))
+
+    premise = " . ".join(story_clauses)
+    if target_category is None:
+        target_category = random.choice(list(queries.keys()))
+        
+    q_tmpl = random.choice(queries[target_category])
+    t_actor = random.choice(active_actors)
+    absent_actors = [a for a in pools["actor"] if a not in active_actors]
+    unmentioned = random.choice(absent_actors) if absent_actors else "nobody"
+
+    q_str, a_str = "", ""
+
+    if "location" in target_category or "Single" in target_category or "Frame" in target_category:
+        if "who" in q_tmpl:
+            q_str = q_tmpl.format(location=world[t_actor]["location"])
+            a_str = t_actor
+        else:
+            q_str = q_tmpl.format(actor=t_actor)
+            a_str = world[t_actor]["location"]
+
+    elif "Lists" in target_category:
+        if random.random() < 0.2 and unmentioned != "nobody":
+            q_str = q_tmpl.format(actor=unmentioned)
+            a_str = "nothing"
+        else:
+            q_str = q_tmpl.format(actor=t_actor)
+            items = world[t_actor]["items"]
+            a_str = "nothing" if not items else format_item_list(items, article="")
+
+    elif "Counting" in target_category:
+        if random.random() < 0.2 and unmentioned != "nobody":
+            q_str = q_tmpl.format(actor=unmentioned)
+            a_str = "none"
+        else:
+            q_str = q_tmpl.format(actor=t_actor)
+            count_map = {0: "none", 1: "one", 2: "two"}
+            a_str = count_map[len(world[t_actor]["items"])]
+
+    elif "Truth" in target_category:
+        loc = world[t_actor]["location"]
+        if random.random() < 0.5:
+            q_str = q_tmpl.format(actor=t_actor, location=loc)
+            a_str = "yes"
+        else:
+            wrong_loc = random.choice([l for l in pools["location"] if l != loc])
+            q_str = q_tmpl.format(actor=t_actor, location=wrong_loc)
+            a_str = "no"
+
+    elif "Polar Possession" in target_category:
+        held = world[t_actor]["items"]
+        if held and random.random() < 0.5:
+            q_str = q_tmpl.format(actor=t_actor, item=random.choice(held))
+            a_str = "yes"
+        else:
+            not_held = [i for i in pools["item"] if i not in held]
+            q_str = q_tmpl.format(actor=t_actor, item=random.choice(not_held))
+            a_str = "no"
+
+    elif "Motivations" in target_category:
+        st = world[t_actor]["state"]
+        if st and "why" in q_tmpl:
+            q_str = q_tmpl.format(actor=t_actor, location=world[t_actor]["location"])
+            a_str = st
+        else:
+            active_with_state = [a for a in active_actors if world[a]["state"]]
+            if active_with_state:
+                ch = random.choice(active_with_state)
+                q_str = q_tmpl.format(state=world[ch]["state"], actor=ch, location="")
+                a_str = ch
+            else:
+                q_str = q_tmpl.format(state=random.choice(needs)["state"], actor="", location="")
+                a_str = "nobody"
+
+    return format_qa_sequence(premise, q_str, a_str)
+
+def generate_benchmark_suite(log_cfg, samples_per_category=400):
+    dataset = {}
+    for cat in log_cfg["queries"].keys():
+        dataset[cat] = []
+        seen = set()
+        attempts = 0
+        while len(dataset[cat]) < samples_per_category and attempts < samples_per_category * 15:
+            attempts += 1
+            seq = generate_atomic_sample(log_cfg, target_category=cat)
+            p, t = split_qa(seq)
+            if p not in seen:
+                seen.add(p)
+                dataset[cat].append({"q": p, "target": t})
+    return dataset
