@@ -1,1 +1,53 @@
-Im failing school today aaaahhhh
+### Part 1: What Was Actually Wrong With the Model Before?
+
+If you look back, the project suffered from a **chain reaction of four hidden bugs** that compounded on each other:
+
+1. **The Context Overflow (The 64-Token Wall):** Early on, our generated stories had too many events and adjective filler ("*walked happily to the cozy garden*"). This pushed prompts past 64 tokens, causing the context window to truncate the start of the story where characters' initial locations were defined.
+2. **The Memorization Trap (Overfitting):** When we pre-cached 40k–100k tasks, the small 96-D model didn't learn reasoning; it just memorized the exact string patterns. When tested on fresh generations, it panicked. Shifting to **on-the-fly dynamic generation** forced it to learn true rules.
+3. **The Rogue Double `[a]` Bug (The Evaluator Ghost):** This was the most frustrating one. `fast_evaluator.py` was accidentally appending an extra ` [a]` tag to prompts that *already* ended in `[a]`. The model was receiving `... [a] [a]`, which it had never seen before, causing it to blindly default to guessing `yes` or `no`.
+4. **The INT8 Embedding Corruption:** Compressing matrix weights to INT8 is fine for hidden layers, but when we quantized the **Token Embeddings** (`tok_emb`), it smashed the fine-grained semantic distances between words like "kitchen" and "garden," turning them into numerical noise. Moving to **Mixed Precision** (FP32 Embeddings + INT8 Layers) saved the vocabulary while shrinking file sizes.
+
+Once those structural bugs were cleared, the math took over, and it landed cleanly at **98.7%**.
+
+---
+
+### Part 2: What Kind of Questions Should You Demo?
+
+When you fire up the web dashboard (`http://192.168.4.1`) or test it locally in `sim.py`, you want to show off that your microcontrollers aren't just matching keywords—they are tracking **space, time, objects, and pronouns**. 
+
+Here is a curated menu of impressive prompts to copy-paste for a demo:
+
+#### 1. Multi-Hop Object Tracking (The Classic bAbI Test)
+*Proves the model understands object permanence and movement handoffs.*
+> **Prompt:** `[c] alice found the ball in the room . then alice went to the garden . [q] where is the ball ? [a]`
+> **Expected Output:** `garden .`
+
+#### 2. Chain of Custody / Entity Transfers
+*Proves it can track who currently holds an item across multiple handoffs.*
+> **Prompt:** `[c] bob gave the cup to alice . then alice gave the cup to luna . [q] who has the cup now ? [a]`
+> **Expected Output:** `luna .`
+
+#### 3. Pronoun Coreference Resolution
+*Proves it can map a pronoun ("she"/"he") back to the correct named character.*
+> **Prompt:** `[c] luna was in the kitchen . then she went to the room . [q] where is luna ? [a]`
+> **Expected Output:** `room .`
+
+#### 4. Spatial Negation
+*Proves it handles negative constraints and resolves to the alternative truth.*
+> **Prompt:** `[c] bob is not in the kitchen . bob is in the park . [q] where is bob ? [a]`
+> **Expected Output:** `park .`
+
+#### 5. Compass / Relational Mapping
+*Proves it understands abstract 2D grid relationships.*
+> **Prompt:** `[c] the kitchen is north of the park . the park is north of the room . [q] what is north of the park ? [a]`
+> **Expected Output:** `kitchen .`
+
+#### 6. Time Reasoning (Before/After)
+*Proves it can look backward chronologically through a timeline.*
+> **Prompt:** `[c] first bob was in the room . then bob was in the kitchen . [q] where was bob first ? [a]`
+> **Expected Output:** `room .`
+
+#### 7. The Mode Switch (Open-Ended Storytelling)
+*Proves that when you strip away the logic tags, it transforms back into a creative neural net.*
+> **Prompt:** `once upon a time alice and luna went into the green garden and`
+> **Expected Output:** *(It will fluently continue writing a fairy tale using its TinyStories background training).*
