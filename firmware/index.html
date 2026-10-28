@@ -111,10 +111,11 @@
 
       <div class="badge">[ HARDWARE &amp; ARCHITECTURE ]</div>
       <div class="metric" style="line-height:1.45; font-size:10px;">
-        <span style="color:#00e5ff;">Meow (Host):</span> RP2040, Layers 0-2 (Flash XIP)<br>
-        <span style="color:#00e5ff;">Miaou (Worker):</span> RP2040, Layers 3-5 (Wi-Fi)<br>
-        <span style="color:#00e5ff;">Precision:</span> INT8 (W8A32 Quantized)<br>
-        <span style="color:#00e5ff;">Dimensions:</span> 80-D | 4 Heads | 1,024 Vocab
+        <span style="color:#00e5ff;">Meow (Host):</span> Dual-Core RP2040 (Core 0: L0-2, Core 1: HTTP)<br>
+        <span style="color:#00e5ff;">Miaou (Worker):</span> 240 MHz RP2040 (Layers 3-7 over Wi-Fi)<br>
+        <span style="color:#00e5ff;">Position:</span> RoPE (Rotary Relative, Zero Pos Embedding)<br>
+        <span style="color:#00e5ff;">Attention:</span> MQA + Sliding Window KV Cache (SWA)<br>
+        <span style="color:#00e5ff;">Network:</span> 8-Layers | 80-D | 4 Heads | INT8 W8A32
       </div>
     </div>
   </div>

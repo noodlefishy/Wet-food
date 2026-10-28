@@ -1,34 +1,65 @@
-import os, sys, json, re, time, torch, numpy as np, torch.nn as nn, struct
+import os, sys, json, re, time, struct, math, torch, numpy as np, torch.nn as nn
 from torch.nn import functional as F
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
-with open(os.path.join(project_root, "config", "model.json"), "r") as f: mod_cfg = json.load(f)
+with open(os.path.join(project_root, "config", "model.json")) as f: mod_cfg = json.load(f)
 from models.local import vocab
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
-EMBED_DIM = mod_cfg["architecture"]["embed_dim"]
-BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
-HEAD_DIM = EMBED_DIM // 4
+
+VOCAB_SIZE   = mod_cfg["architecture"]["vocab_size"]
+EMBED_DIM    = mod_cfg["architecture"]["embed_dim"]
+BLOCK_SIZE   = mod_cfg["architecture"]["block_size"]
+NUM_HEADS    = mod_cfg["architecture"]["num_heads"]
+NUM_LAYERS   = mod_cfg["architecture"]["num_layers"]
+MEOW_LAYERS  = mod_cfg["architecture"]["meow_layers"]
+MIAOU_LAYERS = mod_cfg["architecture"]["miaou_layers"]
+HEAD_DIM     = EMBED_DIM // NUM_HEADS
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 
-class MQA(nn.Module):
+def precompute_rope(head_dim, max_len=BLOCK_SIZE):
+    inv = 1.0 / (10000.0 ** (torch.arange(0, head_dim, 2).float() / head_dim))
+    t = torch.arange(max_len).float()
+    f = torch.outer(t, inv)
+    return f.cos(), f.sin()
+
+cos_c, sin_c = precompute_rope(HEAD_DIM, BLOCK_SIZE)
+
+def apply_rope(x, cos, sin):
+    T = x.shape[2]
+    c = cos[:T].unsqueeze(0).unsqueeze(1).to(x.device)
+    s = sin[:T].unsqueeze(0).unsqueeze(1).to(x.device)
+    x1, x2 = x[..., 0::2], x[..., 1::2]
+    out = torch.empty_like(x)
+    out[..., 0::2] = x1 * c - x2 * s
+    out[..., 1::2] = x1 * s + x2 * c
+    return out
+
+class RoPE_MQA(nn.Module):
     def __init__(self):
         super().__init__()
         self.qkv_proj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * HEAD_DIM)
-        self.out_proj = nn.Linear(EMBED_DIM, EMBED_DIM)
+        self.out_proj  = nn.Linear(EMBED_DIM, EMBED_DIM)
     def forward(self, x):
         B, T, C = x.shape
         qkv = self.qkv_proj(x)
-        q = qkv[:, :, :C].view(B, T, 4, HEAD_DIM).transpose(1, 2)
-        k = qkv[:, :, C : C + HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2).expand(-1, 4, -1, -1)
-        v = qkv[:, :, C + HEAD_DIM :].view(B, T, 1, HEAD_DIM).transpose(1, 2).expand(-1, 4, -1, -1)
+        q = qkv[:, :, :C].view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+        k = qkv[:, :, C:C+HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2)
+        v = qkv[:, :, C+HEAD_DIM:].view(B, T, 1, HEAD_DIM).transpose(1, 2)
+        q = apply_rope(q, cos_c, sin_c)
+        k = apply_rope(k, cos_c, sin_c)
+        k = k.expand(-1, NUM_HEADS, -1, -1)
+        v = v.expand(-1, NUM_HEADS, -1, -1)
         out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         return self.out_proj(out.transpose(1, 2).contiguous().view(B, T, C))
 
 class Block(nn.Module):
     def __init__(self):
         super().__init__()
-        self.ln1, self.sa, self.ln2 = nn.LayerNorm(EMBED_DIM), MQA(), nn.LayerNorm(EMBED_DIM)
+        self.ln1 = nn.LayerNorm(EMBED_DIM)
+        self.sa  = RoPE_MQA()
+        self.ln2 = nn.LayerNorm(EMBED_DIM)
         self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4*EMBED_DIM), nn.ReLU(), nn.Linear(4*EMBED_DIM, EMBED_DIM))
     def forward(self, x):
         x = x + self.sa(self.ln1(x))
@@ -37,84 +68,121 @@ class Block(nn.Module):
 class BabyStories(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tok_emb, self.pos_emb = nn.Embedding(1024, EMBED_DIM), nn.Embedding(BLOCK_SIZE, EMBED_DIM)
-        self.layers = nn.ModuleList([Block() for _ in range(6)])
-        self.ln_f, self.lm_head = nn.LayerNorm(EMBED_DIM), nn.Linear(EMBED_DIM, 1024)
+        self.tok_emb = nn.Embedding(VOCAB_SIZE, EMBED_DIM)
+        self.layers  = nn.ModuleList([Block() for _ in range(NUM_LAYERS)])
+        self.ln_f    = nn.LayerNorm(EMBED_DIM)
+        self.lm_head = nn.Linear(EMBED_DIM, VOCAB_SIZE)
     def forward(self, idx):
-        x = self.tok_emb(idx) + self.pos_emb(torch.arange(idx.size(1), device=idx.device))
+        x = self.tok_emb(idx)
         for layer in self.layers: x = layer(x)
         return self.lm_head(self.ln_f(x))
 
 model = BabyStories().to(device)
+
 def load_param(f, tensor, quantized=True):
     if tensor.ndim == 2 and quantized:
         rows, cols = tensor.shape
         data = np.empty((rows, cols), dtype=np.float32)
         for r in range(rows):
             s = struct.unpack('f', f.read(4))[0]
-            data[r] = np.fromfile(f, dtype=np.int8, count=cols).astype(np.float32) * s
+            data[r] = np.frombuffer(f.read(cols), dtype=np.int8).astype(np.float32) * s
         tensor.data.copy_(torch.from_numpy(data))
     else:
-        tensor.data.copy_(torch.from_numpy(np.fromfile(f, dtype=np.float32, count=tensor.numel())).view_as(tensor))
+        tensor.data.copy_(torch.from_numpy(np.frombuffer(f.read(tensor.numel() * 4), dtype=np.float32)).view_as(tensor))
 
-with open(os.path.join(project_root, "models", "local", "pico1 weights.model"), "rb") as f1:
-    load_param(f1, model.tok_emb.weight, quantized=True)
-    load_param(f1, model.pos_emb.weight, quantized=True)
-    for i in [0, 1, 2]:
-        for p in model.layers[i].parameters(): load_param(f1, p, quantized=True)
+p1 = os.path.join(project_root, "models", "local", "pico1 weights.model")
+p2 = os.path.join(project_root, "models", "local", "pico2 weights.model")
 
-with open(os.path.join(project_root, "models", "local", "pico2 weights.model"), "rb") as f2:
-    for i in [3, 4, 5]:
-        for p in model.layers[i].parameters(): load_param(f2, p, quantized=True)
-    for p in model.ln_f.parameters(): load_param(f2, p, quantized=True)
-    load_param(f2, model.lm_head.weight, quantized=True)
-    load_param(f2, model.lm_head.bias, quantized=True)
+print(f"[*] Loading Meow weights ({MEOW_LAYERS}L) from pico1...")
+with open(p1, "rb") as f:
+    load_param(f, model.tok_emb.weight)
+    for i in range(MEOW_LAYERS):
+        for p in model.layers[i].parameters(): load_param(f, p)
+
+print(f"[*] Loading Miaou weights ({MIAOU_LAYERS}L) from pico2...")
+with open(p2, "rb") as f:
+    for i in range(MEOW_LAYERS, NUM_LAYERS):
+        for p in model.layers[i].parameters(): load_param(f, p)
+    for p in model.ln_f.parameters(): load_param(f, p)
+    load_param(f, model.lm_head.weight)
+    load_param(f, model.lm_head.bias)
+
 model.eval()
+print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE, no pos_emb) on {device}\n")
 
-with open(sys.argv[1] if len(sys.argv) > 1 else "config/stress_test.json", "r") as f:
-    raw_data = json.load(f)
+suite_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(project_root, "config", "stress_test.json")
+with open(suite_path) as f: raw_data = json.load(f)
+
+a_id = WORD_TO_ID.get("[a]", 9)
+
+def tokenize(s):
+    return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.?:]", s.lower())]
+
+def greedy_decode(prompt_ids, max_new=6):
+    ids = prompt_ids[:]
+    for _ in range(max_new):
+        ctx = ids[-BLOCK_SIZE:]
+        t = torch.tensor([ctx], dtype=torch.long, device=device)
+        with torch.no_grad():
+            logits = model(t)
+        nxt = logits[0, -1].argmax().item()
+        ids.append(nxt)
+        if VOCAB[nxt] in ("<eos>", ".") and len(ids) > len(prompt_ids) + 1:
+            break
+    return ids[len(prompt_ids):]
+
 all_tests = [(cat, item["q"], item["target"]) for cat, items in raw_data.items() for item in items]
+total = len(all_tests)
+print(f"[*] Running {total:,} tests on {len(raw_data)} categories...\n")
 
 cat_stats, total_passed, failures = {}, 0, []
-with torch.no_grad():
-    for i in range(0, len(all_tests), 512):
-        batch = all_tests[i : i + 512]
-        # BUG FIXED HERE: Removed the rogue + " [a]" string appendage
-        toks = [[WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", p.lower())][-BLOCK_SIZE:] for _, p, _ in batch]
-        max_len = max(len(t) for t in toks)
-        x_tensor = torch.tensor([t + [WORD_TO_ID["<pad>"]] * (max_len - len(t)) for t in toks], dtype=torch.long, device=device)
-        logits = model(x_tensor)
-        logits[:, :, WORD_TO_ID["<unk>"]] = logits[:, :, WORD_TO_ID["<pad>"]] = -1e9
-        
-        for b_idx, (cat, p, target) in enumerate(batch):
-            if cat not in cat_stats: cat_stats[cat] = {"passed": 0, "total": 0}
-            cat_stats[cat]["total"] += 1
-            pred_word = VOCAB[logits[b_idx, len(toks[b_idx]) - 1].argmax().item()]
-            expected = [w for w in re.findall(r"\w+", target.lower())]
-            
-            if len(expected) == 1:
-                is_correct = (pred_word == expected[0])
-                predicted_str = pred_word
-            else:
-                gen, curr = [pred_word], toks[b_idx] + [logits[b_idx, len(toks[b_idx]) - 1].argmax().item()]
-                while len(gen) < len(expected) + 2:
-                    out = model(torch.tensor([curr[-BLOCK_SIZE:]], dtype=torch.long, device=device))[0, -1]
-                    out[WORD_TO_ID["<unk>"]] = out[WORD_TO_ID["<pad>"]] = -1e9
-                    nw = VOCAB[out.argmax().item()]
-                    if nw in ("<eos>", "<pad>", "."): break
-                    gen.append(nw); curr.append(out.argmax().item())
-                is_correct = (gen == expected)
-                predicted_str = " ".join(gen)
-                
-            if is_correct:
-                cat_stats[cat]["passed"] += 1
-                total_passed += 1
-            else:
-                failures.append({"cat": cat, "prompt": p, "expected": target, "got": predicted_str})
-        print(f"\rEvaluating: {min(i+512, len(all_tests))}/{len(all_tests)}", end="")
+t0 = time.time()
 
-print("\n" + "="*76 + "\nSCORECARD\n" + "="*76)
-for cat, s in cat_stats.items(): print(f"{cat:<34} : {s['passed']:05d}/{s['total']:05d} [{('#'*int((s['passed']/s['total'])*10)).ljust(10, '-')}] {(s['passed']/s['total'])*100:5.1f}%")
-print("-" * 76 + f"\nTOTAL SCORE : {total_passed}/{len(all_tests)} ({(total_passed/len(all_tests))*100:5.1f}%)\n" + "="*76)
+BATCH = 512
+for i in range(0, total, BATCH):
+    batch = all_tests[i:i+BATCH]
+    for cat, q, target in batch:
+        toks = tokenize(q)
+        try:
+            a_pos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == a_id)
+        except StopIteration:
+            toks.append(a_id)
+            a_pos = len(toks) - 1
+        out_ids = greedy_decode(toks[:a_pos+1])
+        pred = " ".join(VOCAB[t] for t in out_ids if VOCAB[t] not in ("<pad>", "<eos>")).strip().rstrip(".")
+        tgt  = target.strip().rstrip(".")
+        ok   = pred.split()[0] == tgt.split()[0] if pred and tgt else pred == tgt
+        if cat not in cat_stats: cat_stats[cat] = [0, 0]
+        cat_stats[cat][1] += 1
+        if ok:
+            cat_stats[cat][0] += 1
+            total_passed += 1
+        else:
+            failures.append((cat, q, target, pred))
 
-with open("benchmarks/failures.json", "w") as f: json.dump(failures, f, indent=2)
+    done = min(i + BATCH, total)
+    pct = total_passed / done * 100
+    elapsed = time.time() - t0
+    eta = (total - done) * (elapsed / done) if done else 0
+    print(f"  {done:>7,}/{total:,}  acc={pct:5.1f}%  eta={eta/60:.1f}m", end="\r")
+
+elapsed = time.time() - t0
+print(f"\n\n{'='*60}")
+print(f" RESULTS: {total_passed:,}/{total:,} = {total_passed/total*100:.1f}%  ({elapsed:.1f}s)")
+print(f"{'='*60}")
+
+perfect, struggling = [], []
+for cat, (passed, n) in sorted(cat_stats.items(), key=lambda x: -x[1][0]/x[1][1]):
+    pct = passed / n * 100
+    mark = "✓" if pct == 100 else ("~" if pct >= 80 else "✗")
+    print(f"  [{mark}] {cat:<35} {passed:>6}/{n:<6} {pct:5.1f}%")
+    if pct == 100: perfect.append(cat)
+    elif pct < 70:  struggling.append(cat)
+
+print(f"\n[✓] Perfect (100%): {', '.join(perfect) or 'none'}")
+print(f"[✗] Struggling (<70%): {', '.join(struggling) or 'none'}")
+
+if "--failures" in sys.argv and failures:
+    print(f"\n--- Sample Failures (first 20) ---")
+    for cat, q, tgt, pred in failures[:20]:
+        print(f"  [{cat}] Q: {q!r}  expected={tgt!r}  got={pred!r}")

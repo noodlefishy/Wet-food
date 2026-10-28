@@ -4,25 +4,32 @@
     "block_size": 64,
     "embed_dim": 80,
     "num_heads": 4,
-    "num_layers": 6
+    "num_layers": 8,
+    "meow_layers": 3,
+    "miaou_layers": 5,
+    "pos_embedding": "rope",
+    "window_size": 32,
+    "sink_size": 4
   },
   "training": {
     "device": "cpu",
-    "total_steps": 6000,
+    "total_steps": 25000,
     "warmup_steps": 1000,
-    "base_lr": 0.002,
-    "min_lr": 0.0002,
-    "half_batch": 16,
+    "base_lr": 0.0015,
+    "min_lr": 0.0001,
+    "batch_qa": 16,
+    "batch_st": 10,
     "weight_decay": 0.01,
     "grad_clip": 1.0,
     "loss_weights": {
-      "qa": 2.5,
-      "story": 0.3
+      "qa": 2.0,
+      "story_base": 0.35,
+      "story_min": 0.15
     }
   },
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
-    "logic_samples_target": 40000,
+    "logic_samples_target": 50000,
     "eval_samples_per_category": 15,
     "name_replacements": {
       "bob": ["timmy", "tom", "jack"],

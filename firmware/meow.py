@@ -1,10 +1,11 @@
-import network, socket, select, struct, math, gc, time, machine, random
+import network, socket, struct, math, gc, time, machine, random, _thread
 from array import array; from machine import Pin
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
 EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
-ROW_B = 4 + EMBED_DIM; L0_OFF = (VOCAB_SIZE * ROW_B) + (BLOCK_SIZE * ROW_B)
+ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B  # Zero absolute pos_emb offset!
+SINK_SIZE = 4; WINDOW_SIZE = 32
 
 try: import vocab; VOCAB = vocab.VOCAB
 except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w"+str(i) for i in range(1021)]
@@ -15,8 +16,8 @@ except: WIFI_SSID = ""; WIFI_PASS = ""
 
 def read_vec(f, c): return struct.unpack(f'{c}f', f.read(c * 4))
 
-def read_emb(f, idx, off=0):
-    f.seek(off + idx * ROW_B)
+def read_emb(f, idx):
+    f.seek(idx * ROW_B)
     s = struct.unpack('f', f.read(4))[0]
     row = struct.unpack(f'{EMBED_DIM}b', f.read(EMBED_DIM))
     return [v * s for v in row]
@@ -59,6 +60,19 @@ def layer_norm(x, w, b):
     m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v+1e-5)
     return [((x[i]-m)/s)*w[i]+b[i] for i in range(len(x))]
 
+# Precompute RoPE table for positions 0..63
+inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(HEAD_DIM // 2)]
+cos_tab = [[math.cos(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in range(BLOCK_SIZE)]
+sin_tab = [[math.sin(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in range(BLOCK_SIZE)]
+
+def apply_rope(vec, pos):
+    c, s = cos_tab[min(pos, BLOCK_SIZE - 1)], sin_tab[min(pos, BLOCK_SIZE - 1)]
+    for i in range(10):
+        i2 = i * 2
+        x0, x1 = vec[i2], vec[i2 + 1]
+        vec[i2] = x0 * c[i] - x1 * s[i]
+        vec[i2 + 1] = x0 * s[i] + x1 * c[i]
+
 def sample_top5(ranks):
     r = random.random()
     if r < 0.52: return ranks[0]
@@ -68,17 +82,32 @@ def sample_top5(ranks):
     return ranks[4]
 
 f_w = open("pico1 weights.model", "rb")
-kv = [{'k':[], 'v':[]} for _ in range(3)]
+kv = [{'k':[], 'v':[]} for _ in range(3)]  # 3 Layers on Meow
 
-def run_layer(f, idx, x):
+def run_layer(f, idx, x, pos):
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
     qkv = stream_linear(f, EMBED_DIM + 2*HEAD_DIM, EMBED_DIM, nx)
-    q, k, v = qkv[:EMBED_DIM], qkv[EMBED_DIM:EMBED_DIM+HEAD_DIM], qkv[EMBED_DIM+HEAD_DIM:]
-    kv[idx]['k'].append(array('f', k)); kv[idx]['v'].append(array('f', v))
-    if len(kv[idx]['k']) > BLOCK_SIZE: kv[idx]['k'].pop(0); kv[idx]['v'].pop(0)
+    q = qkv[:EMBED_DIM]
+    k = qkv[EMBED_DIM : EMBED_DIM + HEAD_DIM]
+    v = qkv[EMBED_DIM + HEAD_DIM :]
+    
+    # RoPE on Query heads and Key
+    for h in range(NUM_HEADS):
+        ho = h * HEAD_DIM
+        apply_rope(memoryview(q)[ho : ho + HEAD_DIM], pos)
+    apply_rope(k, pos)
+    
+    kv[idx]['k'].append(array('f', k))
+    kv[idx]['v'].append(array('f', v))
+    
+    # Sliding window KV cache with Attention Sinks
+    if len(kv[idx]['k']) > SINK_SIZE + WINDOW_SIZE:
+        kv[idx]['k'].pop(SINK_SIZE)
+        kv[idx]['v'].pop(SINK_SIZE)
+        
     ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(HEAD_DIM)
     for h in range(NUM_HEADS):
-        ho = h * HEAD_DIM; qh = q[ho:ho+HEAD_DIM]
+        ho = h * HEAD_DIM; qh = q[ho : ho + HEAD_DIM]
         scs = [sum(qh[i]*kv[idx]['k'][t][i] for i in range(HEAD_DIM))*sc for t in range(len(kv[idx]['k']))]
         ms = max(scs); wts = [math.exp(s-ms) for s in scs]; s_wts = sum(wts); wts = [e/s_wts for e in wts]
         for t in range(len(wts)):
@@ -88,11 +117,11 @@ def run_layer(f, idx, x):
     x = [x[i] + proj[i] for i in range(EMBED_DIM)]
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
     h1 = stream_linear(f, 4*EMBED_DIM, EMBED_DIM, nx)
-    h2 = stream_linear(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, v) for v in h1])
+    h2 = stream_linear(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, val) for val in h1])
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
 print("\n" + "="*50)
-print("[MEOW] Initializing Network Interface...")
+print("[MEOW] Initializing Dual-Core Engine (3L RoPE + FIFO)...")
 
 try: network.hostname('meow')
 except: pass
@@ -123,139 +152,169 @@ web_sock.bind(('0.0.0.0', 80)); web_sock.listen(2)
 beacon_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 beacon_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-pb = None; socks = [web_sock, ai_sock]
+# =====================================================================
+# DUAL-CORE INTER-CORE FIFO PIPELINE
+# =====================================================================
+job_queue = []          # [prompt_string]
+telemetry_fifo = []     # [json_line_string, ...]
+client_active = [False]
+
+def core1_http_daemon():
+    """Core 1 handles Web HTTP server & async streaming without halting Core 0 math."""
+    while True:
+        try:
+            cl, _ = web_sock.accept()
+            cl.settimeout(4.0)
+            req = cl.recv(1024).decode('utf-8', 'ignore')
+            
+            if "GET /gen?p=" in req:
+                p_raw = req.split("p=")[1].split(" ")[0].split("&")[0]
+                prompt = unquote(p_raw).lower()
+                cl.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n")
+                
+                # Signal Core 0 to ingest job
+                client_active[0] = True
+                telemetry_fifo.clear()
+                job_queue.append(prompt)
+                
+                # Stream telemetry lines from Core 0 to browser
+                while client_active[0]:
+                    if telemetry_fifo:
+                        line = telemetry_fifo.pop(0)
+                        if line == "DONE": break
+                        cl.sendall(line.encode())
+                    else:
+                        time.sleep_ms(6)
+                cl.close()
+            elif "GET / " in req or "GET /index.html" in req:
+                try:
+                    with open("index.html.gz", "rb") as f_gz:
+                        cl.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Encoding: gzip\r\nConnection: close\r\n\r\n")
+                        while True:
+                            b = f_gz.read(1024)
+                            if not b: break
+                            cl.sendall(b)
+                except:
+                    cl.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nindex.html missing")
+                cl.close()
+            else:
+                cl.sendall(b"HTTP/1.1 404 Not Found\r\n\r\n")
+                cl.close()
+        except:
+            client_active[0] = False
+            time.sleep_ms(20)
+
+try:
+    _thread.start_new_thread(core1_http_daemon, ())
+    print("[MEOW] Core 1 HTTP daemon initialized successfully.")
+except Exception as e:
+    print("[MEOW] Core 1 fallback warning:", e)
+
+# =====================================================================
+# CORE 0: NEURAL INFERENCE ENGINE & MIAOU LINK
+# =====================================================================
+pb = None
 last_beacon = 0
 
 while True:
-    if pb is None and time.time() - last_beacon >= 2:
-        try: beacon_sock.sendto(b"MEOW_BEACON", ('255.255.255.255', 5001))
-        except: pass
-        last_beacon = time.time()
-
-    r, _, _ = select.select(socks, [], [], 0.5)
-    for s in r:
-        if s == ai_sock:
-            if pb: pb.close()
+    if pb is None:
+        if time.time() - last_beacon >= 2:
+            try: beacon_sock.sendto(b"MEOW_BEACON", ('255.255.255.255', 5001))
+            except: pass
+            last_beacon = time.time()
+            
+        ai_sock.settimeout(0.5)
+        try:
             pb, addr = ai_sock.accept()
             pb.settimeout(10.0)
             print(f"[MEOW] -> Miaou paired from {addr}! System Ready.")
             led.on(); time.sleep(0.1); led.off()
-        elif s == web_sock:
-            c, _ = web_sock.accept()
-            c.settimeout(5.0); req = c.recv(1024).decode('utf-8', 'ignore')
+        except: pass
+        continue
+
+    # Core 0: check if Core 1 queued a prompt
+    if job_queue:
+        p = job_queue.pop(0)
+        is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
+        if is_logic:
+            if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
+            if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
             
-            if "GET /gen?p=" in req and pb:
-                req_line = req.split("\r\n")[0]
-                url_path = req_line.split(" ")[1]
-                raw_p = url_path.split("p=")[1].split("&")[0]
-                p = unquote(raw_p).lower()
+        tks = [WORD_TO_ID.get(w, 0) for w in p.split()]
+        for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
+        
+        # Reset signal to Miaou
+        try:
+            pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0] + [0.0]*(EMBED_DIM-1))))
+            ack = recv_all(pb, 2)
+            if ack != b"OK": pb = None; continue
+        except Exception: pb = None; continue
+        
+        t_start = time.ticks_ms()
+        cur = tks[0]
+        ct_ranks = [0, 0, 0, 0, 0]
+        aborted = False
+        
+        # Phase 1: Prefill prompt tokens into KV cache with RoPE
+        for stp in range(len(tks)):
+            if not client_active[0]: aborted = True; break
+            led.on()
+            tid = tks[stp]
+            x = read_emb(f_w, tid)
+            
+            f_w.seek(L0_OFF)
+            for l in range(3): x = run_layer(f_w, l, x, stp)
+            
+            try:
+                pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
+                rep = recv_all(pb, 10)
+                if not rep: aborted = True; break
+            except Exception: aborted = True; break
+            
+            ct_ranks = struct.unpack('5H', rep)
+            cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
+            
+            lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
+            ranks = [VOCAB[t] for t in ct_ranks]
+            ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
+            v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
+            
+            telemetry_fifo.append(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n')
+            led.off()
 
-                is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
-                if is_logic:
-                    if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
-                    if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
-                tks = [WORD_TO_ID.get(w, 0) for w in p.split()]
-                for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
+        # Phase 2: Generation loop
+        if not aborted:
+            for gen_stp in range(50):
+                if not client_active[0]: break
+                led.on()
+                word = VOCAB[cur]
+                lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
+                v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
+                ranks = [VOCAB[t] for t in ct_ranks]
+                ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
+                
+                telemetry_fifo.append(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n')
+                
+                if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
+                
+                pos = len(tks) + gen_stp
+                tid = cur
+                x = read_emb(f_w, tid)
+                
+                f_w.seek(L0_OFF)
+                for l in range(3): x = run_layer(f_w, l, x, pos)
                 
                 try:
-                    pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0] + [0.0]*(EMBED_DIM-1))))
-                    ack = recv_all(pb, 2)
-                    if ack != b"OK": c.close(); continue
-                except Exception: c.close(); continue
-
-                try:
-                    c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")
-                except Exception: c.close(); continue
+                    pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
+                    rep = recv_all(pb, 10)
+                    if not rep: break
+                except Exception: break
                 
-                t_start = time.ticks_ms()
-                cur = tks[0]
-                ct_ranks = [0, 0, 0, 0, 0]
-                aborted = False
-                
-                # Phase 1: Prefill prompt tokens into KV cache
-                for stp in range(len(tks)):
-                    led.on()
-                    tid = tks[stp]
-                    tv = read_emb(f_w, tid, 0)
-                    pv = read_emb(f_w, min(stp, BLOCK_SIZE-1), VOCAB_SIZE * ROW_B)
-                    x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
-                    
-                    f_w.seek(L0_OFF)
-                    for l in range(3): x = run_layer(f_w, l, x)
-                    
-                    try:
-                        pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
-                        rep = recv_all(pb, 10)
-                        if not rep: aborted = True; break
-                    except Exception: 
-                        aborted = True; break
-                    
-                    ct_ranks = struct.unpack('5H', rep)
-                    cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
-                    
-                    lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
-                    ranks = [VOCAB[t] for t in ct_ranks]
-                    ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
-                    v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
-                    
-                    try:
-                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
-                    except Exception: aborted = True; led.off(); break
-                    led.off()
+                ct_ranks = struct.unpack('5H', rep)
+                cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
+                led.off()
 
-                # Phase 2: Autoregressive token generation
-                if not aborted:
-                    for gen_stp in range(50):
-                        led.on()
-                        word = VOCAB[cur]
-                        lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
-                        v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
-                        ranks = [VOCAB[t] for t in ct_ranks]
-                        ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
-                        
-                        try:
-                            c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
-                        except Exception: led.off(); break
-                        
-                        if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
-                            
-                        tid = cur
-                        tv = read_emb(f_w, tid, 0)
-                        pv = read_emb(f_w, min(len(tks) + gen_stp, BLOCK_SIZE-1), VOCAB_SIZE * ROW_B)
-                        x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
-                        
-                        f_w.seek(L0_OFF)
-                        for l in range(3): x = run_layer(f_w, l, x)
-                        
-                        try:
-                            pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
-                            rep = recv_all(pb, 10)
-                            if not rep: break
-                        except Exception: break
-                        
-                        ct_ranks = struct.unpack('5H', rep)
-                        cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
-                        led.off()
-
-            elif "GET / " in req or "GET /index.html" in req:
-                try:
-                    with open("index.html.gz", "rb") as html_gz:
-                        c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Encoding: gzip\r\nConnection: close\r\n\r\n")
-                        while True:
-                            chunk = html_gz.read(1024)
-                            if not chunk: break
-                            c.sendall(chunk)
-                except OSError:
-                    try:
-                        with open("index.html", "r") as html_f:
-                            c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n")
-                            while True:
-                                chunk = html_f.read(1024)
-                                if not chunk: break
-                                c.sendall(chunk)
-                    except Exception:
-                        c.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nindex.html missing")
-            else: 
-                c.sendall(b"HTTP/1.1 404 Not Found\r\n\r\n")
-            c.close()
-    gc.collect()
+        telemetry_fifo.append("DONE")
+        gc.collect()
+    else:
+        time.sleep_ms(10)

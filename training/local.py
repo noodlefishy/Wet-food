@@ -10,13 +10,15 @@ with open("config/model.json", "r") as f: mod_cfg = json.load(f)
 cfg_path = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
 with open(cfg_path, "r") as f: log_cfg = json.load(f)
 
-VOCAB_SIZE = mod_cfg["architecture"]["vocab_size"]
-BLOCK_SIZE = mod_cfg["architecture"]["block_size"]
-EMBED_DIM  = mod_cfg["architecture"]["embed_dim"]
-NUM_HEADS  = mod_cfg["architecture"]["num_heads"]
-NUM_LAYERS = mod_cfg["architecture"]["num_layers"]
-HEAD_DIM   = EMBED_DIM // NUM_HEADS
-DEVICE = "cpu"  # CPU with 4 P-cores is faster than MPS for small 80-D batch operations
+VOCAB_SIZE   = mod_cfg["architecture"]["vocab_size"]
+BLOCK_SIZE   = mod_cfg["architecture"]["block_size"]
+EMBED_DIM    = mod_cfg["architecture"]["embed_dim"]
+NUM_HEADS    = mod_cfg["architecture"]["num_heads"]
+NUM_LAYERS   = mod_cfg["architecture"]["num_layers"]       # 8 Layers Total (3 Meow, 5 Miaou)
+MEOW_LAYERS  = mod_cfg["architecture"]["meow_layers"]      # 3 Layers
+MIAOU_LAYERS = mod_cfg["architecture"]["miaou_layers"]     # 5 Layers
+HEAD_DIM     = EMBED_DIM // NUM_HEADS
+DEVICE       = mod_cfg["training"]["device"]
 
 MODELS_DIR = mod_cfg["paths"]["models_dir"]
 STORIES_FILE = mod_cfg["paths"]["stories_file"]
@@ -24,9 +26,9 @@ QUESTIONS_FILE = mod_cfg["paths"]["questions_file"]
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs("firmware", exist_ok=True)
 
-print("=" * 60)
-print(f" TRAINING ANTI-SHORTCUT {NUM_LAYERS}L {EMBED_DIM}-D ENGINE ON {DEVICE.upper()}")
-print("=" * 60)
+print("=" * 65)
+print(f" TRAINING 8-LAYER RoPE ENGINE ({MEOW_LAYERS}L MEOW + {MIAOU_LAYERS}L MIAOU, NO POS EMB)")
+print("=" * 65)
 
 if os.path.exists(STORIES_FILE):
     print(f"[*] Reading TinyStories from cached {STORIES_FILE}...")
@@ -43,7 +45,7 @@ else:
 for target, names in mod_cfg["dataset"]["name_replacements"].items():
     raw_stories = re.sub(r"\b(" + "|".join(names) + r")\b", target, raw_stories)
 
-TARGET_LOGIC = 50000
+TARGET_LOGIC = mod_cfg["dataset"].get("logic_samples_target", 50000)
 print(f"[*] Generating {TARGET_LOGIC} anti-shortcut combinatorial tasks...")
 all_qa_tasks = [generate_atomic_sample(log_cfg) for _ in range(TARGET_LOGIC)]
 
@@ -95,7 +97,31 @@ num_st_chunks = (len(story_tokens) - 1) // BLOCK_SIZE
 st_x_data = story_tokens[:num_st_chunks * BLOCK_SIZE].view(num_st_chunks, BLOCK_SIZE).to(DEVICE)
 st_y_data = story_tokens[1 : num_st_chunks * BLOCK_SIZE + 1].view(num_st_chunks, BLOCK_SIZE).to(DEVICE)
 
-class MQA(nn.Module):
+# =====================================================================
+# ROTARY POSITION EMBEDDING (RoPE) - ZERO ABSOLUTE POSITION MEMORIZATION
+# =====================================================================
+def precompute_rope_freqs(head_dim, max_seq_len=BLOCK_SIZE):
+    inv_freq = 1.0 / (10000.0 ** (torch.arange(0, head_dim, 2).float() / head_dim))
+    t = torch.arange(max_seq_len).float()
+    freqs = torch.outer(t, inv_freq)
+    return freqs.cos(), freqs.sin()
+
+cos_cached, sin_cached = precompute_rope_freqs(HEAD_DIM, BLOCK_SIZE)
+
+def apply_rope(x, cos, sin):
+    # x shape: [B, num_heads, T, HEAD_DIM]
+    T = x.shape[2]
+    c = cos[:T].unsqueeze(0).unsqueeze(1).to(x.device)
+    s = sin[:T].unsqueeze(0).unsqueeze(1).to(x.device)
+    x1, x2 = x[..., 0::2], x[..., 1::2]
+    rot1 = x1 * c - x2 * s
+    rot2 = x1 * s + x2 * c
+    out = torch.empty_like(x)
+    out[..., 0::2] = rot1
+    out[..., 1::2] = rot2
+    return out
+
+class RoPE_MQA(nn.Module):
     def __init__(self):
         super().__init__()
         self.qkv_proj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * HEAD_DIM)
@@ -105,8 +131,17 @@ class MQA(nn.Module):
         B, T, C = x.shape
         qkv = self.qkv_proj(x)
         q = qkv[:, :, :C].view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
-        k = qkv[:, :, C : C + HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2).expand(-1, NUM_HEADS, -1, -1)
-        v = qkv[:, :, C + HEAD_DIM :].view(B, T, 1, HEAD_DIM).transpose(1, 2).expand(-1, NUM_HEADS, -1, -1)
+        k = qkv[:, :, C : C + HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2)
+        v = qkv[:, :, C + HEAD_DIM :].view(B, T, 1, HEAD_DIM).transpose(1, 2)
+        
+        # Apply RoPE directly to Query and Key representations
+        q = apply_rope(q, cos_cached, sin_cached)
+        k = apply_rope(k, cos_cached, sin_cached)
+        
+        # Expand single Key and Value head across Query heads
+        k = k.expand(-1, NUM_HEADS, -1, -1)
+        v = v.expand(-1, NUM_HEADS, -1, -1)
+        
         out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         return self.out_proj(out.transpose(1, 2).contiguous().view(B, T, C))
 
@@ -114,7 +149,7 @@ class Block(nn.Module):
     def __init__(self):
         super().__init__()
         self.ln1 = nn.LayerNorm(EMBED_DIM)
-        self.sa = MQA()
+        self.sa = RoPE_MQA()
         self.ln2 = nn.LayerNorm(EMBED_DIM)
         self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4 * EMBED_DIM), nn.ReLU(), nn.Linear(4 * EMBED_DIM, EMBED_DIM))
 
@@ -126,23 +161,25 @@ class BabyStories(nn.Module):
     def __init__(self):
         super().__init__()
         self.tok_emb = nn.Embedding(VOCAB_SIZE, EMBED_DIM)
-        self.pos_emb = nn.Embedding(BLOCK_SIZE, EMBED_DIM)
+        # NOTICE: ABSOLUTELY ZERO learned absolute pos_emb!
         self.layers = nn.ModuleList([Block() for _ in range(NUM_LAYERS)])
         self.ln_f = nn.LayerNorm(EMBED_DIM)
         self.lm_head = nn.Linear(EMBED_DIM, VOCAB_SIZE)
 
     def forward(self, idx):
-        B, T = idx.shape
-        x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=idx.device))
+        # Pure semantic lookup: Position encoding is strictly handled via relative RoPE rotations in attention!
+        x = self.tok_emb(idx)
         for layer in self.layers: x = layer(x)
         return self.lm_head(self.ln_f(x))
 
 raw_model = BabyStories().to(DEVICE)
 
-TOTAL_STEPS = 18000
-WARMUP = 800
-BASE_LR, MIN_LR = 0.0015, 0.0001
-BATCH_QA, BATCH_ST = 16, 10
+TOTAL_STEPS = mod_cfg["training"].get("total_steps", 25000)
+WARMUP = mod_cfg["training"].get("warmup_steps", 1000)
+BASE_LR = mod_cfg["training"].get("base_lr", 0.0015)
+MIN_LR = mod_cfg["training"].get("min_lr", 0.0001)
+BATCH_QA = mod_cfg["training"].get("batch_qa", 16)
+BATCH_ST = mod_cfg["training"].get("batch_st", 10)
 
 optimizer = torch.optim.AdamW(raw_model.parameters(), lr=BASE_LR, weight_decay=mod_cfg["training"]["weight_decay"])
 
@@ -155,7 +192,7 @@ def get_batch():
     st_idx = torch.randint(num_st_chunks, (BATCH_ST,))
     return qa_x_data[qa_idx], qa_y_data[qa_idx], st_x_data[st_idx], st_y_data[st_idx]
 
-print(f"\n[*] Training for {TOTAL_STEPS} steps (Batch: {BATCH_QA} QA + {BATCH_ST} Story)...")
+print(f"\n[*] Training configuration: {TOTAL_STEPS} steps | Batch: {BATCH_QA} QA + {BATCH_ST} Story")
 raw_model.train()
 t_start = time.time()
 
@@ -183,9 +220,9 @@ try:
             eta_min = (TOTAL_STEPS - step) * s_per_step / 60
             print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f} | ETA: {eta_min:.1f}m")
 except KeyboardInterrupt:
-    print(f"\n[!] Training interrupted. Saving current checkpoint...")
+    print(f"\n[!] Training paused. Saving current checkpoint...")
 
-print("\n[*] Quantizing weights (INT8 W8A32) and exporting for Pico 1 & Pico 2...")
+print("\n[*] Quantizing weights (INT8 W8A32) and exporting for Meow (3L) & Miaou (5L)...")
 
 def dump_t(t, f, quantize=True):
     d = t.detach().cpu()
@@ -201,14 +238,15 @@ def dump_t(t, f, quantize=True):
 p1_path = os.path.join(MODELS_DIR, "pico1 weights.model")
 p2_path = os.path.join(MODELS_DIR, "pico2 weights.model")
 
+# Meow gets: tok_emb + Layers 0, 1, 2
 with open(p1_path, "wb") as f:
     dump_t(raw_model.tok_emb.weight, f, quantize=True)
-    dump_t(raw_model.pos_emb.weight, f, quantize=True)
-    for i in [0, 1, 2]:
+    for i in range(MEOW_LAYERS):
         for p in raw_model.layers[i].parameters(): dump_t(p, f, quantize=True)
 
+# Miaou gets: Layers 3, 4, 5, 6, 7 + ln_f + lm_head
 with open(p2_path, "wb") as f:
-    for i in [3, 4, 5]:
+    for i in range(MEOW_LAYERS, NUM_LAYERS):
         for p in raw_model.layers[i].parameters(): dump_t(p, f, quantize=True)
     for p in raw_model.ln_f.parameters(): dump_t(p, f, quantize=True)
     dump_t(raw_model.lm_head.weight, f, quantize=True)
@@ -220,7 +258,7 @@ with open("firmware/vocab.py", "w") as f: f.write(vocab_code)
 if os.path.exists("models/vocab.py"):
     with open("models/vocab.py", "w") as f: f.write(vocab_code)
 
-print(f"[✓] Meow Weights (pico1): {os.path.getsize(p1_path)/1024:.1f} KB -> Saved to {p1_path}")
-print(f"[✓] Miaou Weights (pico2): {os.path.getsize(p2_path)/1024:.1f} KB -> Saved to {p2_path}")
+print(f"[✓] Meow Weights (pico1, {MEOW_LAYERS} Layers): {os.path.getsize(p1_path)/1024:.1f} KB -> Saved to {p1_path}")
+print(f"[✓] Miaou Weights (pico2, {MIAOU_LAYERS} Layers): {os.path.getsize(p2_path)/1024:.1f} KB -> Saved to {p2_path}")
 print(f"[✓] Vocab: Saved to models/local/vocab.py & firmware/vocab.py")
-print("Training and Quantization Complete!")
+print("Training script ready! Run whenever you want to train the model.")
