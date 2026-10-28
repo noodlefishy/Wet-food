@@ -15,9 +15,7 @@ MEOW_FILES = [
     ("models/local/vocab.py", "vocab.py"),
     ("firmware/wifi_config.py", "wifi_config.py"),
     ("firmware/index.html.gz", "index.html.gz"),
-    ("firmware/meow.py", "main.py"),
-    ("firmware/catalysts.json", "catalysts.json"),
-    ("firmware/cortex.json", "cortex.json")
+    ("firmware/meow.py", "main.py")
 ]
 
 MIAOU_FILES = [

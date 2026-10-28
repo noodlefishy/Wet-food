@@ -1,123 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Meow and Miaou AI</title>
+  <meta charset="UTF-8">
+  <title>Meow & Miaou : Distributed Neural Engine</title>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: monospace; background: #050505; color: #39ff14; margin: 0; padding: 10px; font-size: 12px; }
-    h3 { margin: 0 0 8px 0; color: #ff66cc; font-size: 14px; }
-    .container { display: flex; align-items: flex-start; gap: 12px; }
-    .main-col { flex: 1 1 450px; min-width: 0; display: flex; flex-direction: column; }
-    #log { background: #000; border: 1px solid #ff66cc; height: 270px; overflow-y: auto; padding: 8px; white-space: pre-wrap; font-size: 12px; margin-bottom: 6px; }
-    .input-row { display: flex; align-items: center; gap: 5px; width: 100%; margin-bottom: 6px; }
-    .input-row input { flex: 1 1 auto; min-width: 0; padding: 6px 8px; font-family: monospace; background: #1a1a1a; color: #fff; border: 1px solid #ff66cc; font-size: 12px; }
-    .btn { padding: 6px 10px; font-family: monospace; cursor: pointer; color: #000; font-weight: bold; border: none; font-size: 12px; }
-    .btn-exec { background: #ff66cc; }
-    .btn-stop { background: #ff0055; color: #fff; }
-    .btn-pause { background: #ffaa00; }
-    .btn-resume { background: #39ff14; }
-    .btn-step { background: #00e5ff; }
-    #timer { font-size: 13px; font-weight: bold; color: #ff66cc; margin-left: 4px; min-width: 40px; text-align: right; }
-    .surgery-panel { background: #0d0d0d; border: 1px solid #333; padding: 8px; border-radius: 3px; position: relative; }
-    .catalyst-bar { display: flex; align-items: center; gap: 5px; font-size: 11px; margin-bottom: 5px; }
-    .catalyst-bar select, .catalyst-bar input { background: #111; color: #00e5ff; border: 1px solid #333; padding: 3px 5px; font-family: monospace; font-size: 11px; }
-    .catalyst-pill { background: #1a1a1a; color: #ff66cc; border: 1px solid #ff66cc; padding: 2px 6px; border-radius: 2px; cursor: pointer; font-family: monospace; font-size: 11px; }
-    .catalyst-pill:hover { background: #ff66cc; color: #000; }
-    .action-btn { background: #222; color: #fff; border: 1px solid #444; padding: 3px 8px; cursor: pointer; font-family: monospace; font-size: 11px; font-weight: bold; }
-    .action-btn:hover { border-color: #00e5ff; color: #00e5ff; }
-    .btn-steer { background: #39ff14; color: #000; border-color: #39ff14; }
-    .btn-aura { background: #00e5ff; color: #000; border-color: #00e5ff; }
-    #aura-banner { display: none; background: #001f26; border: 1px solid #00e5ff; color: #00e5ff; padding: 3px 6px; font-size: 11px; margin-bottom: 5px; justify-content: space-between; align-items: center; }
-    .word-inspector { background: #080808; border: 1px dashed #444; padding: 6px 8px; margin-top: 5px; font-size: 11px; line-height: 1.4; }
-    .side-col { flex: 0 0 310px; width: 310px; background: #0d0d0d; border: 1px solid #333; padding: 8px; border-radius: 3px; font-size: 11px; color: #00e5ff; overflow: hidden; }
-    .badge { color: #ff66cc; font-weight: bold; margin: 6px 0 2px 0; font-size: 11px; }
-    .badge:first-child { margin-top: 0; }
-    .metric { background: #141414; border-left: 3px solid #ff66cc; padding: 4px 6px; margin: 3px 0; }
-    #m_stat { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; vertical-align: bottom; }
-    #m_prefill { height: 26px; max-height: 26px; overflow-y: auto; }
-    #m_ranks { height: 75px; max-height: 75px; overflow: hidden; line-height: 1.4; }
-    .chip { display: inline-block; padding: 1px 3px; margin: 1px; background: #111; border: 1px solid #333; color: #555; font-size: 10px; }
-    .chip.active { border-color: #39ff14; color: #39ff14; background: #002200; }
-    .chip.done { border-color: #ff66cc; color: #ff66cc; }
-    .cursor { display: inline-block; width: 6px; height: 12px; background: #39ff14; animation: blink 1s step-end infinite; vertical-align: bottom; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .scanner-line { height: 2px; background: #222; width: 100%; position: relative; overflow: hidden; margin-top: 3px; opacity: 0; }
-    .scanner-line.active { opacity: 1; background: #ff66cc; }
-    .scanner-glow { position: absolute; width: 35px; height: 100%; background: #39ff14; animation: scan 1.3s ease-in-out infinite alternate; }
-    @keyframes scan { from { left: 0%; } to { left: calc(100% - 35px); } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #050505; color: #39ff14; font-family: monospace; padding: 10px; font-size: 12px; }
+    h3 { color: #00e5ff; margin-bottom: 8px; font-size: 13px; text-shadow: 0 0 5px rgba(0,229,255,0.5); }
+    .container { display: flex; gap: 10px; }
+    .main-col { flex: 2.2; display: flex; flex-direction: column; gap: 8px; }
+    .side-col { flex: 1.1; display: flex; flex-direction: column; gap: 6px; }
     
-    .cortex-container { height: 115px; max-height: 115px; overflow: hidden; margin-top: 3px; }
-    .cortex-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; padding: 3px; background: #000; border: 1px solid #222; height: 100%; }
-    .cortex-node { aspect-ratio: 1; background: #111; border: 1px solid #1a1a1a; cursor: crosshair; transition: background-color 0.1s; }
-    
-    .top8-list { display: flex; flex-direction: column; gap: 2px; height: 115px; background: #000; border: 1px solid #222; padding: 4px 6px; }
-    .top8-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; height: 12px; }
-    .top8-bar-wrap { flex: 1; height: 4px; background: #222; margin: 0 5px; }
-    .toggle-btn { background: #111; color: #ff66cc; border: 1px solid #ff66cc; font-size: 9px; padding: 1px 5px; cursor: pointer; font-family: monospace; }
-    
-    .radar-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; margin: 2px 0; }
-    .radar-track { flex: 1; height: 5px; background: #222; margin: 0 5px; overflow: hidden; border: 1px solid #333; }
-    .radar-fill { height: 100%; transition: width 0.2s ease-out; }
-    
-    #hover-tooltip {
-      position: fixed; background: rgba(5, 15, 5, 0.98); border: 1px solid #00e5ff; color: #fff;
-      padding: 6px 9px; font-size: 11px; pointer-events: none; display: none; z-index: 99999;
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.35); border-radius: 3px; line-height: 1.35;
-      white-space: nowrap;
+    #log {
+      height: 400px; background: #000; border: 1px solid #1a3a1a; padding: 10px;
+      overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5;
+      box-shadow: inset 0 0 10px rgba(0,255,0,0.1); border-radius: 3px;
     }
-    #toast-msg { position: absolute; top: -14px; right: 8px; font-size: 10px; font-weight: bold; opacity: 0; transition: opacity 0.3s; }
-    .step-flash { animation: flashAnim 0.5s ease-out; }
-    @keyframes flashAnim { 0% { background: #003344; color: #00e5ff; } 100% { background: transparent; } }
+    .input-row { display: flex; gap: 6px; align-items: center; }
+    input[type="text"] {
+      flex: 1; background: #0a0a0a; color: #fff; border: 1px solid #333; padding: 7px 10px;
+      font-family: monospace; font-size: 12px; border-radius: 2px;
+    }
+    input[type="text"]:focus { outline: none; border-color: #00e5ff; box-shadow: 0 0 5px rgba(0,229,255,0.4); }
+    .btn {
+      padding: 7px 14px; border: none; font-weight: bold; cursor: pointer; font-family: monospace;
+      font-size: 12px; border-radius: 2px; transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-exec { background: #00e5ff; color: #000; }
+    .btn-stop { background: #ff0055; color: #fff; }
+    #timer { color: #888; font-size: 11px; min-width: 45px; }
+
+    .badge { color: #ff66cc; font-size: 10px; font-weight: bold; margin-top: 2px; }
+    .metric {
+      background: #0a0a0a; border: 1px solid #222; padding: 6px 8px; border-radius: 3px;
+      font-size: 11px; line-height: 1.4; position: relative; overflow: hidden;
+    }
+    .scanner-line { height: 2px; background: #1a1a1a; margin-top: 5px; position: relative; overflow: hidden; }
+    .scanner-glow {
+      position: absolute; width: 35%; height: 100%; background: #00e5ff;
+      animation: scan 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes scan { from { left: 0%; } to { left: 65%; } }
+
+    .cortex-container { height: 95px; background: #000; border: 1px solid #222; padding: 3px; margin-top: 3px; }
+    .cortex-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; height: 100%; }
+    .cortex-node {
+      aspect-ratio: 1; background: #111; border: 1px solid #1a1a1a;
+      cursor: crosshair; transition: background-color 0.12s ease;
+    }
+
+    #hover-tooltip {
+      position: fixed; background: rgba(5, 15, 5, 0.96); border: 1px solid #00e5ff;
+      color: #fff; padding: 5px 8px; font-size: 11px; pointer-events: none;
+      display: none; z-index: 99999; box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+      border-radius: 3px; white-space: nowrap;
+    }
+
+    .chip {
+      display: inline-block; padding: 1px 5px; margin: 1px 2px; border-radius: 2px;
+      font-size: 10px; background: #161616; color: #888; border: 1px solid #282828;
+    }
+    .chip-active { background: #002b33; color: #00e5ff; border-color: #00e5ff; }
+    .chip-done { background: #0a290a; color: #39ff14; border-color: #1f661f; }
+    .cursor { display: inline-block; width: 6px; height: 13px; background: #39ff14; animation: blink 1s step-end infinite; vertical-align: bottom; }
+    @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
 <body>
   <div id="hover-tooltip"></div>
-  <h3>[ MEOW AND MIAOU : DISTRIBUTED NEURAL ENGINE ]</h3>
+  <h3>[ MEOW &amp; MIAOU : 2-NODE DISTRIBUTED NEURAL ENGINE ]</h3>
+  
   <div class="container">
     <div class="main-col">
-      <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
+      <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi.<br>Waiting for prompt...<br></div>
+      
       <div class="input-row">
-        <input type="text" id="prompt" value="once upon a time bob and felix were walking in the garden .">
+        <input type="text" id="prompt" value="[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]">
         <button class="btn btn-exec" id="btn-exec" onclick="gen()">Execute</button>
-        <button class="btn btn-pause" id="btn-pause" onclick="cmd('pause')" style="display:none;">Pause</button>
-        <button class="btn btn-step" id="btn-step" onclick="cmd('step')" style="display:none;">Step 1x</button>
-        <button class="btn btn-resume" id="btn-resume" onclick="cmd('resume')" style="display:none;">Resume</button>
-        <button class="btn btn-stop" id="btn-stop" onclick="cmd('stop')" style="display:none;">Stop</button>
+        <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
-      </div>
-      <div class="badge">[ MIND SURGERY / LOGIT BIASING ]</div>
-      <div class="surgery-panel" id="surgery-panel">
-        <div id="toast-msg"></div>
-        <div id="aura-banner"><span id="aura-text">[BIAS: NONE]</span><button class="action-btn" onclick="clearAura()" style="padding:1px 5px; font-size:9px;">[X]</button></div>
-        <div class="catalyst-bar">
-          <span style="color:#aaa;">Vibe:</span><select id="vibe-select" onchange="renderPills()"></select>
-          <span style="color:#aaa;">Sparks:</span><div id="pills-container" style="display:flex; gap:3px;"></div>
-          <button class="action-btn" onclick="renderPills()" style="padding:2px 5px;">[RND]</button>
-        </div>
-        <div style="width:100%; height:1px; background:#222; margin:4px 0;"></div>
-        <div class="catalyst-bar">
-          <span style="color:#aaa;">Word:</span><input type="text" id="custom-word" list="vocab-list" placeholder="Word..." style="width:100px;" oninput="onWordInput()">
-          <datalist id="vocab-list"></datalist>
-          <button class="action-btn" onclick="doAction('inject')">Force Word</button><span style="color:#444;">|</span>
-          <button class="action-btn btn-steer" onclick="doAction('steer')">Bias Now</button>
-          <button class="action-btn btn-aura" onclick="applyAura()">Apply Persistent Bias</button>
-          <span style="color:#aaa;">Mag:</span><input type="range" id="steer-mag" min="-5" max="15" step="0.5" value="4.0" oninput="updateMagLabel()" style="width:55px;">
-          <span id="mag-val" style="width:34px; color:#39ff14; font-size:10px;">+4.0</span>
-        </div>
-        
-        <div class="word-inspector" id="word-inspector">
-          <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-            <span style="font-weight:bold; color:#ff66cc;" id="wi-title">INSPECTOR: NONE</span>
-            <span style="color:#00e5ff; font-size:10px;" id="wi-tag">[Select/type word]</span>
-          </div>
-          <div>Sparks: <b style="color:#39ff14;" id="wi-sparks">---</b></div>
-          <div style="color:#aaa; font-size:10px; margin-top:2px;" id="wi-effect">Select any word to preview its contextual associations.</div>
-          <div style="margin-top:4px; padding-top:4px; border-top:1px solid #1a1a1a; font-size:10px; color:#ffaa00;">
-            <b>Force Word:</b> Ignores grammar, clamps next token. | <b>Bias Logit:</b> Grammatically safe score boost to increase word frequency.
-          </div>
-        </div>
       </div>
     </div>
     
@@ -126,414 +88,194 @@
       <div class="metric">
         <b>Status:</b> <span id="m_stat">Idle / Ready</span><br>
         <b>Latency:</b> <span id="m_lat">0</span> ms | <b>Speed:</b> <span id="tps-meter" style="color:#fff;">0.00</span> TPS
-        <div id="scanner" class="scanner-line"><div class="scanner-glow"></div></div>
+        <div class="scanner-line"><div class="scanner-glow"></div></div>
       </div>
       
       <div class="badge">[ KV PREFILL PROGRESS ]</div>
-      <div class="metric" id="m_prefill">Waiting for prompt...</div>
+      <div class="metric" id="m_prefill" style="min-height: 48px;">Waiting for prompt...</div>
 
-      <div class="badge">[ FUN FACTS ]</div>
-      <div class="metric" style="line-height:1.45; font-size:10px;">
-        <span style="color:#00e5ff;">Meow breed:</span> 6-Layer Distributed Transformer<br>
-        <span style="color:#00e5ff;">Miaou ages:</span> 138,480 (Float32 in Flash)<br>
-        <span style="color:#00e5ff;">Meow brain:</span> 1,024 Words (80-D Latent Stream)<br>
-        <span style="color:#00e5ff;">Miaou paws:</span> 240 MHz (Dual Cortex-M0+)
-      </div>
-      
       <div class="badge">[ CANDIDATE RANKINGS (TOP 5) ]</div>
-      <div class="metric" id="m_ranks">1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---</div>
-      
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="badge">[ THEME RADAR ]</span>
-        <button id="probe-toggle" class="toggle-btn" onclick="toggleProbeMode()">Mode: Theme</button>
+      <div class="metric" id="m_ranks" style="font-size: 11px; line-height: 1.45;">
+        1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---
       </div>
-      <div class="metric">
-        <div id="probes-radar">
-          <div class="radar-row"><span style="width:105px; color:#00e5ff;">Myth / Wonder</span><div class="radar-track"><div id="rad-myth" class="radar-fill" style="width:25%; background:#00e5ff;"></div></div><span style="width:25px; text-align:right;" id="rad-myth-pct">25%</span></div>
-          <div class="radar-row"><span style="width:105px; color:#39ff14;">Cozy / Comfort</span><div class="radar-track"><div id="rad-cozy" class="radar-fill" style="width:25%; background:#39ff14;"></div></div><span style="width:25px; text-align:right;" id="rad-cozy-pct">25%</span></div>
-          <div class="radar-row"><span style="width:105px; color:#ffaa00;">Kinetic Action</span><div class="radar-track"><div id="rad-action" class="radar-fill" style="width:25%; background:#ffaa00;"></div></div><span style="width:25px; text-align:right;" id="rad-action-pct">25%</span></div>
-          <div class="radar-row"><span style="width:105px; color:#ff66cc;">Nature / Setting</span><div class="radar-track"><div id="rad-nature" class="radar-fill" style="width:25%; background:#ff66cc;"></div></div><span style="width:25px; text-align:right;" id="rad-nature-pct">25%</span></div>
-        </div>
-        <div id="probes-qa" style="display:none;">
-          <div style="display:flex; justify-content:space-between; font-size:10px;"><span>Alice <span id="p_alice_pct">50%</span></span><span>Bob <span id="p_bob_pct">50%</span></span></div>
-          <div style="height:5px; background:#222; display:flex; margin:2px 0 4px 0;"><div id="bar-entity-l" style="width:50%; background:#39ff14;"></div><div id="bar-entity-r" style="width:50%; background:#ff0055;"></div></div>
-          <div style="display:flex; justify-content:space-between; font-size:10px;"><span>Location <span id="p_loc_pct">50%</span></span><span>Item <span id="p_item_pct">50%</span></span></div>
-          <div style="height:5px; background:#222; display:flex; margin:2px 0;"><div id="bar-cat-l" style="width:50%; background:#00e5ff;"></div><div id="bar-cat-r" style="width:50%; background:#ffaa00;"></div></div>
-        </div>
-      </div>
-      
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="badge">[ 80-D SYNAPTIC CORTEX ]</span>
-        <button id="view-toggle" class="toggle-btn" onclick="toggleCortexView()">View: Top 8</button>
-      </div>
+
+      <div class="badge">[ 80-D SYNAPTIC CORTEX ]</div>
       <div class="metric">
         <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:2px;">
           <span style="color:#aaa;">Vector Energy:</span><span id="v_energy" style="color:#00e5ff;">0.00</span>
         </div>
         <div class="cortex-container">
           <div id="cortex-grid" class="cortex-grid"></div>
-          <div id="top8-view" class="top8-list" style="display:none;"></div>
         </div>
+      </div>
+
+      <div class="badge">[ HARDWARE &amp; ARCHITECTURE ]</div>
+      <div class="metric" style="line-height:1.45; font-size:10px;">
+        <span style="color:#00e5ff;">Meow (Host):</span> RP2040, Layers 0-2 (Flash XIP)<br>
+        <span style="color:#00e5ff;">Miaou (Worker):</span> RP2040, Layers 3-5 (Wi-Fi)<br>
+        <span style="color:#00e5ff;">Precision:</span> INT8 (W8A32 Quantized)<br>
+        <span style="color:#00e5ff;">Dimensions:</span> 80-D | 4 Heads | 1,024 Vocab
       </div>
     </div>
   </div>
-  
+
   <script>
-    let abortController=null, cortexViewMode='grid', probeMode='radar', currentVector=null, engineState='idle', isStepping=false, CORTEX=null, latchedAura={word:'', mag:4.0};
-    const tooltip = document.getElementById('hover-tooltip');
-    
-    const SPARKS = {
-      "dragon": ["monster", "castle", "wings", "giant", "magic", "fire"],
-      "castle": ["tower", "king", "prince", "princess", "gate", "stone"],
-      "magic": ["fairy", "wand", "sparkly", "secret", "dream", "wings"],
-      "monster": ["scary", "dragon", "giant", "dark", "teeth", "wild"],
-      "giant": ["huge", "big", "tall", "tree", "mountain", "loud"],
-      "king": ["prince", "castle", "crown", "queen", "palace", "gold"],
-      "wolf": ["forest", "wild", "bite", "night", "woods", "teeth"],
-      "fox": ["clever", "quick", "woods", "tail", "red", "bush"],
-      "bear": ["huge", "honey", "woods", "claws", "sleep", "cave"],
-      "lion": ["brave", "strong", "roar", "king", "wild", "paws"],
-      "rabbit": ["hop", "bunny", "ears", "grass", "quick", "soft"],
-      "bird": ["wings", "fly", "sky", "tree", "sing", "flew"],
-      "honey": ["sweet", "bee", "bear", "yummy", "gold", "warm"],
-      "cookies": ["sweet", "bake", "oven", "snack", "eat", "yummy"],
-      "cake": ["birthday", "sweet", "party", "candles", "yummy", "cream"],
-      "soft": ["fluffy", "pillow", "bed", "warm", "purr", "blanket"],
-      "fluffy": ["fur", "soft", "kitten", "cloud", "warm", "paws"],
-      "warm": ["sun", "bed", "soft", "blanket", "cozy", "fire"],
-      "garden": ["flowers", "green", "trees", "grass", "plants", "park"],
-      "kitchen": ["food", "cook", "eat", "milk", "bowl", "dinner"],
-      "park": ["play", "bench", "walk", "trees", "friends", "grass"],
-      "forest": ["trees", "woods", "dark", "deep", "path", "wild"],
-      "woods": ["trees", "branches", "leaves", "path", "quiet", "forest"],
-      "river": ["water", "swim", "fish", "flow", "bridge", "boat"],
-      "mud": ["dirty", "puddle", "wet", "messy", "splash", "rain"],
-      "messy": ["trouble", "dirt", "mud", "broken", "silly", "spill"],
-      "silly": ["funny", "laugh", "clown", "giggle", "play", "tricks"],
-      "broke": ["accident", "fix", "crack", "pieces", "sad", "fell"],
-      "bite": ["sharp", "teeth", "crunch", "chew", "eat", "snap"],
-      "trouble": ["danger", "scared", "hide", "naughty", "run", "mess"],
-      "jump": ["hop", "high", "leap", "bounce", "legs", "play"],
-      "climb": ["high", "tree", "ladder", "up", "mountain", "top"],
-      "flew": ["wings", "sky", "bird", "high", "wind", "clouds"],
-      "fly": ["wings", "air", "sky", "feather", "glide", "soar"],
-      "run": ["fast", "chase", "legs", "race", "hurry", "dash"],
-      "chased": ["ran", "catch", "follow", "fast", "behind", "hunt"]
-    };
+    let abortController = null;
+    let engineState = 'idle';
+    let currentVector = null;
+    let tokenTimes = [];
 
     const Stopwatch = {
-      startTime:0, elapsed:0, interval:null, running:false,
-      start() { this.reset(); this.running=true; this.startTime=performance.now(); this.interval=setInterval(()=>this.tick(), 100); },
-      pause() { if(!this.running) return; this.running=false; this.elapsed+=performance.now()-this.startTime; clearInterval(this.interval); this.render(); },
-      resume() { if(this.running) return; this.running=true; this.startTime=performance.now(); this.interval=setInterval(()=>this.tick(), 100); },
-      stop() { if(this.running) { this.elapsed+=performance.now()-this.startTime; this.running=false; clearInterval(this.interval); } this.render(); },
-      reset() { clearInterval(this.interval); this.interval=null; this.running=false; this.elapsed=0; this.render(); },
-      getMs() { return this.running ? (this.elapsed + (performance.now() - this.startTime)) : this.elapsed; },
-      tick() { document.getElementById('timer').innerText=(this.getMs()/1000).toFixed(1)+"s"; },
-      render() { document.getElementById('timer').innerText=(this.elapsed/1000).toFixed(1)+"s"; }
+      startTime: 0, elapsed: 0, interval: null, running: false,
+      start() { this.startTime = performance.now(); this.elapsed = 0; this.running = true; clearInterval(this.interval); this.interval = setInterval(() => this.render(), 100); },
+      stop() { this.running = false; clearInterval(this.interval); this.render(); },
+      render() {
+        const t = this.running ? (performance.now() - this.startTime) : this.elapsed;
+        document.getElementById('timer').innerText = (t / 1000).toFixed(1) + 's';
+      }
     };
-    
-    function attachTooltip(el, func) {
-      el.addEventListener('mousemove', e => {
-        tooltip.style.display = 'block';
-        tooltip.innerHTML = func();
-        const tipWidth = tooltip.offsetWidth || 180;
-        const tipHeight = tooltip.offsetHeight || 40;
-        const pad = 12;
-        let left = e.clientX + pad;
-        if (left + tipWidth > window.innerWidth - 10) left = e.clientX - tipWidth - pad;
-        let top = e.clientY + pad;
-        if (top + tipHeight > window.innerHeight - 10) top = e.clientY - tipHeight - pad;
-        tooltip.style.left = Math.max(10, left) + 'px';
-        tooltip.style.top = Math.max(10, top) + 'px';
-      });
-      el.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-    }
-    
-    window.onload = async function() {
+
+    function initGrid() {
       const grid = document.getElementById('cortex-grid');
-      for (let i=0; i<80; i++) {
-        const node = document.createElement('div'); node.className = 'cortex-node'; node.id = 'node-' + i;
-        attachTooltip(node, () => {
-          const val = parseFloat(node.getAttribute('data-val') || '0.00'), sign = val>=0?'+':'';
-          const rawTag = (CORTEX && CORTEX.neurons && CORTEX.neurons[String(i)]) || 'Language | General syntax';
-          const parts = rawTag.split(' | ');
-          const domain = parts[0], desc = parts[1] || 'Syntax & structure';
-          return `<div style="font-weight:bold; color:#fff;">Neuron #${i} <span style="color:${val>=0?'#39ff14':'#ff0055'};">(${sign}${val.toFixed(2)})</span></div>` +
-                 `<div style="color:#00e5ff; font-size:10px;">Domain: <b>${domain}</b></div>` +
-                 `<div style="color:#888; font-size:10px;">Affinity: ${desc}</div>`;
+      grid.innerHTML = '';
+      const tip = document.getElementById('hover-tooltip');
+      for (let i = 0; i < 80; i++) {
+        const node = document.createElement('div');
+        node.className = 'cortex-node';
+        node.id = 'node-' + i;
+        node.addEventListener('mousemove', (e) => {
+          const val = node.getAttribute('data-val') || '0.00';
+          tip.innerHTML = `<b>Neuron #${i}</b><br>Act: <span style="color:${parseFloat(val)>=0?'#39ff14':'#ff0055'}">${val}</span>`;
+          tip.style.left = (e.clientX + 12) + 'px';
+          tip.style.top = (e.clientY + 12) + 'px';
+          tip.style.display = 'block';
         });
+        node.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
         grid.appendChild(node);
       }
-      try {
-        const res = await fetch('/cortex.json'); CORTEX = await res.json();
-        if (CORTEX && CORTEX.catalysts) {
-          const select = document.getElementById('vibe-select');
-          for (let cat in CORTEX.catalysts) {
-            const opt = document.createElement('option'); opt.value = cat; opt.innerText = cat; select.appendChild(opt);
-          }
-          renderPills();
-        }
-      } catch(e) {}
-    };
-
-    function updateControls() {
-      document.getElementById('btn-exec').style.display = (engineState==='idle')?'block':'none';
-      document.getElementById('btn-stop').style.display = (engineState!=='idle')?'block':'none';
-      document.getElementById('btn-pause').style.display = (engineState==='running')?'block':'none';
-      document.getElementById('btn-resume').style.display = (engineState==='paused')?'block':'none';
-      document.getElementById('btn-step').style.display = (engineState==='paused')?'block':'none';
     }
 
-    async function cmd(a) {
-      if (a==='pause') { engineState='paused'; Stopwatch.pause(); setStat("[PAUSED]", "#ffaa00"); }
-      if (a==='resume') { engineState='running'; Stopwatch.resume(); setStat("Generating...", "#ff66cc"); updateTelemetry(currentVector); }
-      if (a==='step') { isStepping=true; engineState='running'; setStat("[STEP 1x...]", "#00e5ff"); }
-      if (a==='stop') { engineState='idle'; Stopwatch.stop(); if(abortController) abortController.abort(); }
-      updateControls(); await fetch('/cmd?action=' + a);
-    }
-    function setStat(t, c) { const s=document.getElementById('m_stat'); if(s){ s.innerText=t; s.style.color=c; } }
-    
-    function updateMagLabel() { 
-      const m = parseFloat(document.getElementById('steer-mag').value); 
-      document.getElementById('mag-val').innerText=(m>=0?'+':'')+m.toFixed(1); 
-    }
-    
-    function renderPills() {
-      if (!CORTEX || !CORTEX.catalysts) return;
-      const cat=document.getElementById('vibe-select').value, cont=document.getElementById('pills-container'), list=document.getElementById('vocab-list');
-      cont.innerHTML=''; list.innerHTML='';
-      const pool = CORTEX.catalysts[cat] || [];
-      pool.forEach(w=>{ const o=document.createElement('option'); o.value=w; list.appendChild(o); });
-      [...pool].sort(()=>0.5-Math.random()).slice(0,3).forEach(w=>{
-        const b=document.createElement('button'); b.className='catalyst-pill'; b.innerText=w;
-        b.onclick=()=>{ document.getElementById('custom-word').value=w; onWordInput(); };
-        cont.appendChild(b);
-      });
-    }
-
-    function onWordInput() {
-      const w = document.getElementById('custom-word').value.trim().toLowerCase();
-      
-      const titleEl = document.getElementById('wi-title');
-      const tagEl = document.getElementById('wi-tag');
-      const sparksEl = document.getElementById('wi-sparks');
-      const effectEl = document.getElementById('wi-effect');
-
-      if (!w) {
-        titleEl.innerText = "INSPECTOR: NONE";
-        tagEl.innerText = "[Select/type word]";
-        sparksEl.innerText = "---";
-        effectEl.innerText = "Select any word to preview its contextual associations.";
-        return;
-      }
-
-      let cat = "Vocabulary";
-      if (CORTEX && CORTEX.catalysts) {
-        for (let c in CORTEX.catalysts) { if (CORTEX.catalysts[c].includes(w)) { cat=c; break; } }
-      }
-
-      titleEl.innerText = `WORD: ${w.toUpperCase()}`;
-      tagEl.innerText = `[${cat}]`;
-      
-      const sparks = SPARKS[w] || ["story", "character", "scene", "event"];
-      sparksEl.innerText = sparks.join(', ');
-      effectEl.innerText = `Biases narrative flow toward ${sparks.slice(0, 3).join(', ')} themes.`;
-    }
-
-    async function applyAura() {
-      const w=document.getElementById('custom-word').value.trim().toLowerCase(); if(!w) return;
-      const mag=parseFloat(document.getElementById('steer-mag').value);
-      latchedAura={word:w, mag};
-      document.getElementById('aura-banner').style.display='flex';
-      document.getElementById('aura-text').innerHTML=`[BIAS: <b style="color:#fff;">${w.toUpperCase()}</b> (+${mag}) ACTIVE]`;
-      await fetch('/cmd?action=steer&word='+encodeURIComponent(w)+'&mag='+mag);
-      flashToast(`BIAS LOCKED: ${w.toUpperCase()}`, '#00e5ff');
-    }
-
-    async function clearAura() {
-      latchedAura.word=''; document.getElementById('aura-banner').style.display='none';
-      await fetch('/cmd?action=clear'); flashToast("BIAS CLEARED", '#aaa');
-    }
-
-    async function doAction(act) {
-      if (act==='clear') { document.getElementById('custom-word').value=''; onWordInput(); await fetch('/cmd?action=clear'); return; }
-      const w=document.getElementById('custom-word').value.trim().toLowerCase(); if(!w) return;
-      if (act==='inject') {
-        flashToast(`FORCED: ${w.toUpperCase()}`, '#ffaa00');
-        if (engineState!=='idle') await fetch('/cmd?action=inject&word='+encodeURIComponent(w));
-      } else if (act==='steer') {
-        const mag=document.getElementById('steer-mag').value;
-        flashToast(`BIASED: ${w.toUpperCase()} (+${mag})`, '#39ff14');
-        if (engineState!=='idle') await fetch('/cmd?action=steer&word='+encodeURIComponent(w)+'&mag='+mag);
-      }
-    }
-
-    function flashToast(msg, col) {
-      const t=document.getElementById('toast-msg'); if(t){ t.innerText='>> '+msg; t.style.color=col; t.style.opacity=1; setTimeout(()=>t.style.opacity=0, 1500); }
-    }
-
-    function toggleProbeMode() {
-      probeMode=(probeMode==='radar')?'qa':'radar';
-      document.getElementById('probe-toggle').innerText=`Mode: ${probeMode==='radar'?'Theme':'QA'}`;
-      document.getElementById('probes-radar').style.display=(probeMode==='radar')?'block':'none';
-      document.getElementById('probes-qa').style.display=(probeMode==='qa')?'block':'none';
-      if (currentVector) updateTelemetry(currentVector);
-    }
-
-    function toggleCortexView() {
-      const g = document.getElementById('cortex-grid');
-      const t = document.getElementById('top8-view');
-      const b = document.getElementById('view-toggle');
-
-      if (cortexViewMode === 'grid') {
-        cortexViewMode = 'top8';
-        g.style.display = 'none'; t.style.display = 'flex';
-        b.innerText = 'View: Grid';
-        renderTop8();
-      } else {
-        cortexViewMode = 'grid';
-        g.style.display = 'grid'; t.style.display = 'none';
-        b.innerText = 'View: Top 8';
-      }
-    }
-
-    function renderTop8() {
-      if (cortexViewMode!=='top8' || !currentVector || !CORTEX) return;
-      const top8=document.getElementById('top8-view'); top8.innerHTML='';
-      [...currentVector.map((v,i)=>({i,v,abs:Math.abs(v)}))].sort((a,b)=>b.abs-a.abs).slice(0,8).forEach(it=>{
-        const row=document.createElement('div'); row.className='top8-row';
-        const tag=((CORTEX.neurons&&CORTEX.neurons[String(it.i)])||'Synapse').split(' | ')[0];
-        const pct=Math.min(100,(it.abs/4)*100), isPos=it.v>=0;
-        row.innerHTML=`<span style="width:90px; overflow:hidden;">#${it.i} ${tag}</span><div class="top8-bar-wrap"><div style="height:100%; width:${pct}%; background:${isPos?'#39ff14':'#ff0055'};"></div></div><span>${isPos?'+':''}${it.v.toFixed(2)}</span>`;
-        top8.appendChild(row);
-      });
-    }
-
-    function dot(a,b) { let s=0; for(let i=0;i<80;i++) s+=a[i]*b[i]; return s; }
-    function sigmoid(x) { return 1/(1+Math.exp(-x*2.5)); }
-
-    function updateTelemetry(v, isPrev=false) {
-      if (!v || v.length===0) return;
-      if (!isPrev) currentVector=v;
-      let energy=0;
-      for (let i=0; i<80; i++) {
-        const node=document.getElementById('node-'+i); if(!node) continue;
-        const val=i<v.length?v[i]:0; energy+=Math.abs(val);
-        const mag=Math.min(1, Math.abs(val)/3);
-        node.style.backgroundColor=val>=0?`rgba(57,255,20,${0.12+0.88*mag})`:`rgba(255,0,85,${0.12+0.88*mag})`;
-        node.setAttribute('data-val', val.toFixed(2));
+    function updateTelemetry(v) {
+      if (!v || v.length === 0) return;
+      currentVector = v;
+      let energy = 0;
+      for (let i = 0; i < 80; i++) {
+        const node = document.getElementById('node-' + i);
+        if (!node) continue;
+        const val = i < v.length ? v[i] : 0;
+        energy += Math.abs(val);
+        const mag = Math.min(1, Math.abs(val) / 3.0);
+        node.style.backgroundColor = val >= 0 
+          ? `rgba(57, 255, 20, ${0.12 + 0.88 * mag})` 
+          : `rgba(255, 0, 85, ${0.12 + 0.88 * mag})`;
+        node.setAttribute('data-val', (val >= 0 ? '+' : '') + val.toFixed(2));
       }
       const eEl = document.getElementById('v_energy');
-      if (eEl) eEl.innerText=(energy/80).toFixed(2);
-      
-      if (cortexViewMode==='top8') renderTop8();
-
-      if (probeMode==='radar' && CORTEX && CORTEX.radar) {
-        const sM=dot(v,CORTEX.radar.myth), sC=dot(v,CORTEX.radar.cozy), sA=dot(v,CORTEX.radar.action), sN=dot(v,CORTEX.radar.nature);
-        const mx=Math.max(sM,sC,sA,sN), eM=Math.exp((sM-mx)/3.5), eC=Math.exp((sC-mx)/3.5), eA=Math.exp((sA-mx)/3.5), eN=Math.exp((sN-mx)/3.5);
-        const sum=eM+eC+eA+eN||1;
-        setRadar('rad-myth', Math.round((eM/sum)*100)); setRadar('rad-cozy', Math.round((eC/sum)*100));
-        setRadar('rad-action', Math.round((eA/sum)*100)); setRadar('rad-nature', Math.round((eN/sum)*100));
-      } else if (probeMode==='qa' && CORTEX && CORTEX.probes) {
-        let sA=0, sL=0; for(let i=0;i<80;i++) { sA+=v[i]*CORTEX.probes.entity[i]; sL+=v[i]*CORTEX.probes.category[i]; }
-        const pE=sigmoid(sA), pC=sigmoid(sL);
-        document.getElementById('p_alice_pct').innerText=Math.round(pE*100)+'%'; document.getElementById('p_bob_pct').innerText=Math.round((1-pE)*100)+'%';
-        document.getElementById('bar-entity-l').style.width=(pE*100)+'%'; document.getElementById('bar-entity-r').style.width=((1-pE)*100)+'%';
-        document.getElementById('p_loc_pct').innerText=Math.round(pC*100)+'%'; document.getElementById('p_item_pct').innerText=Math.round((1-pC)*100)+'%';
-        document.getElementById('bar-cat-l').style.width=(pC*100)+'%'; document.getElementById('bar-cat-r').style.width=((1-pC)*100)+'%';
-      }
+      if (eEl) eEl.innerText = (energy / 80).toFixed(2);
     }
 
-    function setRadar(id, pct) {
-      const el = document.getElementById(id), pEl = document.getElementById(id+'-pct');
-      if (el) el.style.width=pct+'%';
-      if (pEl) pEl.innerText=pct+'%';
+    function setStat(txt, color='#39ff14') {
+      const el = document.getElementById('m_stat');
+      el.innerText = txt;
+      el.style.color = color;
+    }
+
+    function setControls(running) {
+      engineState = running ? 'running' : 'idle';
+      document.getElementById('btn-exec').style.display = running ? 'none' : 'block';
+      document.getElementById('btn-stop').style.display = running ? 'block' : 'none';
+      document.getElementById('prompt').disabled = running;
+    }
+
+    function abortGen() {
+      if (abortController) { abortController.abort(); abortController = null; }
+      setControls(false);
+      Stopwatch.stop();
+      setStat("Stopped", "#ffaa00");
     }
 
     async function gen() {
-      const pInput = document.getElementById('prompt');
-      if (!pInput || !pInput.value.trim()) return;
-      const p = pInput.value;
+      const p = document.getElementById('prompt').value.trim();
+      if (!p) return;
+
+      abortGen();
+      abortController = new AbortController();
+      setControls(true);
+      Stopwatch.start();
+      tokenTimes = [];
+
+      const log = document.getElementById('log');
+      log.innerHTML = `<span style="color:#aaa;">&gt; ${p}</span>\n\n<span id="stream-ans"></span><span class="cursor" id="cursor"></span>`;
+      const ansSpan = document.getElementById('stream-ans');
+      const prefContainer = document.getElementById('m_prefill');
       
-      const l = document.getElementById('log');
-      const pre = document.getElementById('m_prefill');
-      
-      engineState='running'; isStepping=false; updateControls();
-      setStat("Syncing Miaou...", "#ff66cc");
-      const scan = document.getElementById('scanner');
-      if (scan) scan.className='scanner-line active';
-      
-      abortController=new AbortController(); Stopwatch.start();
-      let toks=0, words=p.trim().split(/\s+/);
-      
-      if (pre) {
-        pre.innerHTML = words.map((t,i)=>`<span class="chip" id="chip-${i}">${t}</span>`).join('');
-      }
-      
-      if (l) {
-        l.innerHTML += `\n<br><span style="color:#ff66cc;">> </span>${latchedAura.word?`<span style="color:#00e5ff;">[Bias:${latchedAura.word.toUpperCase()}]</span> `:''}<span id="stream-p" style="color:#ff66cc;"></span><span id="stream-a" style="color:#39ff14;"></span><span class="cursor" id="cursor"></span>`;
-        l.scrollTop=l.scrollHeight;
-      }
-      
-      let url='/gen?p='+encodeURIComponent(p);
-      if (latchedAura.word) url+='&bw='+encodeURIComponent(latchedAura.word)+'&bm='+latchedAura.mag;
+      const words = p.toLowerCase().split(/\s+/);
+      prefContainer.innerHTML = words.map((w, i) => `<span class="chip" id="pchip-${i}">${w}</span>`).join(' ');
+
+      setStat("Prefilling KV Cache...", "#00e5ff");
 
       try {
-        const res=await fetch(url, {signal:abortController.signal});
-        const reader=res.body.getReader(), decoder=new TextDecoder();
-        let buf='';
+        const resp = await fetch('/gen?p=' + encodeURIComponent(p), { signal: abortController.signal });
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+
         while (true) {
-          const {value, done}=await reader.read(); if(done) break;
-          buf+=decoder.decode(value); const lines=buf.split('\n'); buf=lines.pop();
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+
           for (const line of lines) {
-            if(!line.trim()) continue;
-            try {
-              const data=JSON.parse(line); toks++;
-              const tpsEl = document.getElementById('tps-meter');
-              if (tpsEl) tpsEl.innerText=(toks/Math.max(0.1, Stopwatch.getMs()/1000)).toFixed(2);
-              const latEl = document.getElementById('m_lat');
-              if (latEl) latEl.innerText=data.ms;
-              
-              if (data.v && data.v.length>=4) updateTelemetry(data.v);
-              
-              if (data.ranks) {
-                const rEl = document.getElementById('m_ranks');
-                if (rEl) rEl.innerHTML=data.ranks.map((r,i)=>`${i+1}. <span style="color:${i===0?'#39ff14':'#aaa'}; font-weight:${i===0?'bold':'normal'};">${r}</span>`).join('<br>');
+            if (!line.trim()) continue;
+            let data;
+            try { data = JSON.parse(line); } catch(e) { continue; }
+
+            if (data.v) updateTelemetry(data.v);
+            if (data.ms) document.getElementById('m_lat').innerText = data.ms;
+
+            if (data.ranks && data.ranks.length) {
+              document.getElementById('m_ranks').innerHTML = data.ranks.map((r, i) => 
+                `${i+1}. <b style="color:${i===0?'#39ff14':'#aaa'}">${r}</b>`
+              ).join('<br>');
+            }
+
+            if (data.stage === 'prefill') {
+              setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
+              const chip = document.getElementById('pchip-' + (data.cur - 1));
+              if (chip) { chip.className = 'chip chip-done'; }
+              const nextChip = document.getElementById('pchip-' + data.cur);
+              if (nextChip) { nextChip.className = 'chip chip-active'; }
+            } else if (data.stage === 'gen') {
+              setStat("Generating...", "#39ff14");
+              ansSpan.innerText += data.w + ' ';
+              log.scrollTop = log.scrollHeight;
+
+              const now = performance.now();
+              tokenTimes.push(now);
+              if (tokenTimes.length > 1) {
+                const dur = (tokenTimes[tokenTimes.length - 1] - tokenTimes[0]) / 1000;
+                const tps = (tokenTimes.length - 1) / (dur || 0.001);
+                document.getElementById('tps-meter').innerText = tps.toFixed(2);
               }
-              
-              if (data.stage==='prefill') {
-                if(engineState!=='paused') setStat(`Prefill ${data.cur}/${data.tot}`, "#00e5ff");
-                const c=document.getElementById(`chip-${data.cur-1}`); if(c) c.className="chip active";
-                const pr=document.getElementById(`chip-${data.cur-2}`); if(pr) pr.className="chip done";
-                const sp=document.getElementById('stream-p');
-                if (sp) sp.innerHTML += (data.tok==='.'||data.tok==='?'||data.tok===':')?data.tok:(' '+data.tok);
-              } else if (data.stage==='gen') {
-                const spA=document.getElementById('stream-a');
-                if (spA) {
-                  const s=document.createElement('span'); s.innerText=(data.w==='.'||data.w==='?'||data.w===':')?data.w:(' '+data.w);
-                  if(isStepping) s.className='step-flash'; spA.appendChild(s);
-                }
-                if (isStepping || data.paused===1) {
-                  isStepping=false; engineState='paused'; Stopwatch.pause(); updateControls(); setStat(`[STEP: "${data.w}"]`, "#00e5ff");
-                } else if (engineState==='running') setStat("Generating...", "#ff66cc");
-              }
-              if (l) l.scrollTop=l.scrollHeight;
-            } catch(e){}
+            }
           }
         }
-      } catch(e) { 
-        if(e.name==='AbortError' && l) l.innerHTML+=' <span style="color:#ff0055;">[STOPPED]</span>'; 
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          ansSpan.innerText += `\n[Error: ${err.message}]`;
+        }
+      } finally {
+        const cur = document.getElementById('cursor');
+        if (cur) cur.remove();
+        setControls(false);
+        Stopwatch.stop();
+        setStat("Completed", "#00e5ff");
       }
-      
-      engineState='idle'; isStepping=false; updateControls(); Stopwatch.stop();
-      if (scan) scan.className='scanner-line';
-      document.getElementById('cursor')?.remove();
-      document.getElementById('stream-p')?.removeAttribute('id');
-      document.getElementById('stream-a')?.removeAttribute('id');
-      setStat("Idle / Ready", "#00e5ff");
-      if (l) { l.innerHTML+='<br><span style="color:#666;">[Ready]</span><br>'; l.scrollTop=l.scrollHeight; }
     }
+
+    window.onload = () => { initGrid(); };
   </script>
 </body>
 </html>

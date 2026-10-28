@@ -61,7 +61,6 @@ else:
         led.toggle(); time.sleep(0.25)
     print("[MIAOU] Connected to Meow-Net!")
 
-# Discover Meow's IP
 meow_ip = None
 if is_home_wifi:
     beacon_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -117,15 +116,11 @@ def run_layer(f, idx, x):
 
 while True:
     try:
-        # Receive 80-D vector + 2 bias floats (Target ID and Magnitude)
-        data = recv_all(c, (EMBED_DIM + 2) * 4)
+        data = recv_all(c, EMBED_DIM * 4)
         if not data: break
         
         led.on()
-        unpacked = list(struct.unpack(f'{EMBED_DIM+2}f', data))
-        x = unpacked[:EMBED_DIM]
-        bias_id = int(unpacked[EMBED_DIM])
-        bias_mag = unpacked[EMBED_DIM+1]
+        x = list(struct.unpack(f'{EMBED_DIM}f', data))
         
         # Reset signal from Meow
         if x[0] == -999.0:
@@ -139,14 +134,7 @@ while True:
         for l in range(3): x = run_layer(f_w, l, x)
         nx = layer_norm(x, read_vec(f_w, EMBED_DIM), read_vec(f_w, EMBED_DIM))
         lg = stream_linear(f_w, VOCAB_SIZE, EMBED_DIM, nx)
-        
-        # Mask control tokens
-        lg[0] = lg[1] = -1e9  
-        
-        # ===== TRUE LOGIT BIASING =====
-        if 0 <= bias_id < VOCAB_SIZE:
-            lg[bias_id] += bias_mag
-        # ==============================
+        lg[0] = lg[1] = -1e9  # Mask <unk> and <pad>
         
         # Extract top 5 candidates
         tops = [2]*5; tvs = [-1e9]*5

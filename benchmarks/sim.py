@@ -64,7 +64,7 @@ def rl(f, x, kv):
     
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
-def generate(p_txt, max_t=30, bias_word=None, bias_mag=3.0):
+def generate(p_txt, max_t=30):
     is_log = any(t in p_txt for t in ("[c]", "[q]", "[a]")) or any(p_txt.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
     p = p_txt.strip()
     if is_log:
@@ -74,9 +74,6 @@ def generate(p_txt, max_t=30, bias_word=None, bias_mag=3.0):
     toks = [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", p.lower())] or [WORD_TO_ID["alice"]]
     m_kv, mi_kv = [{"k":[], "v":[]} for _ in range(3)], [{"k":[], "v":[]} for _ in range(3)]
     curr, out = toks[-1], []
-    
-    bias_id = WORD_TO_ID.get(bias_word.lower(), -1) if bias_word else -1
-    last_tok_id = -1
 
     for step in range(len(toks) + max_t):
         tid = toks[step] if step < len(toks) else curr
@@ -94,14 +91,6 @@ def generate(p_txt, max_t=30, bias_word=None, bias_mag=3.0):
         lg = sl(f2, 1024, EMBED_DIM, nx)
         lg[WORD_TO_ID["<unk>"]] = lg[WORD_TO_ID["<pad>"]] = -1e9
         
-        # --- TRUE LOGIT BIASING ---
-        if bias_id >= 0:
-            lg[bias_id] += bias_mag
-            
-        # --- ANTI-LOOP REPETITION PENALTY ---
-        if last_tok_id != -1 and last_tok_id != WORD_TO_ID["."]:
-            lg[last_tok_id] -= 6.0
-            
         if is_log: 
             curr = max(range(1024), key=lambda i: lg[i])
         else:
@@ -110,8 +99,6 @@ def generate(p_txt, max_t=30, bias_word=None, bias_mag=3.0):
             for i, pr in enumerate(probs):
                 acc += pr
                 if r <= acc: curr = i; break
-                
-        last_tok_id = curr
 
         if step >= len(toks) - 1:
             w = VOCAB[curr]
@@ -121,39 +108,18 @@ def generate(p_txt, max_t=30, bias_word=None, bias_mag=3.0):
             
     return " ".join(out)
 
-print("="*65)
-print("     WET FOOD LOCAL SIMULATOR (WITH LOGIT BIASING & REPL)     ")
-print("="*65)
-print("Commands:")
-print("  /bias <word> <mag>  -> e.g. /bias wolf 3.0")
-print("  /clear              -> Clear active logit bias")
-print("  exit / quit         -> Exit simulator\n")
+if __name__ == "__main__":
+    print("="*65)
+    print("           WET FOOD LOCAL SIMULATOR (CLEAN REPL)              ")
+    print("="*65)
+    print("Type a prompt or 'exit' to quit.\n")
 
-active_bias_word = None
-active_bias_mag = 3.0
-
-while True:
-    try:
-        line = input("> ")
-        if not line.strip(): continue
-        if line.strip().lower() in ["exit", "quit"]: break
-        
-        if line.startswith("/bias"):
-            parts = line.strip().split()
-            if len(parts) >= 2:
-                active_bias_word = parts[1].lower()
-                if len(parts) >= 3: active_bias_mag = float(parts[2])
-                print(f"  [+] Logit Bias active: {active_bias_word.upper()} (+{active_bias_mag})\n")
-            else:
-                print("  [!] Usage: /bias <word> <mag>\n")
-            continue
-            
-        if line.startswith("/clear"):
-            active_bias_word = None
-            print("  [-] Logit Bias cleared.\n")
-            continue
-            
-        res = generate(line, bias_word=active_bias_word, bias_mag=active_bias_mag)
-        print(f"  {res}\n")
-    except (KeyboardInterrupt, EOFError): 
-        break
+    while True:
+        try:
+            line = input("> ")
+            if not line.strip(): continue
+            if line.strip().lower() in ["exit", "quit"]: break
+            res = generate(line)
+            print(f"  {res}\n")
+        except (KeyboardInterrupt, EOFError): 
+            break

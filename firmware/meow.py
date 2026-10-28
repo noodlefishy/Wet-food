@@ -126,10 +126,6 @@ beacon_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 pb = None; socks = [web_sock, ai_sock]
 last_beacon = 0
 
-# Store persistent specific logit bias
-latched_bias_id = -1
-latched_bias_mag = 0.0
-
 while True:
     if pb is None and time.time() - last_beacon >= 2:
         try: beacon_sock.sendto(b"MEOW_BEACON", ('255.255.255.255', 5001))
@@ -148,59 +144,11 @@ while True:
             c, _ = web_sock.accept()
             c.settimeout(5.0); req = c.recv(1024).decode('utf-8', 'ignore')
             
-            if "GET /cmd?action=" in req:
-                req_path = req.split(" ")[1] if len(req.split(" ")) > 1 else ""
-                if "action=steer" in req_path:
-                    try:
-                        w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
-                        m_val = float(req_path.split("mag=")[1].split("&")[0])
-                        if w_val in WORD_TO_ID:
-                            latched_bias_id = WORD_TO_ID[w_val]
-                            latched_bias_mag = m_val
-                            print(f"[MEOW] Logit Bias Latched: '{w_val}' (+{m_val})")
-                    except Exception as e:
-                        print("[MEOW] Bias Cmd Error:", e)
-                elif "action=clear" in req_path:
-                    latched_bias_id = -1
-                    latched_bias_mag = 0.0
-                    print("[MEOW] Bias Cleared.")
-
-                c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nOK")
-                c.close()
-                continue
-            
-            elif "GET /cortex.json" in req:
-                c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
-                try:
-                    with open("cortex.json", "rb") as f_json:
-                        while True:
-                            chunk = f_json.read(1024)
-                            if not chunk: break
-                            c.sendall(chunk)
-                except Exception as e:
-                    print("[MEOW] Cortex JSON Error:", e)
-                    c.sendall(b"{}")
-                c.close()
-                continue
-            
-            elif "GET /gen?p=" in req and pb:
+            if "GET /gen?p=" in req and pb:
                 req_line = req.split("\r\n")[0]
                 url_path = req_line.split(" ")[1]
-                
                 raw_p = url_path.split("p=")[1].split("&")[0]
                 p = unquote(raw_p).lower()
-                
-                # Check for query-level bias overrides
-                if "bw=" in url_path:
-                    try:
-                        bw_param = unquote(url_path.split("bw=")[1].split("&")[0]).strip()
-                        bm_param = float(url_path.split("bm=")[1].split("&")[0])
-                        if bw_param in WORD_TO_ID:
-                            latched_bias_id = WORD_TO_ID[bw_param]
-                            latched_bias_mag = bm_param
-                            print(f"[MEOW] URL Bias Engaged: {bw_param} (+{bm_param})")
-                    except Exception as e:
-                        print("[MEOW] Query Bias Error:", e)
 
                 is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
                 if is_logic:
@@ -210,8 +158,7 @@ while True:
                 for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
                 
                 try:
-                    # Init signal: send 82 floats total
-                    pb.sendall(struct.pack(f'{EMBED_DIM+2}f', *([-999.0, 1.0 if is_logic else 0.0] + [0.0]*EMBED_DIM)))
+                    pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0] + [0.0]*(EMBED_DIM-1))))
                     ack = recv_all(pb, 2)
                     if ack != b"OK": c.close(); continue
                 except Exception: c.close(); continue
@@ -223,12 +170,9 @@ while True:
                 t_start = time.ticks_ms()
                 cur = tks[0]
                 ct_ranks = [0, 0, 0, 0, 0]
-                
-                state_paused = False
-                state_step = False
                 aborted = False
                 
-                # --- PHASE 1: PREFILL ---
+                # Phase 1: Prefill prompt tokens into KV cache
                 for stp in range(len(tks)):
                     led.on()
                     tid = tks[stp]
@@ -240,9 +184,7 @@ while True:
                     for l in range(3): x = run_layer(f_w, l, x)
                     
                     try:
-                        # Append the 2 bias floats (ID and Mag) for Miaou
-                        payload = x + [float(latched_bias_id), latched_bias_mag]
-                        pb.sendall(struct.pack(f'{EMBED_DIM+2}f', *payload))
+                        pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
                         rep = recv_all(pb, 10)
                         if not rep: aborted = True; break
                     except Exception: 
@@ -257,58 +199,13 @@ while True:
                     v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
                     
                     try:
-                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"paused":0}}\n'.encode())
+                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
                     except Exception: aborted = True; led.off(); break
                     led.off()
 
-                # --- PHASE 2: GENERATION ---
+                # Phase 2: Autoregressive token generation
                 if not aborted:
                     for gen_stp in range(50):
-                        while True:
-                            r_cmd, _, _ = select.select([web_sock], [], [], 0.0)
-                            if r_cmd:
-                                try:
-                                    c2, _ = web_sock.accept()
-                                    req2 = c2.recv(512).decode('utf-8', 'ignore')
-                                    req_path = req2.split(" ")[1] if len(req2.split(" ")) > 1 else ""
-                                    
-                                    if "action=pause" in req_path: 
-                                        state_paused = True
-                                    elif "action=resume" in req_path: 
-                                        state_paused = False
-                                    elif "action=step" in req_path: 
-                                        state_step = True
-                                    elif "action=stop" in req_path: 
-                                        aborted = True; state_paused = False
-                                    
-                                    elif "action=inject" in req_path:
-                                        w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
-                                        if w_val in WORD_TO_ID: cur = WORD_TO_ID[w_val]
-                                        
-                                    elif "action=steer" in req_path:
-                                        w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
-                                        m_val = float(req_path.split("mag=")[1].split("&")[0])
-                                        if w_val in WORD_TO_ID:
-                                            latched_bias_id = WORD_TO_ID[w_val]
-                                            latched_bias_mag = m_val
-                                            print(f"[MEOW] Mid-flight Bias updated: {w_val} (+{m_val})")
-                                            
-                                    elif "action=clear" in req_path:
-                                        latched_bias_id = -1
-                                        latched_bias_mag = 0.0
-
-                                    c2.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")
-                                    c2.close()
-                                except: pass
-                            
-                            if aborted: break
-                            if state_paused and not state_step: time.sleep(0.05)
-                            else: 
-                                state_step = False
-                                break
-                        
-                        if aborted: break
-
                         led.on()
                         word = VOCAB[cur]
                         lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
@@ -316,9 +213,8 @@ while True:
                         ranks = [VOCAB[t] for t in ct_ranks]
                         ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
                         
-                        is_paused_val = 1 if state_paused else 0
                         try:
-                            c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"paused":{is_paused_val}}}\n'.encode())
+                            c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
                         except Exception: led.off(); break
                         
                         if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
@@ -326,15 +222,13 @@ while True:
                         tid = cur
                         tv = read_emb(f_w, tid, 0)
                         pv = read_emb(f_w, min(len(tks) + gen_stp, BLOCK_SIZE-1), VOCAB_SIZE * ROW_B)
-                        
                         x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
                         
                         f_w.seek(L0_OFF)
                         for l in range(3): x = run_layer(f_w, l, x)
                         
                         try:
-                            payload = x + [float(latched_bias_id), latched_bias_mag]
-                            pb.sendall(struct.pack(f'{EMBED_DIM+2}f', *payload))
+                            pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
                             rep = recv_all(pb, 10)
                             if not rep: break
                         except Exception: break

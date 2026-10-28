@@ -1,4 +1,4 @@
-import torch, struct, requests, re, math, os, json, sys, torch.nn as nn
+import torch, struct, requests, re, math, os, json, sys, time, torch.nn as nn
 from torch.nn import functional as F
 from collections import Counter
 
@@ -16,16 +16,23 @@ EMBED_DIM  = mod_cfg["architecture"]["embed_dim"]
 NUM_HEADS  = mod_cfg["architecture"]["num_heads"]
 NUM_LAYERS = mod_cfg["architecture"]["num_layers"]
 HEAD_DIM   = EMBED_DIM // NUM_HEADS
-DEVICE = mod_cfg["training"]["device"]
+DEVICE = "cpu"  # CPU with 4 P-cores is faster than MPS for small 80-D batch operations
 
 MODELS_DIR = mod_cfg["paths"]["models_dir"]
 STORIES_FILE = mod_cfg["paths"]["stories_file"]
 QUESTIONS_FILE = mod_cfg["paths"]["questions_file"]
 os.makedirs(MODELS_DIR, exist_ok=True)
+os.makedirs("firmware", exist_ok=True)
+
+print("=" * 60)
+print(f" TRAINING ANTI-SHORTCUT {NUM_LAYERS}L {EMBED_DIM}-D ENGINE ON {DEVICE.upper()}")
+print("=" * 60)
 
 if os.path.exists(STORIES_FILE):
+    print(f"[*] Reading TinyStories from cached {STORIES_FILE}...")
     with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f: raw_stories = f.read().lower()
 else:
+    print("[*] Downloading TinyStories dataset...")
     response = requests.get(mod_cfg["dataset"]["url"], headers={"User-Agent": "Mozilla/5.0"}, stream=True)
     with open(STORIES_FILE, "wb") as f:
         for chunk in response.iter_content(chunk_size=512 * 1024):
@@ -36,16 +43,16 @@ else:
 for target, names in mod_cfg["dataset"]["name_replacements"].items():
     raw_stories = re.sub(r"\b(" + "|".join(names) + r")\b", target, raw_stories)
 
-TARGET_LOGIC = 100000 
-print(f"Pre-caching {TARGET_LOGIC} logic tasks into RAM...")
+TARGET_LOGIC = 50000
+print(f"[*] Generating {TARGET_LOGIC} anti-shortcut combinatorial tasks...")
 all_qa_tasks = [generate_atomic_sample(log_cfg) for _ in range(TARGET_LOGIC)]
 
 eval_benchmarks = {}
-categories = [c["name"] for c in log_cfg["categories"]] if "categories" in log_cfg else list(log_cfg["queries"].keys())
+categories = [c["name"] for c in log_cfg["categories"]]
 for cat in categories:
     eval_benchmarks[cat] = []
     for _ in range(15):
-        p, t = split_qa(generate_atomic_sample(log_cfg, target_category=cat))
+        p, t = split_qa(generate_atomic_sample(log_cfg, target_category=cat, inject_distractor=False))
         eval_benchmarks[cat].append({"q": p, "target": t})
 
 eval_benchmarks["Storytelling"] = [{"q": p, "target": None} for p in [
@@ -57,7 +64,7 @@ eval_benchmarks["Storytelling"] = [{"q": p, "target": None} for p in [
 with open(QUESTIONS_FILE, "w") as f: json.dump(eval_benchmarks, f, indent=2)
 
 CAT_CORE_WORDS = mod_cfg["dataset"]["core_words"]
-all_words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", raw_stories + " " + " ".join(all_qa_tasks[:5000]))
+all_words = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", raw_stories + " " + " ".join(all_qa_tasks[:8000]))
 counts = Counter(all_words)
 for w in CAT_CORE_WORDS: counts.pop(w, None)
 VOCAB = CAT_CORE_WORDS + [w for w, _ in counts.most_common(VOCAB_SIZE - len(CAT_CORE_WORDS))]
@@ -67,6 +74,7 @@ pad_id, a_token_id = WORD_TO_ID["<pad>"], WORD_TO_ID["[a]"]
 def tokenize_str(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", s.lower())]
 
+print("[*] Tokenizing logic and story streams...")
 qa_tensor_x, qa_tensor_y = [], []
 for task in all_qa_tasks:
     toks = tokenize_str(task)
@@ -130,16 +138,13 @@ class BabyStories(nn.Module):
         return self.lm_head(self.ln_f(x))
 
 raw_model = BabyStories().to(DEVICE)
-optimizer = torch.optim.AdamW(raw_model.parameters(), lr=0.001, weight_decay=mod_cfg["training"]["weight_decay"])
 
-try: compiled_model = torch.compile(raw_model)
-except Exception: compiled_model = raw_model
+TOTAL_STEPS = 18000
+WARMUP = 800
+BASE_LR, MIN_LR = 0.0015, 0.0001
+BATCH_QA, BATCH_ST = 16, 10
 
-# 3. Supercharged Batch Scaling
-TOTAL_STEPS = 6000
-WARMUP = 500
-BASE_LR, MIN_LR = 0.001, 0.0001
-BATCH_QA, BATCH_ST = 32, 4
+optimizer = torch.optim.AdamW(raw_model.parameters(), lr=BASE_LR, weight_decay=mod_cfg["training"]["weight_decay"])
 
 def get_lr(step):
     if step < WARMUP: return BASE_LR * (step + 1) / WARMUP
@@ -150,31 +155,39 @@ def get_batch():
     st_idx = torch.randint(num_st_chunks, (BATCH_ST,))
     return qa_x_data[qa_idx], qa_y_data[qa_idx], st_x_data[st_idx], st_y_data[st_idx]
 
+print(f"\n[*] Training for {TOTAL_STEPS} steps (Batch: {BATCH_QA} QA + {BATCH_ST} Story)...")
 raw_model.train()
+t_start = time.time()
+
 try:
     for step in range(TOTAL_STEPS + 1):
         for p in optimizer.param_groups: p["lr"] = get_lr(step)
 
         x_qa, y_qa, x_st, y_st = get_batch()
-        logits_all = compiled_model(torch.cat([x_qa, x_st], dim=0))
+        logits_all = raw_model(torch.cat([x_qa, x_st], dim=0))
         loss_qa = F.cross_entropy(logits_all[:BATCH_QA].view(-1, VOCAB_SIZE), y_qa.view(-1), ignore_index=-100)
         loss_st = F.cross_entropy(logits_all[BATCH_QA:].view(-1, VOCAB_SIZE), y_st.view(-1))
 
         decay_start = int(TOTAL_STEPS * 0.70)
-        current_w_st = 0.3 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.25 if step > decay_start else 0.3
-        loss = (2.5 * loss_qa) + (max(current_w_st, 0.05) * loss_st)
+        current_w_st = 0.35 - ((step - decay_start) / (TOTAL_STEPS - decay_start)) * 0.20 if step > decay_start else 0.35
+        loss = (2.0 * loss_qa) + (max(current_w_st, 0.15) * loss_st)
 
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(raw_model.parameters(), mod_cfg["training"]["grad_clip"])
         optimizer.step()
 
-        if step % 250 == 0:
-            print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f}")
+        if step % 500 == 0:
+            elapsed = time.time() - t_start
+            s_per_step = elapsed / max(step, 1)
+            eta_min = (TOTAL_STEPS - step) * s_per_step / 60
+            print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f} | ETA: {eta_min:.1f}m")
 except KeyboardInterrupt:
-    print(f"\n[!] Training stopped early. Saving current weights...")
+    print(f"\n[!] Training interrupted. Saving current checkpoint...")
 
-def dump_t(t, f, quantize=False):
+print("\n[*] Quantizing weights (INT8 W8A32) and exporting for Pico 1 & Pico 2...")
+
+def dump_t(t, f, quantize=True):
     d = t.detach().cpu()
     if d.ndim == 2 and quantize:
         for r in d:
@@ -185,17 +198,29 @@ def dump_t(t, f, quantize=False):
     else:
         f.write(d.to(torch.float32).numpy().tobytes())
 
-with open(os.path.join(MODELS_DIR, "pico1 weights.model"), "wb") as f:
+p1_path = os.path.join(MODELS_DIR, "pico1 weights.model")
+p2_path = os.path.join(MODELS_DIR, "pico2 weights.model")
+
+with open(p1_path, "wb") as f:
     dump_t(raw_model.tok_emb.weight, f, quantize=True)
     dump_t(raw_model.pos_emb.weight, f, quantize=True)
     for i in [0, 1, 2]:
         for p in raw_model.layers[i].parameters(): dump_t(p, f, quantize=True)
 
-with open(os.path.join(MODELS_DIR, "pico2 weights.model"), "wb") as f:
+with open(p2_path, "wb") as f:
     for i in [3, 4, 5]:
         for p in raw_model.layers[i].parameters(): dump_t(p, f, quantize=True)
     for p in raw_model.ln_f.parameters(): dump_t(p, f, quantize=True)
     dump_t(raw_model.lm_head.weight, f, quantize=True)
     dump_t(raw_model.lm_head.bias, f, quantize=True)
 
-with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: f.write(f"VOCAB = {repr(VOCAB)}\n")
+vocab_code = f"VOCAB = {repr(VOCAB)}\n"
+with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: f.write(vocab_code)
+with open("firmware/vocab.py", "w") as f: f.write(vocab_code)
+if os.path.exists("models/vocab.py"):
+    with open("models/vocab.py", "w") as f: f.write(vocab_code)
+
+print(f"[✓] Meow Weights (pico1): {os.path.getsize(p1_path)/1024:.1f} KB -> Saved to {p1_path}")
+print(f"[✓] Miaou Weights (pico2): {os.path.getsize(p2_path)/1024:.1f} KB -> Saved to {p2_path}")
+print(f"[✓] Vocab: Saved to models/local/vocab.py & firmware/vocab.py")
+print("Training and Quantization Complete!")
