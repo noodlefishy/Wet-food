@@ -222,11 +222,11 @@ while True:
                     v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
                     
                     try:
-                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
+                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"paused":0}}\n'.encode())
                     except Exception: aborted = True; led.off(); break
                     led.off()
 
-                # --- PHASE 2: GENERATION (With True Mind Surgery) ---
+                # --- PHASE 2: GENERATION (With Mind Surgery) ---
                 if not aborted:
                     for gen_stp in range(50):
                         while True:
@@ -237,10 +237,14 @@ while True:
                                     req2 = c2.recv(512).decode('utf-8', 'ignore')
                                     req_path = req2.split(" ")[1] if len(req2.split(" ")) > 1 else ""
                                     
-                                    if "action=pause" in req_path: state_paused = True
-                                    elif "action=resume" in req_path: state_paused = False
-                                    elif "action=step" in req_path: state_step = True
-                                    elif "action=stop" in req_path: aborted = True; state_paused = False
+                                    if "action=pause" in req_path: 
+                                        state_paused = True
+                                    elif "action=resume" in req_path: 
+                                        state_paused = False
+                                    elif "action=step" in req_path: 
+                                        state_step = True
+                                    elif "action=stop" in req_path: 
+                                        aborted = True; state_paused = False
                                     
                                     elif "action=inject" in req_path:
                                         w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
@@ -251,8 +255,10 @@ while True:
                                         m_val = float(req_path.split("mag=")[1].split("&")[0])
                                         if w_val in WORD_TO_ID:
                                             s_vec = read_emb(f_w, WORD_TO_ID[w_val], 0)
-                                            for i in range(EMBED_DIM): steer_vector[i] = s_vec[i] * m_val
-                                            print(f"[MEOW] Steering active: {w_val} (mag: {m_val})")
+                                            # NORMALIZE to prevent vector blowout!
+                                            v_norm = math.sqrt(sum(v*v for v in s_vec)) or 1.0
+                                            for i in range(EMBED_DIM): steer_vector[i] = (s_vec[i] / v_norm) * m_val
+                                            print(f"[MEOW] Steering active: {w_val} (normed, mag: {m_val})")
                                             
                                     elif "action=clear" in req_path:
                                         steer_vector = [0.0] * EMBED_DIM
@@ -263,7 +269,9 @@ while True:
                             
                             if aborted: break
                             if state_paused and not state_step: time.sleep(0.05)
-                            else: state_step = False; break
+                            else: 
+                                state_step = False
+                                break
                         
                         if aborted: break
 
@@ -274,8 +282,10 @@ while True:
                         ranks = [VOCAB[t] for t in ct_ranks]
                         ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
                         
+                        # Tell UI if backend is in a paused hold
+                        is_paused_val = 1 if state_paused else 0
                         try:
-                            c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
+                            c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"paused":{is_paused_val}}}\n'.encode())
                         except Exception: led.off(); break
                         
                         if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
@@ -288,7 +298,7 @@ while True:
                         f_w.seek(L0_OFF)
                         for l in range(3): x = run_layer(f_w, l, x)
                         
-                        # Apply Vector Steering!
+                        # Apply Vector Steering safely
                         x = [x[i] + steer_vector[i] for i in range(EMBED_DIM)]
                         
                         try:
@@ -302,15 +312,24 @@ while True:
                         led.off()
 
             elif "GET / " in req or "GET /index.html" in req:
-                c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
+                # Check for pre-compressed index.html.gz first (saves flash & transfers in 3KB)
                 try:
-                    with open("index.html", "r") as html_f:
+                    with open("index.html.gz", "rb") as html_gz:
+                        c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Encoding: gzip\r\nConnection: close\r\n\r\n")
                         while True:
-                            chunk = html_f.read(1024)
+                            chunk = html_gz.read(1024)
                             if not chunk: break
                             c.sendall(chunk)
-                except Exception:
-                    c.sendall(b"index.html missing")
+                except OSError:
+                    try:
+                        with open("index.html", "r") as html_f:
+                            c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n")
+                            while True:
+                                chunk = html_f.read(1024)
+                                if not chunk: break
+                                c.sendall(chunk)
+                    except Exception:
+                        c.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nindex.html missing")
             else: 
                 c.sendall(b"HTTP/1.1 404 Not Found\r\n\r\n")
             c.close()
