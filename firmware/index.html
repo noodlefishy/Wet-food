@@ -3,19 +3,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Meow and Miaou AI</title>
   <style>
-    body { font-family: monospace; background: #050505;color: #39ff14; margin: 0; padding: 12px; }
-    h3 { margin: 0 0 10px 0;color: #ff66cc; }
+    body { font-family: monospace; background: #050505; color: #39ff14; margin: 0; padding: 12px; }
+    h3 { margin: 0 0 10px 0; color: #ff66cc; }
     .container { display: flex; flex-wrap: wrap; gap: 12px; }
     .main-col { flex: 1 1 450px; }
-    .side-col { flex: 1 1 300px; background: #0d0d0d; border: 1px solid #333; padding: 10px; border-radius: 4px; font-size: 13px; line-height: 1.4;color: #00e5ff; }
+    .side-col { flex: 1 1 300px; background: #0d0d0d; border: 1px solid #333; padding: 10px; border-radius: 4px; font-size: 13px; line-height: 1.4; color: #00e5ff; }
     #log { background: #000; border: 1px solid #ff66cc; height: 350px; overflow-y: auto; padding: 10px; white-space: pre-wrap; font-size: 14px; margin-bottom: 10px; }
-    input { width: 70%; padding: 8px; font-family: monospace; background: #1a1a1a;color: #fff; border: 1px solid #ff66cc; }
-    button { padding: 8px 14px; font-family: monospace; cursor: pointer; background: #ff66cc;color: #000; font-weight: bold; border: none; }
-    .badge {color: #ff66cc; font-weight: bold; margin-bottom: 4px; }
+    input { width: 70%; padding: 8px; font-family: monospace; background: #1a1a1a; color: #fff; border: 1px solid #ff66cc; }
+    button { padding: 8px 14px; font-family: monospace; cursor: pointer; background: #ff66cc; color: #000; font-weight: bold; border: none; }
+    .badge { color: #ff66cc; font-weight: bold; margin-bottom: 4px; }
     .metric { background: #141414; border-left: 3px solid #ff66cc; padding: 5px 8px; margin: 6px 0; }
-    .vec-val {color: #fff; font-size: 11px; word-break: break-all; }
-    .rank-selected {color: #39ff14; font-weight: bold; }
-    .rank-alt {color: #888; }
+    .vec-val { color: #fff; font-size: 11px; word-break: break-all; }
+    .rank-selected { color: #39ff14; font-weight: bold; }
+    .rank-alt { color: #888; }
   </style>
 </head>
 <body>
@@ -24,24 +24,21 @@
   <div class="container">
     <div class="main-col">
       <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
-      <input type="text" id="prompt" value="what are your names ? ">
+      <input type="text" id="prompt" value="[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]">
       <button id="btn" onclick="gen()">Execute</button>
     </div>
 
     <div class="side-col">
-      <div class="badge">[ FUN FACTS ]</div>
+      <div class="badge">[ PIPELINE TELEMETRY ]</div>
       <div class="metric">
-        <b>Meow breed:</b> 4-Layer Transformer<br>
-        <b>Miaou ages:</b> 138,480 (Float32 in Flash)<br>
-        <b>Meow brain:</b> 1,024 Words<br>
-        <b>Miaou paws:</b> 250 MHz (Dual Cortex-M0+)
+        <b>Pipeline Status:</b> <span id="m_stat">Resting / Idle</span><br>
+        <b>Token Latency:</b> <span id="m_lat">0</span> ms<br>
+        <b>Meow Free Heap:</b> <span id="m_ram">0</span> bytes
       </div>
 
-      <div class="badge">[ LIVE METRICS ]</div>
-      <div class="metric">
-        <b>Last Token Latency:</b> <span id="m_lat">0</span> ms<br>
-        <b>Meow Free Heap:</b> <span id="m_ram">0</span> bytes<br>
-        <b>Pipeline Status:</b> <span id="m_stat">Resting</span>
+      <div class="badge">[ PROMPT INGESTION (KV PREFILL) ]</div>
+      <div class="metric" id="m_prefill">
+        Idle (Waiting for prompt)...
       </div>
 
       <div class="badge">[ WORD CANDIDATE RANKINGS (TOP 5) ]</div>
@@ -49,9 +46,9 @@
         1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---
       </div>
 
-      <div class="badge">[ WI-FI THOUGHT VECTOR (48-D) ]</div>
+      <div class="badge">[ WI-FI THOUGHT VECTOR (80-D) ]</div>
       <div class="metric">
-        <span style="font-size:11px;color:#aaa;">Transmitted from Meow to Miaou:</span><br>
+        <span style="font-size:11px; color:#aaa;">Transmitted from Meow to Miaou:</span><br>
         <span id="m_vec" class="vec-val">[ 0.00, 0.00, 0.00, 0.00 ... ]</span>
       </div>
     </div>
@@ -67,11 +64,13 @@
       const ram = document.getElementById('m_ram');
       const vec = document.getElementById('m_vec');
       const ranks = document.getElementById('m_ranks');
+      const prefill = document.getElementById('m_prefill');
 
       b.disabled = true;
-      stat.innerText = "Computing (Meow -> Wi-Fi -> Miaou)";
+      stat.innerText = "Synchronizing with Miaou...";
       stat.style.color = "#ff66cc";
-      l.innerHTML += '\\n<br><span style="color:#ff66cc;">> ' + p + '</span>';
+      prefill.innerText = "Ingesting prompt...";
+      l.innerHTML += '<br><span style="color:#ff66cc;">> ' + p + '</span> ';
 
       try {
         const res = await fetch('/gen?p=' + encodeURIComponent(p));
@@ -84,32 +83,39 @@
           if (done) break;
           buffer += decoder.decode(value);
 
-          const lines = buffer.split('\\n');
+          const lines = buffer.split('\n');
           buffer = lines.pop();
 
           for (const line of lines) {
             if (!line.trim()) continue;
             try {
               const data = JSON.parse(line);
-              if (data.w === '.') {
-                l.innerHTML += '.';
-              } else {
-                l.innerHTML += ' ' + data.w;
-              }
-              l.scrollTop = l.scrollHeight;
-
+              
               lat.innerText = data.ms;
               ram.innerText = data.ram;
               vec.innerText = '[ ' + data.v.join(', ') + ', ... ]';
 
-              // Update Word Rankings
-              if (data.ranks && data.ranks.length > 0) {
-                let rankHtml = '';
-                rankHtml += '1. <span class="rank-selected">' + data.ranks[0] + ' (selected)</span><br>';
-                for (let i = 1; i < data.ranks.length; i++) {
-                  rankHtml += (i + 1) + '. <span class="rank-alt">' + data.ranks[i] + '</span><br>';
+              if (data.stage === 'prefill') {
+                stat.innerText = "Prefilling KV Cache (Meow -> Miaou)";
+                prefill.innerHTML = 'Ingesting (' + data.cur + '/' + data.tot + '): <b>' + data.tok + '</b>';
+              } else if (data.stage === 'gen') {
+                stat.innerText = "Generating Tokens (Miaou -> Meow)";
+                prefill.innerHTML = '<span style="color:#39ff14;">✓ Prompt Ingested. Generating answer...</span>';
+
+                if (data.w === '.') {
+                  l.innerHTML += '.';
+                } else {
+                  l.innerHTML += ' ' + data.w;
                 }
-                ranks.innerHTML = rankHtml;
+                l.scrollTop = l.scrollHeight;
+
+                if (data.ranks && data.ranks.length > 0) {
+                  let rankHtml = '1. <span class="rank-selected">' + data.ranks[0] + ' (selected)</span><br>';
+                  for (let i = 1; i < data.ranks.length; i++) {
+                    rankHtml += (i + 1) + '. <span class="rank-alt">' + data.ranks[i] + '</span><br>';
+                  }
+                  ranks.innerHTML = rankHtml;
+                }
               }
             } catch (err) {
               l.innerHTML += line;
@@ -117,7 +123,7 @@
           }
         }
       } catch (e) {
-        l.innerHTML += "\\n[NETWORK ABORT: " + e.message + "]";
+        l.innerHTML += "<br>[NETWORK ABORT: " + e.message + "]";
       }
 
       stat.innerText = "Resting / Idle";

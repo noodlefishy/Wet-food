@@ -12,24 +12,31 @@ MIAOU_FILES = [
     ("firmware/miaou.py", "main.py")
 ]
 
-node = sys.argv[1].lower().replace("--", "") if len(sys.argv) > 1 else None
+args = [a.lower() for a in sys.argv[1:]]
+code_only = "--code" in args or "-c" in args
+clean_args = [a for a in args if not a.startswith("-")]
+
+node = clean_args[0] if len(clean_args) > 0 else None
 if node not in ("meow", "miaou"):
-    print("Usage: python3 deploy.py meow  (or: python3 deploy.py miaou) [port]")
+    print("Usage: python3 deploy.py meow [--code] [port]")
     sys.exit(1)
 
-port_arg = ["connect", sys.argv[2]] if len(sys.argv) > 2 else []
-targets = MEOW_FILES if node == "meow" else MIAOU_FILES
-print(f"[*] Cleaning old files on {node.upper()}...")
-for _, dst in targets:
-    subprocess.run(["mpremote"] + port_arg + ["rm", f":{dst}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+port_arg = ["connect", clean_args[1]] if len(clean_args) > 1 else []
+all_targets = MEOW_FILES if node == "meow" else MIAOU_FILES
 
-print(f"[*] Uploading fresh build to {node.upper()}...")
+# Filter to only .py / .html if --code is passed
+targets = [t for t in all_targets if not t[0].endswith(".model")] if code_only else all_targets
+
+print(f"[*] Deploying {'(CODE ONLY)' if code_only else '(FULL)'} to {node.upper()}...")
 for src, dst in targets:
-    if not os.path.exists(src): print(f"[!] Error: missing {src}. Run local.py first!"); sys.exit(1)
+    if not os.path.exists(src):
+        print(f"[!] Missing {src}")
+        sys.exit(1)
     print(f"  -> Uploading {src} as :{dst}...")
-    cmd = ["mpremote"] + port_arg + ["cp", src, f":{dst}"]
-    if subprocess.run(cmd).returncode != 0: print(f"[!] Upload failed for {src}. Check USB connection."); sys.exit(1)
+    subprocess.run(["mpremote"] + port_arg + ["rm", f":{dst}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if subprocess.run(["mpremote"] + port_arg + ["cp", src, f":{dst}"]).returncode != 0:
+        print(f"[!] Upload failed for {src}")
+        sys.exit(1)
 
-print(f"[+] Resetting {node.upper()} to boot main.py...")
 subprocess.run(["mpremote"] + port_arg + ["reset"])
-print(f"[✓] {node.upper()} deployed and running successfully!")
+print(f"[✓] {node.upper()} updated and rebooted!")
