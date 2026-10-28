@@ -94,13 +94,12 @@ def run_layer(f, idx, x):
 print("\n" + "="*50)
 print("[MEOW] Initializing Network Interface...")
 
-network.hostname('meow')
-
+try: network.hostname('meow')
+except: pass
 
 sta = network.WLAN(network.STA_IF)
 sta.active(True)
 if WIFI_SSID:
-    print(f"[MEOW] Connecting to {WIFI_SSID}...")
     sta.connect(WIFI_SSID, WIFI_PASS)
     t_end = time.time() + 12
     while not sta.isconnected() and time.time() < t_end:
@@ -109,12 +108,9 @@ if WIFI_SSID:
 if sta.isconnected():
     my_ip = sta.ifconfig()[0]
     print(f"[MEOW] Connected to Home Wi-Fi! IP: {my_ip}")
-    print(f"[MEOW] Web UI live at http://{my_ip}/")
 else:
-    print("[MEOW] Home Wi-Fi unavailable. Launching Meow-Net AP...")
     ap = network.WLAN(network.AP_IF); ap.active(True); ap.config(ssid='Meow-Net', security=0)
     my_ip = ap.ifconfig()[0]
-    print(f"[MEOW] AP Online at http://{my_ip}/")
 
 led.off()
 
@@ -129,7 +125,6 @@ beacon_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 pb = None; socks = [web_sock, ai_sock]
 last_beacon = 0
-print("[MEOW] Waiting for Miaou (Pico 2) to pair...")
 
 while True:
     if pb is None and time.time() - last_beacon >= 2:
@@ -149,10 +144,28 @@ while True:
             c, _ = web_sock.accept()
             c.settimeout(5.0); req = c.recv(1024).decode('utf-8', 'ignore')
             
-            if "GET /gen?p=" in req and pb:
+            # --- HANDLE DIRECTOR COMMANDS ---
+            if "GET /cmd?action=" in req:
+                c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nOK")
+                c.close()
+                continue
+            
+            if "GET /cortex.json" in req:
+                c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+                try:
+                    with open("cortex.json", "r") as f_json:
+                        while True:
+                            chunk = f_json.read(512)
+                            if not chunk: break
+                            c.sendall(chunk)
+                except:
+                    c.sendall(b"{}")
+                c.close()
+                continue
+            
+            elif "GET /gen?p=" in req and pb:
                 raw_p = req.split("GET /gen?p=")[1].split(" ")[0]
                 p = unquote(raw_p).lower()
-                print(f"\n[MEOW] Prompt: '{p}'")
                 
                 is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
                 if is_logic:
@@ -164,22 +177,23 @@ while True:
                 try:
                     pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0, 1.0 if is_logic else 0.0] + [0.0]*(EMBED_DIM-2))))
                     ack = recv_all(pb, 2)
-                    if ack != b"OK":
-                        c.close(); continue
-                except Exception:
-                    c.close(); continue
+                    if ack != b"OK": c.close(); continue
+                except Exception: c.close(); continue
 
                 try:
                     c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")
-                except Exception:
-                    c.close(); continue
+                except Exception: c.close(); continue
                 
                 t_start = time.ticks_ms()
                 cur = tks[0]
                 ct_ranks = [0, 0, 0, 0, 0]
-                aborted = False
                 
-                # --- PHASE 1: PREFILL (SEND EVERY SINGLE PROMPT TOKEN) ---
+                state_paused = False
+                state_step = False
+                aborted = False
+                steer_vector = [0.0] * EMBED_DIM
+                
+                # --- PHASE 1: PREFILL ---
                 for stp in range(len(tks)):
                     led.on()
                     tid = tks[stp]
@@ -207,13 +221,49 @@ while True:
                     
                     try:
                         c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
-                    except Exception:
-                        print("[MEOW] Aborted by client."); aborted = True; led.off(); break
+                    except Exception: aborted = True; led.off(); break
                     led.off()
 
-                # --- PHASE 2: GENERATION (STREAM AUTOREGRESSIVE TOKENS) ---
+                # --- PHASE 2: GENERATION (With True Mind Surgery) ---
                 if not aborted:
-                    for gen_stp in range(30):
+                    for gen_stp in range(50):
+                        while True:
+                            r_cmd, _, _ = select.select([web_sock], [], [], 0.0)
+                            if r_cmd:
+                                try:
+                                    c2, _ = web_sock.accept()
+                                    req2 = c2.recv(512).decode('utf-8', 'ignore')
+                                    req_path = req2.split(" ")[1] if len(req2.split(" ")) > 1 else ""
+                                    
+                                    if "action=pause" in req_path: state_paused = True
+                                    elif "action=resume" in req_path: state_paused = False
+                                    elif "action=step" in req_path: state_step = True
+                                    elif "action=stop" in req_path: aborted = True; state_paused = False
+                                    
+                                    elif "action=inject" in req_path:
+                                        w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
+                                        if w_val in WORD_TO_ID: cur = WORD_TO_ID[w_val] # Force next token
+                                        
+                                    elif "action=steer" in req_path:
+                                        w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
+                                        m_val = float(req_path.split("mag=")[1].split("&")[0])
+                                        if w_val in WORD_TO_ID:
+                                            s_vec = read_emb(f_w, WORD_TO_ID[w_val], 0)
+                                            for i in range(EMBED_DIM): steer_vector[i] = s_vec[i] * m_val
+                                            
+                                    elif "action=clear" in req_path:
+                                        steer_vector = [0.0] * EMBED_DIM
+
+                                    c2.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")
+                                    c2.close()
+                                except: pass
+                            
+                            if aborted: break
+                            if state_paused and not state_step: time.sleep(0.05)
+                            else: state_step = False; break
+                        
+                        if aborted: break
+
                         led.on()
                         word = VOCAB[cur]
                         lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
@@ -223,11 +273,9 @@ while True:
                         
                         try:
                             c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
-                        except Exception:
-                            print("[MEOW] Aborted by client."); led.off(); break
+                        except Exception: led.off(); break
                         
-                        if (is_logic and word == ".") or word in ("<eos>", "<pad>"):
-                            led.off(); break
+                        if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
                             
                         tid = cur
                         tv = read_emb(f_w, tid, 0)
@@ -236,6 +284,9 @@ while True:
                         
                         f_w.seek(L0_OFF)
                         for l in range(3): x = run_layer(f_w, l, x)
+                        
+                        # Apply Vector Steering!
+                        x = [x[i] + steer_vector[i] for i in range(EMBED_DIM)]
                         
                         try:
                             pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
