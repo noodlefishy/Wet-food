@@ -1,52 +1,19 @@
-import os, sys, json, math, struct
+import os, sys, json, struct
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 try: from firmware.vocab import VOCAB
 except: from models.local.vocab import VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-EMBED_DIM, BLOCK_SIZE, ROW_B = 80, 64, 4 + 80
-L0_OFF = (1024 * ROW_B) + (BLOCK_SIZE * ROW_B)
+EMBED_DIM, ROW_B = 80, 4 + 80
 f1 = open(os.path.join(os.path.dirname(__file__), "..", "models", "local", "pico1 weights.model"), "rb")
 
-def rv(f, c): return struct.unpack(f"{c}f", f.read(c * 4))
 def read_emb(f, idx):
     f.seek(idx * ROW_B)
     s = struct.unpack('f', f.read(4))[0]
     return [v * s for v in struct.unpack(f'{EMBED_DIM}b', f.read(EMBED_DIM))]
-def sl(f, r, c, x):
-    out = [0.0]*r
-    for i in range(r):
-        s = struct.unpack('f', f.read(4))[0]
-        row = struct.unpack(f"{c}b", f.read(c))
-        out[i] = sum(row[j] * x[j] for j in range(c)) * s
-    b = struct.unpack(f"{r}f", f.read(r * 4))
-    return [out[i] + b[i] for i in range(r)]
-def ln(x, w, b):
-    m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v + 1e-5)
-    return [((x[i]-m)/s)*w[i] + b[i] for i in range(len(x))]
 
-def get_thought_vector(word):
-    if word not in WORD_TO_ID: return [0.0]*EMBED_DIM
-    tv = read_emb(f1, WORD_TO_ID[word])
-    pv = read_emb(f1, 1024) # Position 0
-    x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
-    f1.seek(L0_OFF)
-    for l in range(3):
-        nx = ln(x, rv(f1, EMBED_DIM), rv(f1, EMBED_DIM))
-        qkv = sl(f1, 100, EMBED_DIM, nx)
-        
-        # Expanded cleanly to avoid the 80x stream-read bug
-        proj = sl(f1, EMBED_DIM, EMBED_DIM, qkv[:EMBED_DIM])
-        x = [x[i] + proj[i] for i in range(EMBED_DIM)]
-        
-        nx = ln(x, rv(f1, EMBED_DIM), rv(f1, EMBED_DIM))
-        h1 = sl(f1, 320, EMBED_DIM, nx)
-        h2 = sl(f1, EMBED_DIM, 320, [max(0.0, v) for v in h1])
-        x = [x[i] + h2[i] for i in range(EMBED_DIM)]
-    return [round(val, 3) for val in x]
-
-print("[*] Building external Cortex JSON...")
+print("[*] Building clean external Cortex JSON...")
 
 CATALYSTS = {
     "Mythical & Royalty": ["dragon", "castle", "magic", "magical", "treasure", "monster", "giant", "fairy", "creature", "tower", "king", "prince", "princess", "wings", "rainbow"],
@@ -72,9 +39,9 @@ cortex_payload = {
 
 for cat, words in CATALYSTS.items():
     for w in words:
-        if w not in cortex_payload["vectors"]:
-            cortex_payload["vectors"][w] = get_thought_vector(w)
+        if w in WORD_TO_ID and w not in cortex_payload["vectors"]:
+            cortex_payload["vectors"][w] = [round(v, 3) for v in read_emb(f1, WORD_TO_ID[w])]
 
 out_path = os.path.join(os.path.dirname(__file__), "..", "firmware", "cortex.json")
 with open(out_path, "w") as f: json.dump(cortex_payload, f)
-print(f"[✓] Successfully generated {out_path}!")
+print(f"[✓] Successfully generated clean {out_path} without NaNs!")

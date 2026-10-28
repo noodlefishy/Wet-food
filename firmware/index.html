@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Meow and Miaou AI</title>
   <style>
@@ -55,6 +56,7 @@
     .cortex-container { height: 120px; max-height: 120px; overflow: hidden; margin-top: 5px; }
     .cortex-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; padding: 4px; background: #000; border: 1px solid #222; border-radius: 3px; transition: border-color 0.2s, box-shadow 0.2s; }
     .cortex-node { aspect-ratio: 1; background: #111; border-radius: 1px; border: 1px solid #1a1a1a; cursor: crosshair; }
+    #node-inspector { height: 16px; line-height: 16px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; color: #39ff14; margin-top: 4px; }
 
     .top8-list { display: flex; flex-direction: column; gap: 2px; height: 100%; background: #000; border: 1px solid #222; padding: 4px 6px; border-radius: 3px; }
     .top8-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; height: 12px; cursor: crosshair; }
@@ -187,23 +189,7 @@
     let CORTEX = null;
     const tooltip = document.getElementById('hover-tooltip');
 
-    // 1. Fetch Cortex JSON on load
-    window.onload = async function() {
-      try {
-        const res = await fetch('/cortex.json');
-        CORTEX = await res.json();
-        
-        const select = document.getElementById('vibe-select');
-        for (let cat in CORTEX.catalysts) {
-          const opt = document.createElement('option');
-          opt.value = cat; opt.innerText = cat;
-          select.appendChild(opt);
-        }
-        buildGrid();
-        renderPills();
-      } catch(e) { console.log("Cortex JSON not loaded."); }
-    };
-
+    // Safe Tooltip Attachment
     function attachTooltip(el, getHtmlFunc) {
       el.addEventListener('mousemove', (e) => {
         tooltip.style.display = 'block';
@@ -214,6 +200,25 @@
       el.addEventListener('mouseleave', () => tooltip.style.display = 'none');
     }
 
+    // Safely fetch JSON on load (Building Grid synchronously first to prevent DOM missing errors)
+    window.onload = async function() {
+      buildGrid();
+      try {
+        const res = await fetch('/cortex.json');
+        CORTEX = await res.json();
+        
+        if(CORTEX && CORTEX.catalysts) {
+            const select = document.getElementById('vibe-select');
+            for (let cat in CORTEX.catalysts) {
+              const opt = document.createElement('option');
+              opt.value = cat; opt.innerText = cat;
+              select.appendChild(opt);
+            }
+            renderPills();
+        }
+      } catch(e) { console.error("Cortex JSON failed to load:", e); }
+    };
+
     function buildGrid() {
       const grid = document.getElementById('cortex-grid');
       for (let i = 0; i < 80; i++) {
@@ -223,7 +228,7 @@
         attachTooltip(node, () => {
           const val = parseFloat(node.getAttribute('data-val') || '0.00');
           const sign = val >= 0 ? '+' : '';
-          const tag = CORTEX.neurons[String(i)] || 'Residual Circuit';
+          const tag = (CORTEX && CORTEX.neurons) ? (CORTEX.neurons[String(i)] || 'Residual Circuit') : 'Residual Circuit';
           return `Neuron <span style="color:#fff;">#${i}</span> (<span style="color:${val>=0?'#39ff14':'#ff0055'};">${sign}${val.toFixed(2)}</span>)\n<span style="color:#00e5ff;">[${tag}]</span>`;
         });
         grid.appendChild(node);
@@ -251,7 +256,7 @@
     }
 
     function renderPills() {
-      if(!CORTEX) return;
+      if(!CORTEX || !CORTEX.catalysts) return;
       const cat = document.getElementById('vibe-select').value;
       const container = document.getElementById('pills-container');
       const datalist = document.getElementById('vocab-list');
@@ -273,12 +278,12 @@
     function previewVector() {
       if (engineState !== 'paused' || !currentVector || !CORTEX) return;
       const w = document.getElementById('custom-word').value.trim().toLowerCase();
-      if (!w || !CORTEX.vectors[w]) { updateTelemetry(currentVector); return; } // Reset to normal
+      if (!w || !CORTEX.vectors[w]) { updateTelemetry(currentVector); return; } 
 
       const mag = parseFloat(document.getElementById('steer-mag').value);
       const wVec = CORTEX.vectors[w];
       const preview = currentVector.map((val, i) => val + (wVec[i] * mag));
-      updateTelemetry(preview, true); // true = isPreview (cyan glow)
+      updateTelemetry(preview, true); 
     }
 
     async function doAction(act) {
@@ -333,7 +338,7 @@
       indexed.forEach(item => {
         const row = document.createElement('div');
         row.className = 'top8-row';
-        const tag = CORTEX.neurons[String(item.i)] || 'Residual';
+        const tag = (CORTEX && CORTEX.neurons) ? CORTEX.neurons[String(item.i)] || 'Residual' : 'Residual';
         const pct = Math.min(100, (item.abs / 4.0) * 100);
         const isPos = item.v >= 0;
 
@@ -346,12 +351,13 @@
     function sigmoid(x) { return 1 / (1 + Math.exp(-x * 2.5)); }
 
     function updateTelemetry(v, isPreview=false) {
-      if (!v || v.length === 0 || !CORTEX) return;
+      if (!v || v.length === 0) return;
       if (!isPreview) currentVector = v;
       let energy = 0;
 
       for (let i = 0; i < 80; i++) {
         const node = document.getElementById('node-' + i);
+        if(!node) continue;
         const val = i < v.length ? v[i] : 0;
         energy += Math.abs(val);
         const mag = Math.min(1.0, Math.abs(val) / 3.0);
@@ -365,6 +371,8 @@
       else { grid.style.borderColor = '#222'; grid.style.boxShadow = 'none'; }
 
       if (cortexViewMode === 'top8') renderTop8();
+
+      if(!CORTEX || !CORTEX.probes) return; // Safeguard if JSON failed
 
       let sA = 0, sB = 0, sL = 0, sI = 0;
       for(let i=0; i<80; i++) {
@@ -468,7 +476,7 @@
                 }
               }
               l.scrollTop = l.scrollHeight;
-            } catch (err) { }
+            } catch (err) { console.error(err); }
           }
         }
       } catch (e) {

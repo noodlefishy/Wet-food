@@ -150,15 +150,17 @@ while True:
                 c.close()
                 continue
             
-            if "GET /cortex.json" in req:
+            # --- SAFELY SERVE CORTEX JSON AS BINARY CHUNKS ---
+            elif "GET /cortex.json" in req:
                 c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
                 try:
-                    with open("cortex.json", "r") as f_json:
+                    with open("cortex.json", "rb") as f_json:
                         while True:
-                            chunk = f_json.read(512)
+                            chunk = f_json.read(1024)
                             if not chunk: break
                             c.sendall(chunk)
-                except:
+                except Exception as e:
+                    print("[MEOW] Cortex JSON Error:", e)
                     c.sendall(b"{}")
                 c.close()
                 continue
@@ -242,7 +244,7 @@ while True:
                                     
                                     elif "action=inject" in req_path:
                                         w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
-                                        if w_val in WORD_TO_ID: cur = WORD_TO_ID[w_val] # Force next token
+                                        if w_val in WORD_TO_ID: cur = WORD_TO_ID[w_val]
                                         
                                     elif "action=steer" in req_path:
                                         w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
@@ -250,6 +252,7 @@ while True:
                                         if w_val in WORD_TO_ID:
                                             s_vec = read_emb(f_w, WORD_TO_ID[w_val], 0)
                                             for i in range(EMBED_DIM): steer_vector[i] = s_vec[i] * m_val
+                                            print(f"[MEOW] Steering active: {w_val} (mag: {m_val})")
                                             
                                     elif "action=clear" in req_path:
                                         steer_vector = [0.0] * EMBED_DIM
