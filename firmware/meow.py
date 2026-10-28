@@ -1,12 +1,21 @@
-import network, socket, select, struct, math, gc, time, machine
+import network, socket, select, struct, math, gc, time, machine, random
 from array import array; from machine import Pin
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
+ROW_B = 4 + EMBED_DIM; L0_OFF = (VOCAB_SIZE * ROW_B) + (BLOCK_SIZE * ROW_B)
+
 try: import vocab; VOCAB = vocab.VOCAB
 except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w"+str(i) for i in range(1021)]
-WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}; L0_OFF = (VOCAB_SIZE*EMBED_DIM + BLOCK_SIZE*EMBED_DIM)*4
+WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
+
 def read_vec(f, c): return struct.unpack(f'{c}f', f.read(c * 4))
+
+def read_emb(f, idx, off=0):
+    f.seek(off + idx * ROW_B)
+    s = struct.unpack('f', f.read(4))[0]
+    row = struct.unpack(f'{EMBED_DIM}b', f.read(EMBED_DIM))
+    return [v * s for v in row]
 
 def unquote(s):
     res = s.replace('+', ' ')
@@ -45,6 +54,14 @@ def stream_linear(f, r, c, x):
 def layer_norm(x, w, b):
     m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v+1e-5)
     return [((x[i]-m)/s)*w[i]+b[i] for i in range(len(x))]
+
+def sample_top5(ranks):
+    r = random.random()
+    if r < 0.52: return ranks[0]
+    elif r < 0.76: return ranks[1]
+    elif r < 0.88: return ranks[2]
+    elif r < 0.95: return ranks[3]
+    return ranks[4]
 
 f_w = open("pico1 weights.model", "rb")
 kv = [{'k':[], 'v':[]} for _ in range(3)]
@@ -117,45 +134,89 @@ while True:
                 except Exception:
                     c.close(); continue
 
-                c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n"); cur = tks[-1]
+                try:
+                    c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")
+                except Exception:
+                    c.close(); continue
+                
                 t_start = time.ticks_ms()
-                for stp in range(len(tks) + 30):
+                cur = tks[0]
+                ct_ranks = [0, 0, 0, 0, 0]
+                aborted = False
+                
+                # --- PHASE 1: PREFILL (WITH USER ABORT DETECTION) ---
+                for stp in range(len(tks)):
                     led.on()
-                    tid = tks[stp] if stp < len(tks) else cur
+                    tid = tks[stp]
+                    tv = read_emb(f_w, tid, 0)
+                    pv = read_emb(f_w, min(stp, BLOCK_SIZE-1), VOCAB_SIZE * ROW_B)
+                    x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
                     
-                    f_w.seek(tid * EMBED_DIM * 4); tv = read_vec(f_w, EMBED_DIM)
-                    f_w.seek((VOCAB_SIZE * EMBED_DIM + min(stp, BLOCK_SIZE-1) * EMBED_DIM) * 4); pv = read_vec(f_w, EMBED_DIM)
-                    x = [tv[i] + pv[i] for i in range(EMBED_DIM)]; f_w.seek(L0_OFF)
+                    f_w.seek(L0_OFF)
                     for l in range(3): x = run_layer(f_w, l, x)
                     
                     try:
                         pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
                         rep = recv_all(pb, 10)
-                        if not rep: break
-                    except Exception as e:
-                        print(f"[MEOW] Wi-Fi lost: {e}"); break
+                        if not rep: aborted = True; break
+                    except Exception: 
+                        aborted = True; break
                     
                     ct_ranks = struct.unpack('5H', rep)
-                    cur = ct_ranks[0]
-                    lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
-                    v_str = f"[{x[0]:.2f},{x[1]:.2f},{x[2]:.2f},{x[3]:.2f}]"
+                    cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
                     
-                    # STREAM TELEMETRY DURING PREFILL
-                    if stp < len(tks) - 1:
-                        tok_str = VOCAB[tid]
-                        print(f" -> Prefilling ({stp+1}/{len(tks)}): '{tok_str}' ({lat}ms)")
-                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{tok_str}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str}}}\n'.encode())
-                    else:
-                        # STREAM GENERATED ANSWER TOKENS
+                    lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
+                    ranks = [VOCAB[t] for t in ct_ranks]
+                    ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
+                    v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
+                    
+                    try:
+                        c.sendall(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
+                    except Exception:
+                        print("[MEOW] Client aborted during prefill.")
+                        aborted = True
+                        led.off()
+                        break
+                    led.off()
+
+                # --- PHASE 2: GENERATION (WITH USER ABORT DETECTION) ---
+                if not aborted:
+                    for gen_stp in range(30):
+                        led.on()
                         word = VOCAB[cur]
+                        lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
+                        v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
                         ranks = [VOCAB[t] for t in ct_ranks]
                         ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
-                        print(f" -> Generated: [{word}] ({lat}ms)")
-                        c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
-                        if (is_logic and word == ".") or word in ("<eos>", "<pad>"): 
+                        
+                        try:
+                            c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n'.encode())
+                        except Exception:
+                            print("[MEOW] Client aborted during generation.")
+                            led.off()
+                            break
+                        
+                        if (is_logic and word == ".") or word in ("<eos>", "<pad>"):
                             led.off(); break
-                    led.off()
-            
+                            
+                        tid = cur
+                        tv = read_emb(f_w, tid, 0)
+                        pv = read_emb(f_w, min(len(tks) + gen_stp, BLOCK_SIZE-1), VOCAB_SIZE * ROW_B)
+                        x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
+                        
+                        f_w.seek(L0_OFF)
+                        for l in range(3): x = run_layer(f_w, l, x)
+                        
+                        try:
+                            pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
+                            rep = recv_all(pb, 10)
+                            if not rep: break
+                        except Exception: break
+                        
+                        ct_ranks = struct.unpack('5H', rep)
+                        cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
+                        led.off()
+
             elif "GET / " in req or "GET /index.html" in req:
                 c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
                 try:
@@ -164,7 +225,7 @@ while True:
                             chunk = html_f.read(1024)
                             if not chunk: break
                             c.sendall(chunk)
-                except Exception as e:
+                except Exception:
                     c.sendall(b"index.html missing")
             else: 
                 c.sendall(b"HTTP/1.1 404 Not Found\r\n\r\n")

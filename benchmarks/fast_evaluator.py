@@ -46,7 +46,7 @@ class BabyStories(nn.Module):
         return self.lm_head(self.ln_f(x))
 
 model = BabyStories().to(device)
-def load_param(f, tensor, quantized=False):
+def load_param(f, tensor, quantized=True):
     if tensor.ndim == 2 and quantized:
         rows, cols = tensor.shape
         data = np.empty((rows, cols), dtype=np.float32)
@@ -58,8 +58,8 @@ def load_param(f, tensor, quantized=False):
         tensor.data.copy_(torch.from_numpy(np.fromfile(f, dtype=np.float32, count=tensor.numel())).view_as(tensor))
 
 with open(os.path.join(project_root, "models", "local", "pico1 weights.model"), "rb") as f1:
-    load_param(f1, model.tok_emb.weight, quantized=False)
-    load_param(f1, model.pos_emb.weight, quantized=False)
+    load_param(f1, model.tok_emb.weight, quantized=True)
+    load_param(f1, model.pos_emb.weight, quantized=True)
     for i in [0, 1, 2]:
         for p in model.layers[i].parameters(): load_param(f1, p, quantized=True)
 
@@ -67,8 +67,8 @@ with open(os.path.join(project_root, "models", "local", "pico2 weights.model"), 
     for i in [3, 4, 5]:
         for p in model.layers[i].parameters(): load_param(f2, p, quantized=True)
     for p in model.ln_f.parameters(): load_param(f2, p, quantized=True)
-    load_param(f2, model.lm_head.weight, quantized=False)
-    load_param(f2, model.lm_head.bias, quantized=False)
+    load_param(f2, model.lm_head.weight, quantized=True)
+    load_param(f2, model.lm_head.bias, quantized=True)
 model.eval()
 
 with open(sys.argv[1] if len(sys.argv) > 1 else "config/stress_test.json", "r") as f:

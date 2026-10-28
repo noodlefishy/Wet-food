@@ -186,8 +186,8 @@ def dump_t(t, f, quantize=False):
         f.write(d.to(torch.float32).numpy().tobytes())
 
 with open(os.path.join(MODELS_DIR, "pico1 weights.model"), "wb") as f:
-    dump_t(raw_model.tok_emb.weight, f, quantize=False)
-    dump_t(raw_model.pos_emb.weight, f, quantize=False)
+    dump_t(raw_model.tok_emb.weight, f, quantize=True)
+    dump_t(raw_model.pos_emb.weight, f, quantize=True)
     for i in [0, 1, 2]:
         for p in raw_model.layers[i].parameters(): dump_t(p, f, quantize=True)
 
@@ -195,7 +195,7 @@ with open(os.path.join(MODELS_DIR, "pico2 weights.model"), "wb") as f:
     for i in [3, 4, 5]:
         for p in raw_model.layers[i].parameters(): dump_t(p, f, quantize=True)
     for p in raw_model.ln_f.parameters(): dump_t(p, f, quantize=True)
-    dump_t(raw_model.lm_head.weight, f, quantize=False)
-    dump_t(raw_model.lm_head.bias, f, quantize=False)
+    dump_t(raw_model.lm_head.weight, f, quantize=True)
+    dump_t(raw_model.lm_head.bias, f, quantize=True)
 
 with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: f.write(f"VOCAB = {repr(VOCAB)}\n")
