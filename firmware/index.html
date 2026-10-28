@@ -30,15 +30,14 @@
     .btn-steer { background: #39ff14; color: #000; border-color: #39ff14; }
     .btn-aura { background: #00e5ff; color: #000; border-color: #00e5ff; }
     #aura-banner { display: none; background: #001f26; border: 1px solid #00e5ff; color: #00e5ff; padding: 3px 6px; font-size: 11px; margin-bottom: 5px; justify-content: space-between; align-items: center; }
-    .word-inspector { background: #080808; border: 1px dashed #444; padding: 5px 7px; margin-top: 5px; font-size: 11px; line-height: 1.35; }
-    .wi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+    .word-inspector { background: #080808; border: 1px dashed #444; padding: 6px 8px; margin-top: 5px; font-size: 11px; line-height: 1.4; }
     .side-col { flex: 0 0 310px; width: 310px; background: #0d0d0d; border: 1px solid #333; padding: 8px; border-radius: 3px; font-size: 11px; color: #00e5ff; overflow: hidden; }
     .badge { color: #ff66cc; font-weight: bold; margin: 6px 0 2px 0; font-size: 11px; }
     .badge:first-child { margin-top: 0; }
     .metric { background: #141414; border-left: 3px solid #ff66cc; padding: 4px 6px; margin: 3px 0; }
     #m_stat { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; vertical-align: bottom; }
     #m_prefill { height: 26px; max-height: 26px; overflow-y: auto; }
-    #m_ranks { height: 80px; max-height: 80px; overflow: hidden; line-height: 1.4; }
+    #m_ranks { height: 75px; max-height: 75px; overflow: hidden; line-height: 1.4; }
     .chip { display: inline-block; padding: 1px 3px; margin: 1px; background: #111; border: 1px solid #333; color: #555; font-size: 10px; }
     .chip.active { border-color: #39ff14; color: #39ff14; background: #002200; }
     .chip.done { border-color: #ff66cc; color: #ff66cc; }
@@ -49,16 +48,15 @@
     .scanner-glow { position: absolute; width: 35px; height: 100%; background: #39ff14; animation: scan 1.3s ease-in-out infinite alternate; }
     @keyframes scan { from { left: 0%; } to { left: calc(100% - 35px); } }
     
-    .cortex-container { height: 105px; max-height: 105px; overflow: hidden; margin-top: 3px; }
+    .cortex-container { height: 115px; max-height: 115px; overflow: hidden; margin-top: 3px; }
     .cortex-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; padding: 3px; background: #000; border: 1px solid #222; height: 100%; }
-    .cortex-node { aspect-ratio: 1; background: #111; border: 1px solid #1a1a1a; cursor: crosshair; }
-    .cortex-node.synapse-pos { outline: 2px solid #00e5ff; outline-offset: -1px; box-shadow: 0 0 6px #00e5ff; z-index: 5; }
-    .cortex-node.synapse-neg { outline: 2px solid #ff0055; outline-offset: -1px; box-shadow: 0 0 5px #ff0055; z-index: 4; }
+    .cortex-node { aspect-ratio: 1; background: #111; border: 1px solid #1a1a1a; cursor: crosshair; transition: background-color 0.1s; }
     
-    .top8-list { display: flex; flex-direction: column; gap: 2px; height: 105px; background: #000; border: 1px solid #222; padding: 3px 5px; }
-    .top8-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; height: 11px; }
+    .top8-list { display: flex; flex-direction: column; gap: 2px; height: 115px; background: #000; border: 1px solid #222; padding: 4px 6px; }
+    .top8-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; height: 12px; }
     .top8-bar-wrap { flex: 1; height: 4px; background: #222; margin: 0 5px; }
     .toggle-btn { background: #111; color: #ff66cc; border: 1px solid #ff66cc; font-size: 9px; padding: 1px 5px; cursor: pointer; font-family: monospace; }
+    
     .radar-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; margin: 2px 0; }
     .radar-track { flex: 1; height: 5px; background: #222; margin: 0 5px; overflow: hidden; border: 1px solid #333; }
     .radar-fill { height: 100%; transition: width 0.2s ease-out; }
@@ -89,10 +87,10 @@
         <button class="btn btn-stop" id="btn-stop" onclick="cmd('stop')" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
       </div>
-      <div class="badge">[ MIND SURGERY / STEERING ]</div>
+      <div class="badge">[ MIND SURGERY / LOGIT BIASING ]</div>
       <div class="surgery-panel" id="surgery-panel">
         <div id="toast-msg"></div>
-        <div id="aura-banner"><span id="aura-text">[AURA: NONE]</span><button class="action-btn" onclick="clearAura()" style="padding:1px 5px; font-size:9px;">[X]</button></div>
+        <div id="aura-banner"><span id="aura-text">[BIAS: NONE]</span><button class="action-btn" onclick="clearAura()" style="padding:1px 5px; font-size:9px;">[X]</button></div>
         <div class="catalyst-bar">
           <span style="color:#aaa;">Vibe:</span><select id="vibe-select" onchange="renderPills()"></select>
           <span style="color:#aaa;">Sparks:</span><div id="pills-container" style="display:flex; gap:3px;"></div>
@@ -103,23 +101,26 @@
           <span style="color:#aaa;">Word:</span><input type="text" id="custom-word" list="vocab-list" placeholder="Word..." style="width:100px;" oninput="onWordInput()">
           <datalist id="vocab-list"></datalist>
           <button class="action-btn" onclick="doAction('inject')">Force Word</button><span style="color:#444;">|</span>
-          <button class="action-btn btn-steer" onclick="doAction('steer')">Steer</button>
-          <button class="action-btn btn-aura" onclick="applyAura()">Apply Aura (Sentence)</button>
-          <span style="color:#aaa;">Mag:</span><input type="range" id="steer-mag" min="-3" max="3" step="0.25" value="1.5" oninput="updateMagLabel(); previewVector();" style="width:55px;">
-          <span id="mag-val" style="width:30px; color:#39ff14; font-size:10px;">+1.5x</span>
+          <button class="action-btn btn-steer" onclick="doAction('steer')">Bias Now</button>
+          <button class="action-btn btn-aura" onclick="applyAura()">Apply Persistent Bias</button>
+          <span style="color:#aaa;">Mag:</span><input type="range" id="steer-mag" min="-5" max="15" step="0.5" value="4.0" oninput="updateMagLabel()" style="width:55px;">
+          <span id="mag-val" style="width:34px; color:#39ff14; font-size:10px;">+4.0</span>
         </div>
+        
         <div class="word-inspector" id="word-inspector">
-          <div class="wi-header"><span style="font-weight:bold; color:#ff66cc;" id="wi-title">INSPECTOR: NONE</span><span style="color:#00e5ff; font-size:10px;" id="wi-tag">[Select/type word]</span></div>
-          <div style="display:flex; flex-direction:column; gap:2px; font-size:10px; color:#888;">
-            <div>Active Synapses: <b style="color:#00e5ff;" id="wi-neurons">---</b></div>
-            <div>Inhibited Synapses: <b style="color:#ff0055;" id="wi-inhibited">---</b> (Norm: <span style="color:#fff;" id="wi-norm">0.00</span>)</div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+            <span style="font-weight:bold; color:#ff66cc;" id="wi-title">INSPECTOR: NONE</span>
+            <span style="color:#00e5ff; font-size:10px;" id="wi-tag">[Select/type word]</span>
           </div>
-          <div style="margin-top:3px; padding-top:3px; border-top:1px solid #1a1a1a; font-size:10px; color:#ffaa00;">
-            <b>Force Word:</b> Clamps next token. | <b>Apply Aura:</b> Conditions entire sentence generation on this concept.
+          <div>Sparks: <b style="color:#39ff14;" id="wi-sparks">---</b></div>
+          <div style="color:#aaa; font-size:10px; margin-top:2px;" id="wi-effect">Select any word to preview its contextual associations.</div>
+          <div style="margin-top:4px; padding-top:4px; border-top:1px solid #1a1a1a; font-size:10px; color:#ffaa00;">
+            <b>Force Word:</b> Ignores grammar, clamps next token. | <b>Bias Logit:</b> Grammatically safe score boost to increase word frequency.
           </div>
         </div>
       </div>
     </div>
+    
     <div class="side-col">
       <div class="badge">[ PIPELINE TELEMETRY ]</div>
       <div class="metric">
@@ -127,6 +128,10 @@
         <b>Latency:</b> <span id="m_lat">0</span> ms | <b>Speed:</b> <span id="tps-meter" style="color:#fff;">0.00</span> TPS
         <div id="scanner" class="scanner-line"><div class="scanner-glow"></div></div>
       </div>
+      
+      <div class="badge">[ KV PREFILL PROGRESS ]</div>
+      <div class="metric" id="m_prefill">Waiting for prompt...</div>
+
       <div class="badge">[ FUN FACTS ]</div>
       <div class="metric" style="line-height:1.45; font-size:10px;">
         <span style="color:#00e5ff;">Meow breed:</span> 6-Layer Distributed Transformer<br>
@@ -134,8 +139,10 @@
         <span style="color:#00e5ff;">Meow brain:</span> 1,024 Words (80-D Latent Stream)<br>
         <span style="color:#00e5ff;">Miaou paws:</span> 240 MHz (Dual Cortex-M0+)
       </div>
+      
       <div class="badge">[ CANDIDATE RANKINGS (TOP 5) ]</div>
       <div class="metric" id="m_ranks">1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---</div>
+      
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span class="badge">[ THEME RADAR ]</span>
         <button id="probe-toggle" class="toggle-btn" onclick="toggleProbeMode()">Mode: Theme</button>
@@ -154,12 +161,15 @@
           <div style="height:5px; background:#222; display:flex; margin:2px 0;"><div id="bar-cat-l" style="width:50%; background:#00e5ff;"></div><div id="bar-cat-r" style="width:50%; background:#ffaa00;"></div></div>
         </div>
       </div>
+      
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span class="badge">[ 80-D SYNAPTIC CORTEX ]</span>
         <button id="view-toggle" class="toggle-btn" onclick="toggleCortexView()">View: Top 8</button>
       </div>
       <div class="metric">
-        <div style="display:flex; justify-content:space-between; font-size:10px;"><span style="color:#aaa;">Vector Energy:</span><span id="v_energy" style="color:#00e5ff;">0.00</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:2px;">
+          <span style="color:#aaa;">Vector Energy:</span><span id="v_energy" style="color:#00e5ff;">0.00</span>
+        </div>
         <div class="cortex-container">
           <div id="cortex-grid" class="cortex-grid"></div>
           <div id="top8-view" class="top8-list" style="display:none;"></div>
@@ -167,10 +177,50 @@
       </div>
     </div>
   </div>
+  
   <script>
-    let abortController=null, cortexViewMode='grid', probeMode='radar', currentVector=null, engineState='idle', isStepping=false, CORTEX=null, latchedAura={word:'', mag:1.5};
+    let abortController=null, cortexViewMode='grid', probeMode='radar', currentVector=null, engineState='idle', isStepping=false, CORTEX=null, latchedAura={word:'', mag:4.0};
     const tooltip = document.getElementById('hover-tooltip');
     
+    const SPARKS = {
+      "dragon": ["monster", "castle", "wings", "giant", "magic", "fire"],
+      "castle": ["tower", "king", "prince", "princess", "gate", "stone"],
+      "magic": ["fairy", "wand", "sparkly", "secret", "dream", "wings"],
+      "monster": ["scary", "dragon", "giant", "dark", "teeth", "wild"],
+      "giant": ["huge", "big", "tall", "tree", "mountain", "loud"],
+      "king": ["prince", "castle", "crown", "queen", "palace", "gold"],
+      "wolf": ["forest", "wild", "bite", "night", "woods", "teeth"],
+      "fox": ["clever", "quick", "woods", "tail", "red", "bush"],
+      "bear": ["huge", "honey", "woods", "claws", "sleep", "cave"],
+      "lion": ["brave", "strong", "roar", "king", "wild", "paws"],
+      "rabbit": ["hop", "bunny", "ears", "grass", "quick", "soft"],
+      "bird": ["wings", "fly", "sky", "tree", "sing", "flew"],
+      "honey": ["sweet", "bee", "bear", "yummy", "gold", "warm"],
+      "cookies": ["sweet", "bake", "oven", "snack", "eat", "yummy"],
+      "cake": ["birthday", "sweet", "party", "candles", "yummy", "cream"],
+      "soft": ["fluffy", "pillow", "bed", "warm", "purr", "blanket"],
+      "fluffy": ["fur", "soft", "kitten", "cloud", "warm", "paws"],
+      "warm": ["sun", "bed", "soft", "blanket", "cozy", "fire"],
+      "garden": ["flowers", "green", "trees", "grass", "plants", "park"],
+      "kitchen": ["food", "cook", "eat", "milk", "bowl", "dinner"],
+      "park": ["play", "bench", "walk", "trees", "friends", "grass"],
+      "forest": ["trees", "woods", "dark", "deep", "path", "wild"],
+      "woods": ["trees", "branches", "leaves", "path", "quiet", "forest"],
+      "river": ["water", "swim", "fish", "flow", "bridge", "boat"],
+      "mud": ["dirty", "puddle", "wet", "messy", "splash", "rain"],
+      "messy": ["trouble", "dirt", "mud", "broken", "silly", "spill"],
+      "silly": ["funny", "laugh", "clown", "giggle", "play", "tricks"],
+      "broke": ["accident", "fix", "crack", "pieces", "sad", "fell"],
+      "bite": ["sharp", "teeth", "crunch", "chew", "eat", "snap"],
+      "trouble": ["danger", "scared", "hide", "naughty", "run", "mess"],
+      "jump": ["hop", "high", "leap", "bounce", "legs", "play"],
+      "climb": ["high", "tree", "ladder", "up", "mountain", "top"],
+      "flew": ["wings", "sky", "bird", "high", "wind", "clouds"],
+      "fly": ["wings", "air", "sky", "feather", "glide", "soar"],
+      "run": ["fast", "chase", "legs", "race", "hurry", "dash"],
+      "chased": ["ran", "catch", "follow", "fast", "behind", "hunt"]
+    };
+
     const Stopwatch = {
       startTime:0, elapsed:0, interval:null, running:false,
       start() { this.reset(); this.running=true; this.startTime=performance.now(); this.interval=setInterval(()=>this.tick(), 100); },
@@ -206,7 +256,7 @@
         const node = document.createElement('div'); node.className = 'cortex-node'; node.id = 'node-' + i;
         attachTooltip(node, () => {
           const val = parseFloat(node.getAttribute('data-val') || '0.00'), sign = val>=0?'+':'';
-          const rawTag = (CORTEX && CORTEX.neurons && CORTEX.neurons[String(i)]) || 'Language Subsystem | General syntax';
+          const rawTag = (CORTEX && CORTEX.neurons && CORTEX.neurons[String(i)]) || 'Language | General syntax';
           const parts = rawTag.split(' | ');
           const domain = parts[0], desc = parts[1] || 'Syntax & structure';
           return `<div style="font-weight:bold; color:#fff;">Neuron #${i} <span style="color:${val>=0?'#39ff14':'#ff0055'};">(${sign}${val.toFixed(2)})</span></div>` +
@@ -226,6 +276,7 @@
         }
       } catch(e) {}
     };
+
     function updateControls() {
       document.getElementById('btn-exec').style.display = (engineState==='idle')?'block':'none';
       document.getElementById('btn-stop').style.display = (engineState!=='idle')?'block':'none';
@@ -233,6 +284,7 @@
       document.getElementById('btn-resume').style.display = (engineState==='paused')?'block':'none';
       document.getElementById('btn-step').style.display = (engineState==='paused')?'block':'none';
     }
+
     async function cmd(a) {
       if (a==='pause') { engineState='paused'; Stopwatch.pause(); setStat("[PAUSED]", "#ffaa00"); }
       if (a==='resume') { engineState='running'; Stopwatch.resume(); setStat("Generating...", "#ff66cc"); updateTelemetry(currentVector); }
@@ -240,8 +292,13 @@
       if (a==='stop') { engineState='idle'; Stopwatch.stop(); if(abortController) abortController.abort(); }
       updateControls(); await fetch('/cmd?action=' + a);
     }
-    function setStat(t, c) { const s=document.getElementById('m_stat'); s.innerText=t; s.style.color=c; }
-    function updateMagLabel() { const m=parseFloat(document.getElementById('steer-mag').value); document.getElementById('mag-val').innerText=(m>=0?'+':'')+m.toFixed(2)+'x'; }
+    function setStat(t, c) { const s=document.getElementById('m_stat'); if(s){ s.innerText=t; s.style.color=c; } }
+    
+    function updateMagLabel() { 
+      const m = parseFloat(document.getElementById('steer-mag').value); 
+      document.getElementById('mag-val').innerText=(m>=0?'+':'')+m.toFixed(1); 
+    }
+    
     function renderPills() {
       if (!CORTEX || !CORTEX.catalysts) return;
       const cat=document.getElementById('vibe-select').value, cont=document.getElementById('pills-container'), list=document.getElementById('vocab-list');
@@ -254,75 +311,68 @@
         cont.appendChild(b);
       });
     }
-    function onWordInput() { inspectWord(); previewVector(); }
-    function inspectWord() {
-      const w=document.getElementById('custom-word').value.trim().toLowerCase();
-      for(let i=0; i<80; i++) { const el=document.getElementById('node-'+i); if(el) el.classList.remove('synapse-pos','synapse-neg'); }
-      if (!w || !CORTEX || !CORTEX.vectors || !CORTEX.vectors[w]) {
-        document.getElementById('wi-title').innerText="INSPECTOR: NONE";
-        document.getElementById('wi-tag').innerText="[Select/type word]";
-        document.getElementById('wi-neurons').innerText="---";
-        document.getElementById('wi-inhibited').innerText="---";
-        document.getElementById('wi-norm').innerText="0.00";
+
+    function onWordInput() {
+      const w = document.getElementById('custom-word').value.trim().toLowerCase();
+      
+      const titleEl = document.getElementById('wi-title');
+      const tagEl = document.getElementById('wi-tag');
+      const sparksEl = document.getElementById('wi-sparks');
+      const effectEl = document.getElementById('wi-effect');
+
+      if (!w) {
+        titleEl.innerText = "INSPECTOR: NONE";
+        tagEl.innerText = "[Select/type word]";
+        sparksEl.innerText = "---";
+        effectEl.innerText = "Select any word to preview its contextual associations.";
         return;
       }
-      let cat="Vocabulary";
-      for (let c in CORTEX.catalysts) { if (CORTEX.catalysts[c].includes(w)) { cat=c; break; } }
-      document.getElementById('wi-title').innerText=`WORD: ${w.toUpperCase()}`;
-      document.getElementById('wi-tag').innerText=`[${cat}]`;
-      const vec = CORTEX.vectors[w], norm = Math.sqrt(vec.reduce((s,v)=>s+v*v,0));
-      document.getElementById('wi-norm').innerText = norm.toFixed(2);
-      const idx = vec.map((v,i)=>({i,v}));
-      const topPos = [...idx].sort((a,b)=>b.v-a.v).slice(0,3);
-      const topNeg = [...idx].sort((a,b)=>a.v-b.v).slice(0,2);
-      topPos.forEach(it=>{ const el=document.getElementById('node-'+it.i); if(el) el.classList.add('synapse-pos'); });
-      topNeg.forEach(it=>{ const el=document.getElementById('node-'+it.i); if(el) el.classList.add('synapse-neg'); });
-      document.getElementById('wi-neurons').innerHTML = topPos.map(it=>{
-        const tag = (CORTEX.neurons && CORTEX.neurons[String(it.i)]) || 'Circuit';
-        return `<span style="color:#00e5ff;">#${it.i} ${tag.split(' ')[0]}</span> (+${it.v.toFixed(1)})`;
-      }).join(', ');
-      document.getElementById('wi-inhibited').innerHTML = topNeg.map(it=>{
-        const tag = (CORTEX.neurons && CORTEX.neurons[String(it.i)]) || 'Circuit';
-        return `<span style="color:#ff0055;">#${it.i} ${tag.split(' ')[0]}</span> (${it.v.toFixed(1)})`;
-      }).join(', ');
+
+      let cat = "Vocabulary";
+      if (CORTEX && CORTEX.catalysts) {
+        for (let c in CORTEX.catalysts) { if (CORTEX.catalysts[c].includes(w)) { cat=c; break; } }
+      }
+
+      titleEl.innerText = `WORD: ${w.toUpperCase()}`;
+      tagEl.innerText = `[${cat}]`;
+      
+      const sparks = SPARKS[w] || ["story", "character", "scene", "event"];
+      sparksEl.innerText = sparks.join(', ');
+      effectEl.innerText = `Biases narrative flow toward ${sparks.slice(0, 3).join(', ')} themes.`;
     }
-    function previewVector() {
-      if (engineState!=='paused' || !currentVector || !CORTEX || !CORTEX.vectors) return;
-      const w=document.getElementById('custom-word').value.trim().toLowerCase();
-      if (!w || !CORTEX.vectors[w]) { updateTelemetry(currentVector); return; }
-      const mag=parseFloat(document.getElementById('steer-mag').value), wVec=CORTEX.vectors[w];
-      const norm=Math.sqrt(wVec.reduce((s,v)=>s+v*v,0))||1.0;
-      updateTelemetry(currentVector.map((v,i)=>v+((wVec[i]/norm)*mag)), true);
-    }
+
     async function applyAura() {
       const w=document.getElementById('custom-word').value.trim().toLowerCase(); if(!w) return;
       const mag=parseFloat(document.getElementById('steer-mag').value);
       latchedAura={word:w, mag};
       document.getElementById('aura-banner').style.display='flex';
-      document.getElementById('aura-text').innerHTML=`[AURA: <b style="color:#fff;">${w.toUpperCase()}</b> (${mag>=0?'+':''}${mag}x) ACTIVE]`;
+      document.getElementById('aura-text').innerHTML=`[BIAS: <b style="color:#fff;">${w.toUpperCase()}</b> (+${mag}) ACTIVE]`;
       await fetch('/cmd?action=steer&word='+encodeURIComponent(w)+'&mag='+mag);
-      flashToast(`AURA: ${w.toUpperCase()}`, '#00e5ff');
+      flashToast(`BIAS LOCKED: ${w.toUpperCase()}`, '#00e5ff');
     }
+
     async function clearAura() {
       latchedAura.word=''; document.getElementById('aura-banner').style.display='none';
-      await fetch('/cmd?action=clear'); flashToast("AURA CLEARED", '#aaa');
+      await fetch('/cmd?action=clear'); flashToast("BIAS CLEARED", '#aaa');
     }
+
     async function doAction(act) {
-      if (act==='clear') { document.getElementById('custom-word').value=''; inspectWord(); updateTelemetry(currentVector); await fetch('/cmd?action=clear'); return; }
+      if (act==='clear') { document.getElementById('custom-word').value=''; onWordInput(); await fetch('/cmd?action=clear'); return; }
       const w=document.getElementById('custom-word').value.trim().toLowerCase(); if(!w) return;
       if (act==='inject') {
         flashToast(`FORCED: ${w.toUpperCase()}`, '#ffaa00');
         if (engineState!=='idle') await fetch('/cmd?action=inject&word='+encodeURIComponent(w));
       } else if (act==='steer') {
         const mag=document.getElementById('steer-mag').value;
-        flashToast(`STEERED: ${w.toUpperCase()} (${mag}x)`, '#39ff14');
+        flashToast(`BIASED: ${w.toUpperCase()} (+${mag})`, '#39ff14');
         if (engineState!=='idle') await fetch('/cmd?action=steer&word='+encodeURIComponent(w)+'&mag='+mag);
       }
     }
+
     function flashToast(msg, col) {
-      const t=document.getElementById('toast-msg'); t.innerText='>> '+msg; t.style.color=col; t.style.opacity=1;
-      setTimeout(()=>t.style.opacity=0, 1500);
+      const t=document.getElementById('toast-msg'); if(t){ t.innerText='>> '+msg; t.style.color=col; t.style.opacity=1; setTimeout(()=>t.style.opacity=0, 1500); }
     }
+
     function toggleProbeMode() {
       probeMode=(probeMode==='radar')?'qa':'radar';
       document.getElementById('probe-toggle').innerText=`Mode: ${probeMode==='radar'?'Theme':'QA'}`;
@@ -330,24 +380,39 @@
       document.getElementById('probes-qa').style.display=(probeMode==='qa')?'block':'none';
       if (currentVector) updateTelemetry(currentVector);
     }
+
     function toggleCortexView() {
-      const g=document.getElementById('cortex-grid'), t=document.getElementById('top8-view'), b=document.getElementById('view-toggle');
-      if (cortexViewMode==='grid') { cortexViewMode='top8'; g.style.display='none'; t.style.display='flex'; b.innerText='View: Grid'; renderTop8(); }
-      else { cortexViewMode='grid'; g.style.display='grid'; t.style.display='none'; b.innerText='View: Top 8'; }
+      const g = document.getElementById('cortex-grid');
+      const t = document.getElementById('top8-view');
+      const b = document.getElementById('view-toggle');
+
+      if (cortexViewMode === 'grid') {
+        cortexViewMode = 'top8';
+        g.style.display = 'none'; t.style.display = 'flex';
+        b.innerText = 'View: Grid';
+        renderTop8();
+      } else {
+        cortexViewMode = 'grid';
+        g.style.display = 'grid'; t.style.display = 'none';
+        b.innerText = 'View: Top 8';
+      }
     }
+
     function renderTop8() {
       if (cortexViewMode!=='top8' || !currentVector || !CORTEX) return;
       const top8=document.getElementById('top8-view'); top8.innerHTML='';
       [...currentVector.map((v,i)=>({i,v,abs:Math.abs(v)}))].sort((a,b)=>b.abs-a.abs).slice(0,8).forEach(it=>{
         const row=document.createElement('div'); row.className='top8-row';
-        const tag=((CORTEX.neurons&&CORTEX.neurons[String(it.i)])||'Synapse').split(' ')[0];
+        const tag=((CORTEX.neurons&&CORTEX.neurons[String(it.i)])||'Synapse').split(' | ')[0];
         const pct=Math.min(100,(it.abs/4)*100), isPos=it.v>=0;
         row.innerHTML=`<span style="width:90px; overflow:hidden;">#${it.i} ${tag}</span><div class="top8-bar-wrap"><div style="height:100%; width:${pct}%; background:${isPos?'#39ff14':'#ff0055'};"></div></div><span>${isPos?'+':''}${it.v.toFixed(2)}</span>`;
         top8.appendChild(row);
       });
     }
+
     function dot(a,b) { let s=0; for(let i=0;i<80;i++) s+=a[i]*b[i]; return s; }
     function sigmoid(x) { return 1/(1+Math.exp(-x*2.5)); }
+
     function updateTelemetry(v, isPrev=false) {
       if (!v || v.length===0) return;
       if (!isPrev) currentVector=v;
@@ -359,8 +424,11 @@
         node.style.backgroundColor=val>=0?`rgba(57,255,20,${0.12+0.88*mag})`:`rgba(255,0,85,${0.12+0.88*mag})`;
         node.setAttribute('data-val', val.toFixed(2));
       }
-      document.getElementById('v_energy').innerText=(energy/80).toFixed(2);
+      const eEl = document.getElementById('v_energy');
+      if (eEl) eEl.innerText=(energy/80).toFixed(2);
+      
       if (cortexViewMode==='top8') renderTop8();
+
       if (probeMode==='radar' && CORTEX && CORTEX.radar) {
         const sM=dot(v,CORTEX.radar.myth), sC=dot(v,CORTEX.radar.cozy), sA=dot(v,CORTEX.radar.action), sN=dot(v,CORTEX.radar.nature);
         const mx=Math.max(sM,sC,sA,sN), eM=Math.exp((sM-mx)/3.5), eC=Math.exp((sC-mx)/3.5), eA=Math.exp((sA-mx)/3.5), eN=Math.exp((sN-mx)/3.5);
@@ -376,18 +444,41 @@
         document.getElementById('bar-cat-l').style.width=(pC*100)+'%'; document.getElementById('bar-cat-r').style.width=((1-pC)*100)+'%';
       }
     }
-    function setRadar(id, pct) { document.getElementById(id).style.width=pct+'%'; document.getElementById(id+'-pct').innerText=pct+'%'; }
+
+    function setRadar(id, pct) {
+      const el = document.getElementById(id), pEl = document.getElementById(id+'-pct');
+      if (el) el.style.width=pct+'%';
+      if (pEl) pEl.innerText=pct+'%';
+    }
+
     async function gen() {
-      const p=document.getElementById('prompt').value; if(!p.trim()) return;
-      const l=document.getElementById('log');
+      const pInput = document.getElementById('prompt');
+      if (!pInput || !pInput.value.trim()) return;
+      const p = pInput.value;
+      
+      const l = document.getElementById('log');
+      const pre = document.getElementById('m_prefill');
+      
       engineState='running'; isStepping=false; updateControls();
-      setStat("Syncing Miaou...", "#ff66cc"); document.getElementById('scanner').className='scanner-line active';
+      setStat("Syncing Miaou...", "#ff66cc");
+      const scan = document.getElementById('scanner');
+      if (scan) scan.className='scanner-line active';
+      
       abortController=new AbortController(); Stopwatch.start();
-      let toks=0;
-      l.innerHTML += `\n<br><span style="color:#ff66cc;">> </span>${latchedAura.word?`<span style="color:#00e5ff;">[Aura:${latchedAura.word.toUpperCase()}]</span> `:''}<span id="stream-p" style="color:#ff66cc;"></span><span id="stream-a" style="color:#39ff14;"></span><span class="cursor" id="cursor"></span>`;
-      l.scrollTop=l.scrollHeight;
+      let toks=0, words=p.trim().split(/\s+/);
+      
+      if (pre) {
+        pre.innerHTML = words.map((t,i)=>`<span class="chip" id="chip-${i}">${t}</span>`).join('');
+      }
+      
+      if (l) {
+        l.innerHTML += `\n<br><span style="color:#ff66cc;">> </span>${latchedAura.word?`<span style="color:#00e5ff;">[Bias:${latchedAura.word.toUpperCase()}]</span> `:''}<span id="stream-p" style="color:#ff66cc;"></span><span id="stream-a" style="color:#39ff14;"></span><span class="cursor" id="cursor"></span>`;
+        l.scrollTop=l.scrollHeight;
+      }
+      
       let url='/gen?p='+encodeURIComponent(p);
-      if (latchedAura.word) url+='&sw='+encodeURIComponent(latchedAura.word)+'&sm='+latchedAura.mag;
+      if (latchedAura.word) url+='&bw='+encodeURIComponent(latchedAura.word)+'&bm='+latchedAura.mag;
+
       try {
         const res=await fetch(url, {signal:abortController.signal});
         const reader=res.body.getReader(), decoder=new TextDecoder();
@@ -399,14 +490,22 @@
             if(!line.trim()) continue;
             try {
               const data=JSON.parse(line); toks++;
-              document.getElementById('tps-meter').innerText=(toks/Math.max(0.1, Stopwatch.getMs()/1000)).toFixed(2);
-              document.getElementById('m_lat').innerText=data.ms;
+              const tpsEl = document.getElementById('tps-meter');
+              if (tpsEl) tpsEl.innerText=(toks/Math.max(0.1, Stopwatch.getMs()/1000)).toFixed(2);
+              const latEl = document.getElementById('m_lat');
+              if (latEl) latEl.innerText=data.ms;
+              
               if (data.v && data.v.length>=4) updateTelemetry(data.v);
+              
               if (data.ranks) {
-                document.getElementById('m_ranks').innerHTML=data.ranks.map((r,i)=>`${i+1}. <span style="color:${i===0?'#39ff14':'#aaa'}; font-weight:${i===0?'bold':'normal'};">${r}</span>`).join('<br>');
+                const rEl = document.getElementById('m_ranks');
+                if (rEl) rEl.innerHTML=data.ranks.map((r,i)=>`${i+1}. <span style="color:${i===0?'#39ff14':'#aaa'}; font-weight:${i===0?'bold':'normal'};">${r}</span>`).join('<br>');
               }
+              
               if (data.stage==='prefill') {
                 if(engineState!=='paused') setStat(`Prefill ${data.cur}/${data.tot}`, "#00e5ff");
+                const c=document.getElementById(`chip-${data.cur-1}`); if(c) c.className="chip active";
+                const pr=document.getElementById(`chip-${data.cur-2}`); if(pr) pr.className="chip done";
                 const sp=document.getElementById('stream-p');
                 if (sp) sp.innerHTML += (data.tok==='.'||data.tok==='?'||data.tok===':')?data.tok:(' '+data.tok);
               } else if (data.stage==='gen') {
@@ -419,15 +518,21 @@
                   isStepping=false; engineState='paused'; Stopwatch.pause(); updateControls(); setStat(`[STEP: "${data.w}"]`, "#00e5ff");
                 } else if (engineState==='running') setStat("Generating...", "#ff66cc");
               }
-              l.scrollTop=l.scrollHeight;
+              if (l) l.scrollTop=l.scrollHeight;
             } catch(e){}
           }
         }
-      } catch(e) { if(e.name==='AbortError') l.innerHTML+=' <span style="color:#ff0055;">[STOPPED]</span>'; }
+      } catch(e) { 
+        if(e.name==='AbortError' && l) l.innerHTML+=' <span style="color:#ff0055;">[STOPPED]</span>'; 
+      }
+      
       engineState='idle'; isStepping=false; updateControls(); Stopwatch.stop();
-      document.getElementById('scanner').className='scanner-line'; document.getElementById('cursor')?.remove();
-      document.getElementById('stream-p')?.removeAttribute('id'); document.getElementById('stream-a')?.removeAttribute('id');
-      setStat("Idle / Ready", "#00e5ff"); l.innerHTML+='<br><span style="color:#666;">[Ready]</span><br>'; l.scrollTop=l.scrollHeight;
+      if (scan) scan.className='scanner-line';
+      document.getElementById('cursor')?.remove();
+      document.getElementById('stream-p')?.removeAttribute('id');
+      document.getElementById('stream-a')?.removeAttribute('id');
+      setStat("Idle / Ready", "#00e5ff");
+      if (l) { l.innerHTML+='<br><span style="color:#666;">[Ready]</span><br>'; l.scrollTop=l.scrollHeight; }
     }
   </script>
 </body>

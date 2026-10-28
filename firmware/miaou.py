@@ -77,7 +77,6 @@ if is_home_wifi:
 else:
     meow_ip = '192.168.4.1'
 
-# Connect to Meow's AI worker port
 c = socket.socket()
 connected = False
 while not connected:
@@ -118,11 +117,15 @@ def run_layer(f, idx, x):
 
 while True:
     try:
-        data = recv_all(c, EMBED_DIM * 4)
+        # Receive 80-D vector + 2 bias floats (Target ID and Magnitude)
+        data = recv_all(c, (EMBED_DIM + 2) * 4)
         if not data: break
         
         led.on()
-        x = list(struct.unpack(f'{EMBED_DIM}f', data))
+        unpacked = list(struct.unpack(f'{EMBED_DIM+2}f', data))
+        x = unpacked[:EMBED_DIM]
+        bias_id = int(unpacked[EMBED_DIM])
+        bias_mag = unpacked[EMBED_DIM+1]
         
         # Reset signal from Meow
         if x[0] == -999.0:
@@ -136,7 +139,14 @@ while True:
         for l in range(3): x = run_layer(f_w, l, x)
         nx = layer_norm(x, read_vec(f_w, EMBED_DIM), read_vec(f_w, EMBED_DIM))
         lg = stream_linear(f_w, VOCAB_SIZE, EMBED_DIM, nx)
-        lg[0] = lg[1] = -1e9  # Mask <unk> and <pad>
+        
+        # Mask control tokens
+        lg[0] = lg[1] = -1e9  
+        
+        # ===== TRUE LOGIT BIASING =====
+        if 0 <= bias_id < VOCAB_SIZE:
+            lg[bias_id] += bias_mag
+        # ==============================
         
         # Extract top 5 candidates
         tops = [2]*5; tvs = [-1e9]*5

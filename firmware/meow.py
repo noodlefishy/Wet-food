@@ -126,6 +126,10 @@ beacon_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 pb = None; socks = [web_sock, ai_sock]
 last_beacon = 0
 
+# Store persistent specific logit bias
+latched_bias_id = -1
+latched_bias_mag = 0.0
+
 while True:
     if pb is None and time.time() - last_beacon >= 2:
         try: beacon_sock.sendto(b"MEOW_BEACON", ('255.255.255.255', 5001))
@@ -144,13 +148,27 @@ while True:
             c, _ = web_sock.accept()
             c.settimeout(5.0); req = c.recv(1024).decode('utf-8', 'ignore')
             
-            # --- HANDLE DIRECTOR COMMANDS ---
             if "GET /cmd?action=" in req:
+                req_path = req.split(" ")[1] if len(req.split(" ")) > 1 else ""
+                if "action=steer" in req_path:
+                    try:
+                        w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
+                        m_val = float(req_path.split("mag=")[1].split("&")[0])
+                        if w_val in WORD_TO_ID:
+                            latched_bias_id = WORD_TO_ID[w_val]
+                            latched_bias_mag = m_val
+                            print(f"[MEOW] Logit Bias Latched: '{w_val}' (+{m_val})")
+                    except Exception as e:
+                        print("[MEOW] Bias Cmd Error:", e)
+                elif "action=clear" in req_path:
+                    latched_bias_id = -1
+                    latched_bias_mag = 0.0
+                    print("[MEOW] Bias Cleared.")
+
                 c.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nOK")
                 c.close()
                 continue
             
-            # --- SAFELY SERVE CORTEX JSON AS BINARY CHUNKS ---
             elif "GET /cortex.json" in req:
                 c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
                 try:
@@ -166,9 +184,24 @@ while True:
                 continue
             
             elif "GET /gen?p=" in req and pb:
-                raw_p = req.split("GET /gen?p=")[1].split(" ")[0]
+                req_line = req.split("\r\n")[0]
+                url_path = req_line.split(" ")[1]
+                
+                raw_p = url_path.split("p=")[1].split("&")[0]
                 p = unquote(raw_p).lower()
                 
+                # Check for query-level bias overrides
+                if "bw=" in url_path:
+                    try:
+                        bw_param = unquote(url_path.split("bw=")[1].split("&")[0]).strip()
+                        bm_param = float(url_path.split("bm=")[1].split("&")[0])
+                        if bw_param in WORD_TO_ID:
+                            latched_bias_id = WORD_TO_ID[bw_param]
+                            latched_bias_mag = bm_param
+                            print(f"[MEOW] URL Bias Engaged: {bw_param} (+{bm_param})")
+                    except Exception as e:
+                        print("[MEOW] Query Bias Error:", e)
+
                 is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
                 if is_logic:
                     if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
@@ -177,7 +210,8 @@ while True:
                 for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
                 
                 try:
-                    pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0, 1.0 if is_logic else 0.0] + [0.0]*(EMBED_DIM-2))))
+                    # Init signal: send 82 floats total
+                    pb.sendall(struct.pack(f'{EMBED_DIM+2}f', *([-999.0, 1.0 if is_logic else 0.0] + [0.0]*EMBED_DIM)))
                     ack = recv_all(pb, 2)
                     if ack != b"OK": c.close(); continue
                 except Exception: c.close(); continue
@@ -193,7 +227,6 @@ while True:
                 state_paused = False
                 state_step = False
                 aborted = False
-                steer_vector = [0.0] * EMBED_DIM
                 
                 # --- PHASE 1: PREFILL ---
                 for stp in range(len(tks)):
@@ -207,7 +240,9 @@ while True:
                     for l in range(3): x = run_layer(f_w, l, x)
                     
                     try:
-                        pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
+                        # Append the 2 bias floats (ID and Mag) for Miaou
+                        payload = x + [float(latched_bias_id), latched_bias_mag]
+                        pb.sendall(struct.pack(f'{EMBED_DIM+2}f', *payload))
                         rep = recv_all(pb, 10)
                         if not rep: aborted = True; break
                     except Exception: 
@@ -226,7 +261,7 @@ while True:
                     except Exception: aborted = True; led.off(); break
                     led.off()
 
-                # --- PHASE 2: GENERATION (With Mind Surgery) ---
+                # --- PHASE 2: GENERATION ---
                 if not aborted:
                     for gen_stp in range(50):
                         while True:
@@ -254,14 +289,13 @@ while True:
                                         w_val = unquote(req_path.split("word=")[1].split("&")[0]).strip()
                                         m_val = float(req_path.split("mag=")[1].split("&")[0])
                                         if w_val in WORD_TO_ID:
-                                            s_vec = read_emb(f_w, WORD_TO_ID[w_val], 0)
-                                            # NORMALIZE to prevent vector blowout!
-                                            v_norm = math.sqrt(sum(v*v for v in s_vec)) or 1.0
-                                            for i in range(EMBED_DIM): steer_vector[i] = (s_vec[i] / v_norm) * m_val
-                                            print(f"[MEOW] Steering active: {w_val} (normed, mag: {m_val})")
+                                            latched_bias_id = WORD_TO_ID[w_val]
+                                            latched_bias_mag = m_val
+                                            print(f"[MEOW] Mid-flight Bias updated: {w_val} (+{m_val})")
                                             
                                     elif "action=clear" in req_path:
-                                        steer_vector = [0.0] * EMBED_DIM
+                                        latched_bias_id = -1
+                                        latched_bias_mag = 0.0
 
                                     c2.sendall(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")
                                     c2.close()
@@ -282,7 +316,6 @@ while True:
                         ranks = [VOCAB[t] for t in ct_ranks]
                         ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
                         
-                        # Tell UI if backend is in a paused hold
                         is_paused_val = 1 if state_paused else 0
                         try:
                             c.sendall(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"paused":{is_paused_val}}}\n'.encode())
@@ -293,16 +326,15 @@ while True:
                         tid = cur
                         tv = read_emb(f_w, tid, 0)
                         pv = read_emb(f_w, min(len(tks) + gen_stp, BLOCK_SIZE-1), VOCAB_SIZE * ROW_B)
+                        
                         x = [tv[i] + pv[i] for i in range(EMBED_DIM)]
                         
                         f_w.seek(L0_OFF)
                         for l in range(3): x = run_layer(f_w, l, x)
                         
-                        # Apply Vector Steering safely
-                        x = [x[i] + steer_vector[i] for i in range(EMBED_DIM)]
-                        
                         try:
-                            pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
+                            payload = x + [float(latched_bias_id), latched_bias_mag]
+                            pb.sendall(struct.pack(f'{EMBED_DIM+2}f', *payload))
                             rep = recv_all(pb, 10)
                             if not rep: break
                         except Exception: break
@@ -312,7 +344,6 @@ while True:
                         led.off()
 
             elif "GET / " in req or "GET /index.html" in req:
-                # Check for pre-compressed index.html.gz first (saves flash & transfers in 3KB)
                 try:
                     with open("index.html.gz", "rb") as html_gz:
                         c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Encoding: gzip\r\nConnection: close\r\n\r\n")
