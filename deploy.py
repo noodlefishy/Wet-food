@@ -1,14 +1,16 @@
-import sys, os, subprocess
+import sys, os, subprocess, time
 
 MEOW_FILES = [
     ("models/local/pico1 weights.model", "pico1 weights.model"),
     ("models/local/vocab.py", "vocab.py"),
+    ("firmware/wifi_config.py", "wifi_config.py"),
     ("firmware/index.html", "index.html"),
     ("firmware/meow.py", "main.py")
 ]
 
 MIAOU_FILES = [
     ("models/local/pico2 weights.model", "pico2 weights.model"),
+    ("firmware/wifi_config.py", "wifi_config.py"),
     ("firmware/miaou.py", "main.py")
 ]
 
@@ -57,4 +59,22 @@ for src, dst in targets:
 
 print(f"[+] Resetting {node.upper()}...")
 subprocess.run(["mpremote"] + port_arg + ["reset"])
+
+if node == "meow":
+    print("[*] Waiting for Meow to connect to Wi-Fi...")
+    time.sleep(3)
+    try:
+        res = subprocess.run(
+            ["mpremote"] + port_arg + ["exec", "import network, time; w = network.WLAN(network.STA_IF); print(w.ifconfig()[0] if w.isconnected() else 'AP')"],
+            capture_output=True, text=True, timeout=8
+        )
+        ip = res.stdout.strip()
+        if ip and ip != "AP":
+            print(f"\n[★] MEOW IS ONLINE ON YOUR HOME NETWORK:")
+            print(f"    -> http://{ip}/")
+            print(f"    -> http://meow/ (if supported by your router)\n")
+    except Exception as e:
+        print(e)
+
+
 print(f"[✓] {node.upper()} deployed successfully!")
