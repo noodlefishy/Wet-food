@@ -1,53 +1,28 @@
-### Part 1: What Was Actually Wrong With the Model Before?
 
-If you look back, the project suffered from a **chain reaction of four hidden bugs** that compounded on each other:
+# 🚀 Wet Food v2.0: Project Rewrite Summary
 
-1. **The Context Overflow (The 64-Token Wall):** Early on, our generated stories had too many events and adjective filler ("*walked happily to the cozy garden*"). This pushed prompts past 64 tokens, causing the context window to truncate the start of the story where characters' initial locations were defined.
-2. **The Memorization Trap (Overfitting):** When we pre-cached 40k–100k tasks, the small 96-D model didn't learn reasoning; it just memorized the exact string patterns. When tested on fresh generations, it panicked. Shifting to **on-the-fly dynamic generation** forced it to learn true rules.
-3. **The Rogue Double `[a]` Bug (The Evaluator Ghost):** This was the most frustrating one. `fast_evaluator.py` was accidentally appending an extra ` [a]` tag to prompts that *already* ended in `[a]`. The model was receiving `... [a] [a]`, which it had never seen before, causing it to blindly default to guessing `yes` or `no`.
-4. **The INT8 Embedding Corruption:** Compressing matrix weights to INT8 is fine for hidden layers, but when we quantized the **Token Embeddings** (`tok_emb`), it smashed the fine-grained semantic distances between words like "kitchen" and "garden," turning them into numerical noise. Moving to **Mixed Precision** (FP32 Embeddings + INT8 Layers) saved the vocabulary while shrinking file sizes.
+### 🧠 1. Neural Architecture Upgrades
+*   **Multi-Query Attention (MQA):** Replaced standard Multi-Head Attention with MQA. By sharing a single Key and Value head across all 4 Query heads, the SRAM footprint for the KV cache was slashed by **75%**. This completely eliminated Out-Of-Memory (OOM) crashes and freed up massive heap space on the Picos.
+*   **Mixed Precision INT8 Quantization (W8A32):** 
+    *   The heavy `Linear` projection layers were quantized from 32-bit floats to 8-bit integers (INT8) using symmetric per-row scaling. 
+    *   This shrunk the `.model` files from **1.25 MB down to ~316 KB** per microcontroller.
+    *   Because the RP2040 has no hardware FPU, this allowed the firmware to bypass slow software-emulated floats and use the chip's native 1-cycle `MULS` integer multiplier.
+    *   *Crucial Fix:* We kept the Vocabulary Embeddings (`tok_emb`) and the Language Modeling Head (`lm_head`) in **FP32 High Definition** to prevent the vocabulary from scrambling into hallucinated words.
+*   **The 80-D / 64-Ctx Sweet Spot:** Calibrated the network to exactly 80 dimensions and 64 tokens. This maximizes the attention signal-to-noise ratio, preventing the model from losing track of logic over long sequences.
 
-Once those structural bugs were cleared, the math took over, and it landed cleanly at **98.7%**.
+### ⚙️ 2. Firmware & Hardware Pipeline
+*   **TCP Fragmentation Fix (`recv_all`):** Replaced naive `socket.recv()` with a guaranteed byte-accumulator. This prevents the Wi-Fi stack from crashing when large 80-D thought vectors get split across multiple wireless packets.
+*   **Live Prefill Telemetry (Zero Blocking):** The original firmware locked up the HTTP server for ~30 seconds during prompt ingestion. The new `meow.py` streams HTTP JSON packets *on every single token*, allowing the browser to animate the KV prefill progress and thought vectors in real time.
+*   **The 80x Speed Bug:** Fixed a catastrophic Python list-comprehension trap in `meow.py` where the Pico was accidentally re-reading matrix weights from the SPI flash 80 times per layer.
+*   **Indefinite Worker Lifespan:** `miaou.py` no longer times out and crashes if the user takes longer than 5 seconds to type a prompt.
 
----
+### 📊 3. Data Engine & PyTorch Training
+*   **Infinite Data (Dynamic Batching):** Abandoned static datasets. `local.py` now generates completely unique, combinatorial state-machine logic on the fly (millions of permutations). This prevents the model from achieving a fake `0.0000` loss via rote memorization.
+*   **Anti-Cheat Symmetry:** The generator now flips `{actor1}` and `{actor2}` positions 50% of the time. This destroyed the model's "Recency Shortcut" (where it was blindly guessing the last noun it saw instead of doing actual attention routing).
+*   **Answer-Only Masking:** By setting `y = -100` for the premise tokens, 100% of the gradient updates are now forced into the reasoning circuits, preventing the model from wasting parameters trying to memorize English grammar.
+*   **Turbo Apple Silicon Training:** Added `torch.set_num_threads(4)` (P-Core locking), fused tensor batching, and RAM pre-caching. Training time for 30,000 steps dropped from **hours to under 3 minutes** on a Mac.
 
-### Part 2: What Kind of Questions Should You Demo?
-
-When you fire up the web dashboard (`http://192.168.4.1`) or test it locally in `sim.py`, you want to show off that your microcontrollers aren't just matching keywords—they are tracking **space, time, objects, and pronouns**. 
-
-Here is a curated menu of impressive prompts to copy-paste for a demo:
-
-#### 1. Multi-Hop Object Tracking (The Classic bAbI Test)
-*Proves the model understands object permanence and movement handoffs.*
-> **Prompt:** `[c] alice found the ball in the room . then alice went to the garden . [q] where is the ball ? [a]`
-> **Expected Output:** `garden .`
-
-#### 2. Chain of Custody / Entity Transfers
-*Proves it can track who currently holds an item across multiple handoffs.*
-> **Prompt:** `[c] bob gave the cup to alice . then alice gave the cup to luna . [q] who has the cup now ? [a]`
-> **Expected Output:** `luna .`
-
-#### 3. Pronoun Coreference Resolution
-*Proves it can map a pronoun ("she"/"he") back to the correct named character.*
-> **Prompt:** `[c] luna was in the kitchen . then she went to the room . [q] where is luna ? [a]`
-> **Expected Output:** `room .`
-
-#### 4. Spatial Negation
-*Proves it handles negative constraints and resolves to the alternative truth.*
-> **Prompt:** `[c] bob is not in the kitchen . bob is in the park . [q] where is bob ? [a]`
-> **Expected Output:** `park .`
-
-#### 5. Compass / Relational Mapping
-*Proves it understands abstract 2D grid relationships.*
-> **Prompt:** `[c] the kitchen is north of the park . the park is north of the room . [q] what is north of the park ? [a]`
-> **Expected Output:** `kitchen .`
-
-#### 6. Time Reasoning (Before/After)
-*Proves it can look backward chronologically through a timeline.*
-> **Prompt:** `[c] first bob was in the room . then bob was in the kitchen . [q] where was bob first ? [a]`
-> **Expected Output:** `room .`
-
-#### 7. The Mode Switch (Open-Ended Storytelling)
-*Proves that when you strip away the logic tags, it transforms back into a creative neural net.*
-> **Prompt:** `once upon a time alice and luna went into the green garden and`
-> **Expected Output:** *(It will fluently continue writing a fairy tale using its TinyStories background training).*
+### 💻 4. Cyberpunk UI & Deployment
+*   **Restored Neon Terminal:** Fixed the CSS to bring back the phosphor green, cyan, and magenta hacker aesthetic.
+*   **Token Chips:** The UI now splits the user's prompt into individual terminal chips that dynamically change color (Gray $\rightarrow$ Magenta $\rightarrow$ Green) as the Picos physically ingest them into their KV cache.
+*   **1-Command Deploy Script (`deploy.py`):** Wrote a Python wrapper around `mpremote` that automatically cleans old fragmented files off the LittleFS partition, uploads the new binaries, and reboots the board in seconds, gracefully handling the Pico's strict 848 KB storage limit.
