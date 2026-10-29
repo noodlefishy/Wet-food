@@ -1,14 +1,15 @@
+# meow.py - Host (Master) node for distributed transformer
 import network, socket, struct, math, gc, time, machine, random, _thread
 from array import array; from machine import Pin
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
 EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
-ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B  # Zero absolute pos_emb offset!
+ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B
 SINK_SIZE = 4; WINDOW_SIZE = 32
 
 try: import vocab; VOCAB = vocab.VOCAB
-except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w"+str(i) for i in range(1021)]
+except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w" + str(i) for i in range(1021)]
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
 try: import wifi_config; WIFI_SSID = wifi_config.SSID; WIFI_PASS = wifi_config.PASSWORD

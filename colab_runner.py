@@ -1,144 +1,101 @@
-"""
-Unified Colab Runner for picoAI (Wet-food)
-This single script runs on Google Colab to:
-1. Environment setup and GPU detection
-2. Train the 8-Layer RoPE Model (CUDA/MPS/CPU)
-3. Quantize INT8 W8A32 weights for Meow (pico1) and Miaou (pico2)
-4. Run Fast Evaluator (all 69,000+ tests across 24 categories)
-5. Run Out-of-Distribution (OOD) Generalization Probes
-6. Run Simulator test prompts
-7. Package and offer automatic zip download of weights + firmware vocab
-"""
 import os, sys, subprocess, shutil
 
-print("="*65)
+print("=" * 65)
 print("     picoAI UNIFIED COLAB BUILD & TEST RUNNER")
-print("="*65)
+print("=" * 65)
 
 import torch
 
-# Enforce running in Google Colab with CUDA
-in_colab = False
+inColab = False
 try:
-    import google.colab  # pyright: ignore[reportMissingImports]
-    in_colab = True
+    import google.colab
+    inColab = True
 except ImportError:
     pass
 
-if not in_colab:
-    print("\n[!] ERROR: colab_runner.py is designed exclusively to run inside a Google Colab GPU environment!")
-    print("    Running this locally on your Mac CPU will take too long.")
-    print("\n    To run this on Colab with GPU (CUDA):")
-    print("    1. Open your Colab notebook (Runtime -> Change runtime type -> T4 GPU)")
-    print("    2. Run this command in a Colab code cell:")
-    print("       !git clone https://github.com/noodlefishy/Wet-food.git /content/Wet-food && cd /content/Wet-food && python3 colab_runner.py\n")
+if not inColab:
+    print("\n[!] ERROR: colab_runner.py must run inside a Google Colab GPU environment!")
     sys.exit(1)
 
 if not torch.cuda.is_available():
-    print("\n[!] WARNING: CUDA GPU is not detected in this Colab session!")
-    print("    Please switch runtime to GPU: Runtime -> Change runtime type -> T4 GPU.")
-    print("    Exiting to avoid slow CPU training.")
+    print("\n[!] WARNING: CUDA GPU not detected! Please switch runtime to T4 GPU.")
     sys.exit(1)
 
-print(f"[✓] Google Colab CUDA environment verified: {torch.cuda.get_device_name(0)}")
-repo_dir = "/content/Wet-food"
-if not os.path.exists(repo_dir) and not os.path.exists("config/model.json"):
+print(f"[✓] CUDA verified: {torch.cuda.get_device_name(0)}")
+repoDir = "/content/Wet-food"
+if not os.path.exists(repoDir) and not os.path.exists("config/model.json"):
     print("[*] Cloning repository...", flush=True)
-    subprocess.run(["git", "clone", "https://github.com/noodlefishy/Wet-food.git", repo_dir], check=True)
-    os.chdir(repo_dir)
-elif os.path.exists(repo_dir):
-    os.chdir(repo_dir)
-    print("[*] Updating repository to latest commit...", flush=True)
+    subprocess.run(["git", "clone", "https://github.com/noodlefishy/Wet-food.git", repoDir], check=True)
+    os.chdir(repoDir)
+elif os.path.exists(repoDir):
+    os.chdir(repoDir)
+    print("[*] Updating repository...", flush=True)
     subprocess.run(["git", "pull", "origin", "main"], check=False)
 
-
-def run_streaming(cmd, env_vars=None):
+def runStreaming(cmd, envVars=None):
     e = os.environ.copy()
     e["PYTHONUNBUFFERED"] = "1"
-    if env_vars:
-        e.update(env_vars)
+    if envVars: e.update(envVars)
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        text=True,
         bufsize=1,
-        universal_newlines=True,
         env=e
     )
-    for line in iter(proc.stdout.readline, ""): # type: ignore
-        sys.stdout.write(line)
-        sys.stdout.flush()
-    proc.stdout.close() # pyright: ignore[reportOptionalMemberAccess]
+    if proc.stdout:
+        for line in iter(proc.stdout.readline, ""):
+            print(line, end="", flush=True)
+        proc.stdout.close()
     ret = proc.wait()
     if ret != 0:
         raise subprocess.CalledProcessError(ret, cmd)
 
-# Step 2: Run Training & Quantization
-print("\n" + "="*65, flush=True)
-print(" STAGE 1: TRAINING & QUANTIZATION (training/local.py)", flush=True)
-print("="*65, flush=True)
-run_streaming([sys.executable, "-u", "training/local.py"])
+print("\n" + "=" * 65)
+print(" STAGE 1: TRAINING & QUANTIZATION (training/local.py)")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "training/local.py"])
 
-# Step 3: Run Fast Evaluator (Full 69k stress test)
-print("\n" + "="*65, flush=True)
-print(" STAGE 2: FAST EVALUATION BENCHMARK (benchmarks/fast_evaluator.py)", flush=True)
-print("="*65, flush=True)
-run_streaming([sys.executable, "-u", "benchmarks/fast_evaluator.py"])
+print("\n" + "=" * 65)
+print(" STAGE 2: FAST EVALUATOR (benchmarks/fast_evaluator.py)")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "benchmarks/fast_evaluator.py"])
 
-# Step 4: Run Out-of-Distribution Generalization Probe
-print("\n" + "="*65, flush=True)
-print(" STAGE 3: OUT-OF-DISTRIBUTION (OOD) GENERALIZATION", flush=True)
-print("="*65, flush=True)
-run_streaming([sys.executable, "-u", "benchmarks/ood_evaluator.py"])
+print("\n" + "=" * 65)
+print(" STAGE 3: OUT-OF-DISTRIBUTION PROBES (benchmarks/ood_evaluator.py)")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "benchmarks/ood_evaluator.py"])
 
-# Step 5: Run Simulator Smoke Test
-print("\n" + "="*65, flush=True)
-print(" STAGE 4: SIMULATOR SMOKE TEST", flush=True)
-print("="*65, flush=True)
-test_prompts = [
-    "[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]",
-    "[c] alice went to the kitchen . bob went to the garden . [q] is alice in the kitchen ? [a]",
-    "[c] bob had two book and gave two to alice . [q] how many book does bob have ? [a]"
-]
-sys.path.insert(0, os.getcwd())
+print("\n" + "=" * 65)
+print(" STAGE 4: SIMULATOR SMOKE TEST")
+print("=" * 65, flush=True)
+simPy = """
 from benchmarks.sim import generate
-
-for tp in test_prompts:
-    res = generate(tp)
-    print(f"Q: {tp}\nA: {res}\n")
-
-# Step 6: Package weights for download
-print("="*65)
-print(" STAGE 5: PACKAGING WEIGHTS & VOCAB")
-print("="*65)
-zip_filename = "pico_weights_latest"
-files_to_pack = [
-    ("models/local/pico1 weights.model", "pico1 weights.model"),
-    ("models/local/pico2 weights.model", "pico2 weights.model"),
-    ("models/local/vocab.py", "vocab.py"),
+test_prompts = [
+    "[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]",
+    "[c] alice has one cup . bob gave alice two cups . [q] how many items does alice have ? [a]",
+    "once upon a time bob went into the green garden ."
 ]
+for p in test_prompts:
+    print(f"\\nPrompt: {p}\\nOutput: {generate(p, maxTokens=25)}")
+"""
+runStreaming(["python3", "-u", "-c", simPy])
 
-os.makedirs("export_pack", exist_ok=True)
-for src, name in files_to_pack:
-    if os.path.exists(src):
-        shutil.copyfile(src, os.path.join("export_pack", name))
-        print(f"  [✓] Bundled {name} ({os.path.getsize(src)/1024:.1f} KB)")
+print("\n" + "=" * 65)
+print(" STAGE 5: PACKAGING WEIGHTS")
+print("=" * 65, flush=True)
 
-shutil.make_archive(zip_filename, 'zip', "export_pack")
-zip_path = f"{zip_filename}.zip"
-try:
-    shutil.copyfile(zip_path, "/content/pico_weights_latest.zip")
-except Exception:
-    pass
-print(f"\n[✓] Created {zip_path} ({os.path.getsize(zip_path)/1024:.1f} KB)")
+zipTarget = "/content/pico_weights_latest.zip"
+pkgDir = "/content/pico_pkg"
+os.makedirs(pkgDir, exist_ok=True)
+shutil.copy("models/local/pico1 weights.model", os.path.join(pkgDir, "pico1 weights.model"))
+shutil.copy("models/local/pico2 weights.model", os.path.join(pkgDir, "pico2 weights.model"))
+shutil.copy("models/local/vocab.py", os.path.join(pkgDir, "vocab.py"))
+shutil.make_archive("/content/pico_weights_latest", "zip", pkgDir)
+shutil.copy(zipTarget, "models/local/pico_weights_latest.zip")
 
-if in_colab:
-    try:
-        from google.colab import files # pyright: ignore[reportMissingImports]
-        print("[*] Triggering automatic browser download of weights package...")
-        files.download(zip_path)
-    except Exception as e:
-        print(f"[!] Could not trigger automatic download: {e}")
-        print(f"    You can download {zip_path} from the left file sidebar.")
-
-print("\n[✓] ALL BUILD & TEST STAGES COMPLETE!")
+print(f"[✓] Package created: {zipTarget} ({os.path.getsize(zipTarget)/1024:.1f} KB)")
+print("\n" + "=" * 65)
+print(" BUILD, TRAIN & EVALUATION PIPELINE COMPLETE!")
+print("=" * 65)

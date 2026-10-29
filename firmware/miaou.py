@@ -1,3 +1,4 @@
+# miaou.py - Worker (Slave) node for distributed transformer
 import network, socket, struct, math, gc, time, machine
 from machine import Pin; from array import array
 machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()

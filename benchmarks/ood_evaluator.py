@@ -1,37 +1,31 @@
-"""
-Out-of-Distribution (OOD) Generalization Evaluator for picoAI.
-Tests the model on completely held-out entities, novel syntax, and reasoning depth
-to rigorously verify if it has learned reasoning abstractions or memorized specific words.
-"""
 import os, sys, json, re, time, struct, torch, numpy as np, torch.nn as nn
 from torch.nn import functional as F
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, project_root)
-with open(os.path.join(project_root, "config", "model.json")) as f: mod_cfg = json.load(f)
+projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, projectRoot)
+with open(os.path.join(projectRoot, "config", "model.json")) as f: modCfg = json.load(f)
 from models.local import vocab
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-VOCAB_SIZE   = mod_cfg["architecture"]["vocab_size"]
-EMBED_DIM    = mod_cfg["architecture"]["embed_dim"]
-BLOCK_SIZE   = mod_cfg["architecture"]["block_size"]
-NUM_HEADS    = mod_cfg["architecture"]["num_heads"]
-NUM_LAYERS   = mod_cfg["architecture"]["num_layers"]
-MEOW_LAYERS  = mod_cfg["architecture"]["meow_layers"]
-MIAOU_LAYERS = mod_cfg["architecture"]["miaou_layers"]
+VOCAB_SIZE   = modCfg["architecture"]["vocab_size"]
+EMBED_DIM    = modCfg["architecture"]["embed_dim"]
+BLOCK_SIZE   = modCfg["architecture"]["block_size"]
+NUM_HEADS    = modCfg["architecture"]["num_heads"]
+NUM_LAYERS   = modCfg["architecture"]["num_layers"]
+MEOW_LAYERS  = modCfg["architecture"]["meow_layers"]
+MIAOU_LAYERS = modCfg["architecture"]["miaou_layers"]
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device       = "mps" if torch.backends.mps.is_available() else "cpu"
 
-def precompute_rope(head_dim, max_len=BLOCK_SIZE):
-    inv = 1.0 / (10000.0 ** (torch.arange(0, head_dim, 2).float() / head_dim))
-    t = torch.arange(max_len).float()
-    f = torch.outer(t, inv)
+def precomputeRope(headDim, maxLen=BLOCK_SIZE):
+    inv = 1.0 / (10000.0 ** (torch.arange(0, headDim, 2).float() / headDim))
+    f = torch.outer(torch.arange(maxLen).float(), inv)
     return f.cos(), f.sin()
 
-cos_c, sin_c = precompute_rope(HEAD_DIM, BLOCK_SIZE)
+cosC, sinC = precomputeRope(HEAD_DIM, BLOCK_SIZE)
 
-def apply_rope(x, cos, sin):
+def applyRope(x, cos, sin):
     T = x.shape[2]
     c = cos[:T].unsqueeze(0).unsqueeze(1).to(x.device)
     s = sin[:T].unsqueeze(0).unsqueeze(1).to(x.device)
@@ -44,20 +38,19 @@ def apply_rope(x, cos, sin):
 class RoPE_MQA(nn.Module):
     def __init__(self):
         super().__init__()
-        self.qkv_proj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * HEAD_DIM)
-        self.out_proj  = nn.Linear(EMBED_DIM, EMBED_DIM)
+        self.qkvProj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * HEAD_DIM)
+        self.outProj  = nn.Linear(EMBED_DIM, EMBED_DIM)
     def forward(self, x):
         B, T, C = x.shape
-        qkv = self.qkv_proj(x)
+        qkv = self.qkvProj(x)
         q = qkv[:, :, :C].view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
         k = qkv[:, :, C:C+HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2)
         v = qkv[:, :, C+HEAD_DIM:].view(B, T, 1, HEAD_DIM).transpose(1, 2)
-        q = apply_rope(q, cos_c, sin_c)
-        k = apply_rope(k, cos_c, sin_c)
-        k = k.expand(-1, NUM_HEADS, -1, -1)
+        q = applyRope(q, cosC, sinC)
+        k = applyRope(k, cosC, sinC).expand(-1, NUM_HEADS, -1, -1)
         v = v.expand(-1, NUM_HEADS, -1, -1)
         out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
-        return self.out_proj(out.transpose(1, 2).contiguous().view(B, T, C))
+        return self.outProj(out.transpose(1, 2).contiguous().view(B, T, C))
 
 class Block(nn.Module):
     def __init__(self):
@@ -67,24 +60,23 @@ class Block(nn.Module):
         self.ln2 = nn.LayerNorm(EMBED_DIM)
         self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4*EMBED_DIM), nn.ReLU(), nn.Linear(4*EMBED_DIM, EMBED_DIM))
     def forward(self, x):
-        x = x + self.sa(self.ln1(x))
-        return x + self.mlp(self.ln2(x))
+        return x + self.mlp(self.ln2(x + self.sa(self.ln1(x))))
 
 class BabyStories(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tok_emb = nn.Embedding(VOCAB_SIZE, EMBED_DIM)
+        self.tokEmb = nn.Embedding(VOCAB_SIZE, EMBED_DIM)
         self.layers  = nn.ModuleList([Block() for _ in range(NUM_LAYERS)])
-        self.ln_f    = nn.LayerNorm(EMBED_DIM)
-        self.lm_head = nn.Linear(EMBED_DIM, VOCAB_SIZE)
+        self.lnF    = nn.LayerNorm(EMBED_DIM)
+        self.lmHead = nn.Linear(EMBED_DIM, VOCAB_SIZE)
     def forward(self, idx):
-        x = self.tok_emb(idx)
+        x = self.tokEmb(idx)
         for layer in self.layers: x = layer(x)
-        return self.lm_head(self.ln_f(x))
+        return self.lmHead(self.lnF(x))
 
 model = BabyStories().to(device)
 
-def load_param(f, tensor, quantized=True):
+def loadParam(f, tensor, quantized=True):
     if tensor.ndim == 2 and quantized:
         rows, cols = tensor.shape
         data = np.empty((rows, cols), dtype=np.float32)
@@ -95,105 +87,76 @@ def load_param(f, tensor, quantized=True):
     else:
         tensor.data.copy_(torch.from_numpy(np.frombuffer(f.read(tensor.numel() * 4), dtype=np.float32)).view_as(tensor))
 
-p1 = os.path.join(project_root, "models", "local", "pico1 weights.model")
-p2 = os.path.join(project_root, "models", "local", "pico2 weights.model")
+p1 = os.path.join(projectRoot, "models", "local", "pico1 weights.model")
+p2 = os.path.join(projectRoot, "models", "local", "pico2 weights.model")
 
 with open(p1, "rb") as f:
-    load_param(f, model.tok_emb.weight)
+    loadParam(f, model.tokEmb.weight)
     for i in range(MEOW_LAYERS):
-        for p in model.layers[i].parameters(): load_param(f, p)
+        for p in model.layers[i].parameters(): loadParam(f, p)
 
 with open(p2, "rb") as f:
     for i in range(MEOW_LAYERS, NUM_LAYERS):
-        for p in model.layers[i].parameters(): load_param(f, p)
-    for p in model.ln_f.parameters(): load_param(f, p)
-    load_param(f, model.lm_head.weight)
-    load_param(f, model.lm_head.bias)
+        for p in model.layers[i].parameters(): loadParam(f, p)
+    for p in model.lnF.parameters(): loadParam(f, p)
+    loadParam(f, model.lmHead.weight)
+    loadParam(f, model.lmHead.bias)
 
 model.eval()
-print(f"[✓] Model loaded on {device} for Out-of-Distribution (OOD) Generalization Suite\n")
 
-a_id = WORD_TO_ID.get("[a]", 9)
-pad_id = WORD_TO_ID.get("<pad>", 1)
+aId, padId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1)
 
 def tokenize(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.?:]", s.lower())]
 
-# =====================================================================
-# OOD TEST BATTERIES
-# =====================================================================
-# 1. Novel Entities from TinyStories vocabulary (never used in world.json logic templates!)
-#    e.g. actors: mia, max, timmy, emma, daisy
-#    locations: woods, forest, lake, school, beach
-#    items: toy, fish, bread, flower, rock
-ood_tests = {
-    "OOD-1: Novel Entities Tracking (1-hop)": [
-        {"q": "[c] mia went to the forest . [q] where is mia ? [a]", "target": "forest"},
-        {"q": "[c] max went to the beach . [q] where is max ? [a]", "target": "beach"},
-        {"q": "[c] timmy went to the lake . [q] where is timmy ? [a]", "target": "lake"},
-        {"q": "[c] daisy moved to the woods . [q] where is daisy ? [a]", "target": "woods"},
-        {"q": "[c] emma arrived at the school . [q] where is emma ? [a]", "target": "school"},
-    ],
-    "OOD-2: Novel Entities Multi-Hop (2-hop)": [
-        {"q": "[c] mia went to the lake . max went to the forest . mia went to the beach . [q] where is mia ? [a]", "target": "beach"},
-        {"q": "[c] timmy went to the woods . daisy went to the beach . timmy went to the school . [q] where is timmy ? [a]", "target": "school"},
-        {"q": "[c] emma went to the forest . emma went to the lake . [q] where is emma ? [a]", "target": "lake"},
-        {"q": "[c] max went to the school . max went to the woods . [q] where is max ? [a]", "target": "woods"},
-    ],
-    "OOD-3: Novel Entities Polar Yes/No": [
-        {"q": "[c] mia went to the lake . [q] is mia in the lake ? [a]", "target": "yes"},
-        {"q": "[c] mia went to the lake . [q] is mia in the forest ? [a]", "target": "no"},
-        {"q": "[c] max went to the beach . [q] is max in the beach ? [a]", "target": "yes"},
-        {"q": "[c] max went to the beach . [q] is max in the woods ? [a]", "target": "no"},
-    ],
-    "OOD-4: 4-Hop Depth Extrapolation (Longer than train)": [
-        {"q": "[c] alice went to the kitchen . alice went to the garden . alice went to the park . alice went to the room . [q] where is alice ? [a]", "target": "room"},
-        {"q": "[c] bob went to the park . bob went to the room . bob went to the kitchen . bob went to the garden . [q] where is bob ? [a]", "target": "garden"},
-        {"q": "[c] felix went to the garden . felix went to the park . felix went to the room . felix went to the kitchen . [q] where is felix ? [a]", "target": "kitchen"},
-    ],
-    "OOD-5: Novel Syntax / Passive Voice": [
-        {"q": "[c] the ball was taken by alice . [q] who got the ball ? [a]", "target": "alice"},
-        {"q": "[c] the cup was given to bob . [q] who got the cup ? [a]", "target": "bob"},
-        {"q": "[c] the box was found by felix . [q] who got the box ? [a]", "target": "felix"},
-    ]
-}
-
-total_tests = sum(len(items) for items in ood_tests.values())
-print(f"[*] Running {total_tests} Out-of-Distribution generalization probes...\n")
-
-total_passed = 0
-with torch.no_grad():
-    for suite_name, tests in ood_tests.items():
-        input_ids, a_positions, metas = [], [], []
-        for item in tests:
-            toks = tokenize(item["q"])
-            try: a_pos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == a_id)
-            except StopIteration: a_pos = len(toks) - 1
-            padded = toks[:a_pos+1] + [pad_id] * (BLOCK_SIZE - len(toks[:a_pos+1]))
-            input_ids.append(padded[:BLOCK_SIZE])
-            a_positions.append(min(a_pos, BLOCK_SIZE - 1))
-            metas.append((item["q"], item["target"]))
-
-        x = torch.tensor(input_ids, dtype=torch.long, device=device)
-        logits = model(x)
-        
-        passed_suite = 0
-        print(f"--- {suite_name} ---")
-        for j, (q_str, target) in enumerate(metas):
-            pred_id = logits[j, a_positions[j]].argmax().item()
-            pred = VOCAB[pred_id] if pred_id < len(VOCAB) else "<unk>"
+def evalSuite(tests, desc):
+    total = len(tests)
+    passed = 0
+    t0 = time.time()
+    for cat, q, target in tests:
+        toks = tokenize(q)
+        try: aPos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == aId)
+        except StopIteration:
+            toks.append(aId); aPos = len(toks) - 1
+        prompt = toks[:aPos+1]
+        padded = prompt + [padId] * (BLOCK_SIZE - len(prompt))
+        x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
+        with torch.no_grad():
+            logits = model(x)
+            predId = logits[0, min(aPos, BLOCK_SIZE - 1)].argmax().item()
+            pred = VOCAB[predId] if predId < len(VOCAB) else "<unk>"
             tgt = target.strip().rstrip(".").split()[0]
-            ok = pred == tgt
-            if ok:
-                passed_suite += 1
-                total_passed += 1
-                status = "✓ PASS"
-            else:
-                status = f"✗ FAIL (got: '{pred}', expected: '{tgt}')"
-            print(f"  [{status}] {q_str}")
-        pct = passed_suite / len(tests) * 100
-        print(f"  Score: {passed_suite}/{len(tests)} ({pct:.1f}%)\n")
+            if pred == tgt: passed += 1
+    pct = (passed / total * 100) if total else 0
+    print(f"  {desc:<45}: {passed:>4}/{total:<4} ({pct:5.1f}%) in {time.time()-t0:.2f}s")
+    return passed, total
 
-print("=" * 60)
-print(f"TOTAL OOD GENERALIZATION SCORE: {total_passed}/{total_tests} ({total_passed/total_tests*100:.1f}%)")
-print("=" * 60)
+print("=" * 65)
+print("     OUT-OF-DISTRIBUTION (OOD) GENERALIZATION BENCHMARK")
+print("=" * 65)
+
+# 1. Unseen Entities Probe
+PROBE_ENTITIES = [
+    ("Unseen Entity (Milo/Barn)", "[c] milo went to the barn . [q] where is milo ? [a]", "barn"),
+    ("Unseen Entity (Cleo/Attic)", "[c] cleo went to the attic . [q] where is cleo ? [a]", "attic"),
+    ("Unseen Entity (Jasper/Cellar)", "[c] jasper went to the cellar . [q] where is jasper ? [a]", "cellar"),
+    ("Unseen Entity (Ziggy/Roof)", "[c] ziggy went to the roof . [q] where is ziggy ? [a]", "roof")
+]
+evalSuite([(cat, q, tgt) for cat, q, tgt in PROBE_ENTITIES], "1. Novel Entity Grounding")
+
+# 2. Syntax Permutation
+PROBE_SYNTAX = [
+    ("Passive Voice", "[c] the red ball was taken by alice . [q] who has the red ball ? [a]", "alice"),
+    ("Inverted Clause", "[c] to the kitchen went bob . [q] where is bob ? [a]", "kitchen"),
+    ("Compound Subject", "[c] felix and luna were in the forest . [q] where is felix ? [a]", "forest")
+]
+evalSuite([(cat, q, tgt) for cat, q, tgt in PROBE_SYNTAX], "2. Novel Syntax Generalization")
+
+# 3. Arithmetic Composition
+PROBE_MATH = [
+    ("3-Item Addition", "[c] alice has one cup . bob gave alice two cups . [q] how many items does alice have ? [a]", "three"),
+    ("Zero Remainder", "[c] bob has two balls . bob gave two balls to felix . [q] how many items does bob have ? [a]", "none"),
+    ("Single Transfer", "[c] felix has three books . felix gave one book to luna . [q] how many items does felix have ? [a]", "two")
+]
+evalSuite([(cat, q, tgt) for cat, q, tgt in PROBE_MATH], "3. Multi-hop Arithmetic Probe")
+print("=" * 65)
