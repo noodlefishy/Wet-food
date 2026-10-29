@@ -32,6 +32,11 @@ elif os.path.exists(repoDir):
     print("[*] Updating repository...", flush=True)
     subprocess.run(["git", "pull", "origin", "main"], check=False)
 
+if os.path.exists("/content/pico_weights_latest.zip"):
+    print("[*] Found uploaded weights archive! Extracting to models/local/...", flush=True)
+    os.makedirs("models/local", exist_ok=True)
+    shutil.unpack_archive("/content/pico_weights_latest.zip", "models/local")
+
 def runStreaming(cmd, envVars=None):
     e = os.environ.copy()
     e["PYTHONUNBUFFERED"] = "1"
