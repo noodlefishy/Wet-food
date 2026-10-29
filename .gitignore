@@ -1,5 +1,10 @@
+# macOS system files
 .DS_Store
+
+# Python cache directories
 __pycache__/
+
+# Big/generated artifacts that should not be versioned
 models/
 config/questions.json
 benchmarks/failures.json
