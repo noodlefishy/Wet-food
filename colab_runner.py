@@ -51,28 +51,50 @@ elif os.path.exists(repo_dir):
     print("[*] Updating repository to latest commit...", flush=True)
     subprocess.run(["git", "pull", "origin", "main"], check=False)
 
-# Force unbuffered stdout across the entire session
-sys.stdout.reconfigure(line_buffering=True)
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:
+        pass
+
+def run_streaming(cmd, env_vars=None):
+    e = os.environ.copy()
+    e["PYTHONUNBUFFERED"] = "1"
+    if env_vars:
+        e.update(env_vars)
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=1,
+        universal_newlines=True,
+        env=e
+    )
+    for line in iter(proc.stdout.readline, ""):
+        sys.stdout.write(line)
+        sys.stdout.flush()
+    proc.stdout.close()
+    ret = proc.wait()
+    if ret != 0:
+        raise subprocess.CalledProcessError(ret, cmd)
 
 # Step 2: Run Training & Quantization
 print("\n" + "="*65, flush=True)
 print(" STAGE 1: TRAINING & QUANTIZATION (training/local.py)", flush=True)
 print("="*65, flush=True)
-env = os.environ.copy()
-env["PYTHONUNBUFFERED"] = "1"
-subprocess.run([sys.executable, "-u", "training/local.py"], check=True, env=env)
+run_streaming([sys.executable, "-u", "training/local.py"])
 
 # Step 3: Run Fast Evaluator (Full 69k stress test)
 print("\n" + "="*65, flush=True)
 print(" STAGE 2: FAST EVALUATION BENCHMARK (benchmarks/fast_evaluator.py)", flush=True)
 print("="*65, flush=True)
-subprocess.run([sys.executable, "-u", "benchmarks/fast_evaluator.py"], check=True, env=env)
+run_streaming([sys.executable, "-u", "benchmarks/fast_evaluator.py"])
 
 # Step 4: Run Out-of-Distribution Generalization Probe
 print("\n" + "="*65, flush=True)
 print(" STAGE 3: OUT-OF-DISTRIBUTION (OOD) GENERALIZATION", flush=True)
 print("="*65, flush=True)
-subprocess.run([sys.executable, "-u", "benchmarks/ood_evaluator.py"], check=True, env=env)
+run_streaming([sys.executable, "-u", "benchmarks/ood_evaluator.py"])
 
 # Step 5: Run Simulator Smoke Test
 print("\n" + "="*65, flush=True)
