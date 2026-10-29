@@ -2,7 +2,7 @@
 
 Have you ever wanted to run transformer models on two tiny microcontrollers that distribute layers over Wi‑Fi? I'm so glad you asked!!! Meet **Meow** and **Miaou**, two electronic kittens made with custom tensor weights, a lot of willpower, love, and MicroPython.
 
-Instead of using one board for everything, this project splits a 6‑layer transformer model in half. **Meow** does the first half of the brain and hosts the kawaii telemetry screen, and **Miaou** handles the second half of the generation over Wi‑Fi (way more useless than **Meow**).
+Instead of using one board for everything, this project splits a 6‑layer transformer model in half. **Meow** does the first half of the brain and hosts the kawaii neon telemetry screen, and **Miaou** handles the second half of the generation over Wi‑Fi.
 
 The repo is called **Wet Food** because cats _love_ wet food, and this project, you know, feeds raw neural network streams between two cats, so pretty similar.
 
@@ -10,126 +10,82 @@ The repo is called **Wet Food** because cats _love_ wet food, and this project, 
 
 ## Meet the Crew
 
-- **Meow (The Master Host):** Initializes its own open access point (named `Meow‑Net`) and serves a green phosphor terminal page on port 80. It crunches through Layers 0, 1, and 2 of the transformer, coordinates the thought vectors, and streams telemetry!
-- **Miaou (The Slave Worker):** Connects to Meow's network and worker‑threads through Layers 3, 4, and 5 over Wi‑Fi. It evaluates all 1,024 logits and performs zero‑RAM top‑k token sampling, sending the final thought back to Meow.
+- **Meow (The Master Host):** Initializes its own network and serves a cyberpunk neon terminal page on port 80. It crunches through Layers 0, 1, and 2, coordinates the thought vectors, and streams token-by-token JSON telemetry using a dual-core async pipeline.
+- **Miaou (The Slave Worker):** Connects to Meow's network and crunches Layers 3, 4, and 5 over Wi‑Fi. It evaluates all 1,024 logits, performs in-place Top-K token sampling, and beams the final thought back to Meow.
 
 ---
 
-## The Hardware Specs
+## The Hardware & Architecture Specs
 
-Even with extremely humble hardware clocked at 240 MHz, this model runs a legitimate, mathematically exact transformer architecture.
+Even with strictly constrained hardware clocked at 240 MHz, this engine runs a mathematically precise, modern LLM architecture heavily optimized for edge inference.
 
-- **Model Size:** Split into two binary files, ~**1.25 MB** each (running direct Flash XIP streaming)
-- **Embedding Dimension:** 80‑D
-- **Layers:** 6 (3 per microcontroller)
-- **Attention Heads:** 4 heads (20 scalars per head)
-- **Vocabulary:** 1,024 words (fairy tales, cat lore, physical states, and logical reasoning syntax)
-- **Context Block Size:** 64 tokens
-- **Execution:** Pure standard‑library math. Zero dependencies.
-
----
-
-## Atomic World‑State Reasoning
-
-Because this is an 80‑D micro‑transformer, it doesn't know the whole internet, but it is an absolute genius at **in‑context reasoning, entity tracking, and theory of mind**.
-
-Unlike standard benchmarks that use rigid, memorizable templates, this engine was trained using a **dynamic atomic world‑state generator**. Actors randomly hold 0, 1, or 2 items, have overlapping emotions and locations, and form compound sentences without fixed slot positions.
-
-### 1. Compositional Cross‑Tasking & Motivations
-The model doesn't just match keywords; it tracks physical locations even inside emotional stories.
-- ``[c] alice is hungry . alice went to the kitchen . bob is tired . bob went to the room . [q] where is alice ? [a]`` → `kitchen .`
-- ``[c] alice is hungry . alice went to the kitchen . bob is tired . bob went to the room . [q] who is thirsty ? [a]`` → `nobody .`
-
-### 2. Variable Cardinality & Possession
-Items are dynamically assigned. The model actually has to count and read, preventing positional cheating.
-- ``[c] felix has the cup . luna has the ball and the book . [q] how many items does luna have ? [a]`` → `two .`
-- ``[c] felix has the cup . luna has the ball and the book . [q] what does felix have ? [a]`` → `cup .`
-- ``[c] alice has the ball . bob has the cup . [q] does alice have the ball ? [a]`` → `yes .`
-
-### 3. The Frame Problem (Selective Departure)
-Understands that if two people are in a room and one leaves, the other is still there.
-- ``[c] alice and bob were in the room . then alice went to the garden . [q] where is bob ? [a]`` → `room .`
-
-### 4. Transferred Attribute Preservation
-Binds adjectives to objects and preserves them across multi‑hop ownership transfers.
-- ``[c] alice had a red ball . alice gave the red ball to bob . [q] who has the red ball ? [a]`` → `bob .`
-- ``[c] alice had a red ball . alice gave the red ball to bob . [q] what colour is the ball ? [a]`` → `red .`
-
-### 5. Relational Symmetry & Inversion
-Understands reciprocal truths in polar constraints.
-- ``[c] the box is bigger than the ball . the ball is bigger than the cup . [q] is the cup smaller than the box ? [a]`` → `yes .`
-
-### 6. Storytelling Mode (Open‑Ended Fiction)
-Start a story sentence without logic tags and let the model write. (Uses temperature scaling to prevent loops!)
-- `once upon a time bob went into the green garden .`
-- `one day alice and felix were in the kitchen .`
+- **Model Size:** 6 Layers (3 per board), ~0.44M Parameters total.
+- **Flash Footprint:** Split into two W8A32 INT8 binary files, ~385 KB each (running direct SPI Flash XIP streaming to bypass the 264KB SRAM limit).
+- **Embedding Dimension:** 96-D
+- **Attention Design:** Multi-Query Attention (MQA) with 4 Query heads ($d_{head}=24$).
+- **Position & Context:** RoPE (Rotary Position Embeddings) over a 64-token Sliding Window Attention (SWA) cache with 4 Attention Sinks.
+- **Training Paradigm:** Supervised Fine-Tuning (SFT) using `-100` prompt masking and Micro-Chain-of-Thought (Micro-CoT) anchoring.
+- **Execution:** Pure standard-library math. _Zero external dependencies_
 
 ---
 
-## Benchmark Scorecard (125,000+ Tests)
+## Architectural Eccentricities & Reasoning Mechanics
 
-The model is evaluated against a deterministic, mathematically exhaustive combinatorial stress suite generated dynamically from its atomic logic configurations.
+While the implementation of spatial logic on dual microcontrollers is inherently _unorthodox_, the Wet Food engine relies on a strict amalgamation of modern training heuristics, memory magic, and algorithmic constraints to prevent high-dimensional superposition collapse 
 
-```
-============================================================================
-                   PARALLEL EVALUATION SCORECARD                        
-============================================================================
-Single/Multi Supporting Facts      : 053909/060096 [#########-]  89.7%
-Argument/Positional Relations      : 001248/001248 [##########] 100.0%
-Yes/No Truth Verification          : 000384/000384 [##########] 100.0%
-Counting & Inverse Symmetry        : 010368/010368 [##########] 100.0%
-Lists and Sets                     : 010368/010368 [##########] 100.0%
-Negation & Indefinite Knowledge    : 000576/000576 [##########] 100.0%
-Basic & Compound Coreference       : 003795/004368 [########--]  86.9%
-Time Reasoning (Before/After)      : 000420/000480 [########--]  87.5%
-Agent Motivations & Needs          : 002201/002208 [#########-]  99.7%
-Cross‑Task Query Transfer          : 002009/002016 [#########-]  99.7%
-Polar Possession (does… have)      : 016390/016416 [#########-]  99.8%
-Selective Departure (Frame Prob)   : 004145/004752 [########--]  87.2%
-Transferred Attribute (Colour)     : 009812/010368 [#########-]  94.6%
-Relational Symmetry Inversion      : 000288/000288 [##########] 100.0%
-----------------------------------------------------------------------------
-TOTAL REASONING SCORE              : 117262/125312 [#########-]  93.6%
-============================================================================
-```
+- **Asymmetric W8A32 Tensor Streaming:** To circumvent the 264 KB SRAM ceiling of the RP2040, the model weights are aggressively compressed via per-row INT8 quantization paired with FP32 scaling vectors. During inference, these weights bypass standard memory allocation entirely, streaming directly from the LittleFS SPI Flash sequentially.
 
+- **Multi-Query Attention (MQA) with Sink-Windowing:** The architecture deploys 4 Query heads mapped to a singular, multiplexed Key/Value head. To maintain context without triggering an Out-Of-Memory kernel panic, the KV cache operates on a strict 32-token sliding window, synthetically stabilized by 4 permanent Attention Sinks to prevent the catastrophic forgetting of initial sequence parameters
+
+- **Anchor-Prefixed Micro-Chain-of-Thought (Micro-CoT):** Because a 6-layer model lacks the depth to resolve multi-hop logic in a single forward pass, it is trained to forcefully echo the subject token prior to the conclusion (eg `[q] where is alice ? [a] alice : kitchen .`). This intermediate temporal step anchors the attention routing and physically bypasses noun recency bias.
+
+- **Adversarial Anti-Recency & Hard-Negative Mining:** The synthetic curriculum generator is shockinly hostile. It intentionally targets the most distant entity in a premise 65 percent of the time, and skews boolean queries toward negative assertions. This mathematically penalizes the network for attempting lazy token distance heuristics or "yes man" co-occurrence shortcuts.
+
+- **Parametric Verb Jitter & Distractor Injection:** Training contexts are subjected to randomized morphological noise (eh swapping "went to" for "arrived at") alongside stochastic distractor insertions (eg injecting `bob saw a little bird` between logical premises). This forces the network to learn robust positional invariance.
+
+- **Bifurcated Loss Annealing & SFT Masking:** The gradient descent isolates reasoning from grammar. Instruction prompts are aggressively masked with `-100` to force 100 percent of the Supervised Fine-Tuning (SFT) gradient onto the micro-cot response. Concurrently, a background TinyStories cross-entropy loss is systematically decayed from 0.35 to 0.15, preserving linguistic fluency without diluting logical convergence.
+
+- **Asynchronous Inter-Core Telemetry:** The host node operates a hardware-decoupled architecture. Core 0 is indefinitely locked in a pure float32 neural loop, pushing activation states through an inter-core FIFO pipeline to Core 1. Core 1 independently manages the TCP/IP stack and non-blocking HTTP daemon to serve real-time json-streamed thought vectors.
+
+- **Dynamic Vocabulary Harvesting:** To prevent Out-Of-Distribution token fragmentation, the compilation pipeline programmatically extracts all entities, container classes, and morphological plurals from the world state configuration, permanently reserving their indices in the 1,024-token latent space before allowing residual narrative words to populate the remaining vocabulary.
 ---
 
-## 🚀 Remote Colab GPU Training & Download
+## Remote Colab GPU Training & Download
 
-The repository ships with a **zero‑click** remote‑training pipeline that runs entirely from the terminal – no manual Chrome‑or‑Colab UI steps required.
-
-### Prerequisites
-1. Python 3.10+ inside the project's virtual‑env (`.venv`).
-2. The **colab‑cli** tool installed (`pip install colab-cli`).
-3. An active Google account with access to Colab T4 GPUs.
+The repository ships with a **zero‑click** remote-training pipeline that runs entirely from the terminal, no manual Chrome or Colab UI steps required
 
 ### Quick Start
 ```bash
-# Activate the project's venv if not already active
+python3 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 
 # Run the full remote‑training, live‑streaming output and automatic download
 ./trainRemote.sh
-```
-The script will:
-1. Spin up a fresh Colab session on a T4 GPU.
-2. Upload `colabRunner.py` (which forces unbuffered stdout).
-3. Execute the full training pipeline **live‑streaming** each step back to your terminal.
-4. Download `pico_weights_latest.zip` from the remote VM, unzip it into `models/local/`, and copy `vocab.py` into `firmware/`.
-5. Cleanly stop the Colab session even if the script is interrupted.
 
-### Troubleshooting
-- **No live output:** Ensure the repository contains the latest `colabRunner.py` where `PYTHONUNBUFFERED=1` and the streaming helper are applied.
-- **Download failed:** Verify the remote script writes the zip to `/content/pico_weights_latest.zip`. The path is hard‑coded in `trainRemote.sh`.
-- **Session leaks:** The script installs a `trap` that calls `colab stop` on EXIT; if you abort with `Ctrl‑C` the session should still be terminated.
+```
+
+## Hardware Deployment Pipeline
+
+Once the weights and vocabulary are compiled and downloaded to the local machine, the `deploy.py` script does the serial transfer to the RP2040 flash memory utilizing `mpremote`. It manages file system cleanup, payload transfers, and automated soft-reboots.
+
+To flash the master host and slave worker respectively, execute:
+
+```bash
+# Flash the HTTP daemon, telemetry logic, and Layer 0-2 tensors to Meow
+python3 deploy.py meow
+
+# Flash the worker logic and Layer 3-5 tensors to Miaou
+python3 deploy.py miaou
 
 ---
 
 ## Future Plans & Roadmap
 
-We have pushed pure FP32 float math on these microcontrollers to their absolute limits. To scale the engine further, the following upgrades are planned:
+Ive pushed MicroPython and emulated floating point math to their extreme limits on the RP2040. Future scaling will require deep software-level optimizations:
 
-- **INT8 Post‑Training Quantization (W8A32):** The RP2040 has no hardware FPU, meaning float math is emulated and slow. By quantizing the weights to 8‑bit integers, we can unlock the Pico's 1‑cycle hardware `MULS` instruction. This will slash the `.model` file sizes from 1.25 MB to ~315 KB, vastly speeding up SPI Flash reads.
-- **Multi‑Query Attention (MQA):** To free up SRAM, we plan to shift from standard Multi‑Head Attention to MQA. By sharing a single Key and Value head across all 4 Query heads, the KV cache footprint will drop by 4× (from 123 KB down to ~30 KB), completely eliminating memory fragmentation risks.
-- **Dual‑Core Pipelining:** Currently, Core 0 handles matrix math, web serving, and the Wi‑Fi TCP stack. We plan to use the RP2040's hardware FIFOs to offload the `cyw43` Wi‑Fi driver and HTTP server to Core 1, allowing Core 0 to compute neural layers at 100 % duty cycle without network interrupts.
+- **Native C-Modules for MicroPython:** Currently, the `stream_linear` inner loops use `@micropython.native`. Writing a dedicated `.c` module to execute matrix multiplication using ARM Thumb-2 Assembly (eg `MULS` and DSP instructions) would slash token generation time from ~6 seconds down to <1 second.
+
+- **INT8 KV Cache Compression:** Storing the SWA KV Cache currently requires ~30 KB of SRAM per board. By quantizing the Key/Value cache elements on the fly from FP32 to INT8, we can instantly double the context window from 64 tokens to 128 tokens without hitting memory fragmentation.
+
+- **Speculative Layer Execution (MoE):** To reduce the massive SPI Flash read overhead, we plan to implement a micro-Mixture-of-Experts (MoE) system where only 2 out of 8 MLP expert blocks are read from Flash per token, heavily reducing the I/O bottleneck.
