@@ -103,30 +103,24 @@ print(f"[✓] Vocab constructed: {len(CAT_CORE_WORDS)} core/pool words guarantee
 
 
 print("[*] Tokenizing logic and story streams...")
-# qaTensorX, qaTensorY = [], []
-# for task in allQaTasks:
-#     toks = tokenizeStr(task)
-#     if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
-#     x = toks + [padId] * (BLOCK_SIZE - len(toks))
-#     y = [-100] * BLOCK_SIZE
-#     ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
-#     if ansStart != -1:
-#         for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
-#     qaTensorX.append(torch.tensor(x, dtype=torch.long))
-#     qaTensorY.append(torch.tensor(y, dtype=torch.long))
-
 qaTensorX, qaTensorY = [], []
 for task in allQaTasks:
     toks = tokenizeStr(task)
-    if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
-    
-    # Input x padded with padId
+    if not toks:
+        continue
+    if len(toks) > BLOCK_SIZE:
+        toks = toks[:BLOCK_SIZE]
+        
     x = toks + [padId] * (BLOCK_SIZE - len(toks))
     
-    # Target y is shifted by 1 position across ALL real tokens
     y = [-100] * BLOCK_SIZE
     for idx in range(len(toks) - 1):
-        y[idx] = toks[idx + 1]
+        y[idx] = toks[idx + 1]  # At step idx, predict the next word
+        
+    qaTensorX.append(torch.tensor(x, dtype=torch.long))
+    qaTensorY.append(torch.tensor(y, dtype=torch.long))
+
+print(f"[✓] Tokenized {len(qaTensorX):,} QA tasks successfully.")
 
 qaXData = torch.stack(qaTensorX).to(DEVICE)
 qaYData = torch.stack(qaTensorY).to(DEVICE)
