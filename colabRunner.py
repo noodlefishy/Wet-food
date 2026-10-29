@@ -58,32 +58,7 @@ print("=" * 65, flush=True)
 runStreaming(["python3", "-u", "training/trainModel.py"])
 
 print("\n" + "=" * 65)
-print(" STAGE 2: FAST EVALUATOR (benchmarks/fastEvaluator.py)")
-print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py"])
-
-print("\n" + "=" * 65)
-print(" STAGE 3: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)")
-print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "benchmarks/oodEvaluator.py"])
-
-print("\n" + "=" * 65)
-print(" STAGE 4: SIMULATOR SMOKE TEST")
-print("=" * 65, flush=True)
-simPy = """
-from benchmarks.sim import generate
-test_prompts = [
-    "[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]",
-    "[c] alice has one cup . bob gave alice two cups . [q] how many items does alice have ? [a]",
-    "once upon a time bob went into the green garden ."
-]
-for p in test_prompts:
-    print(f"\\nPrompt: {p}\\nOutput: {generate(p, maxTokens=25)}")
-"""
-runStreaming(["python3", "-u", "-c", simPy])
-
-print("\n" + "=" * 65)
-print(" STAGE 5: PACKAGING WEIGHTS")
+print(" STAGE 2: PACKAGING WEIGHTS")
 print("=" * 65, flush=True)
 
 zipTarget = "/content/pico_weights_latest.zip"
@@ -97,5 +72,31 @@ shutil.copy(zipTarget, "models/local/pico_weights_latest.zip")
 
 print(f"[✓] Package created: {zipTarget} ({os.path.getsize(zipTarget)/1024:.1f} KB)")
 print("\n" + "=" * 65)
+
+print("\n" + "=" * 65)
+print(" STAGE 3: FAST EVALUATOR (benchmarks/fastEvaluator.py)")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py"])
+
+print("\n" + "=" * 65)
+print(" STAGE 4: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "benchmarks/oodEvaluator.py"])
+
+print("\n" + "=" * 65)
+print(" STAGE 5: SIMULATOR SMOKE TEST")
+print("=" * 65, flush=True)
+simPy = """
+from benchmarks.sim import generate
+test_prompts = [
+    "[c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]",
+    "[c] alice has one cup . bob gave alice two cups . [q] how many items does alice have ? [a]",
+    "once upon a time bob went into the green garden ."
+]
+for p in test_prompts:
+    print(f"\\nPrompt: {p}\\nOutput: {generate(p, maxTokens=25)}")
+"""
+runStreaming(["python3", "-u", "-c", simPy])
+
 print(" BUILD, TRAIN & EVALUATION PIPELINE COMPLETE!")
 print("=" * 65)

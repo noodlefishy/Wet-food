@@ -1,6 +1,6 @@
 # meow.py - Host (Master) node for distributed transformer
-import network, socket, struct, math, gc, time, machine, random, _thread
-from array import array; from machine import Pin
+import network, socket, struct, math, gc, time, machine, random, _thread # pyright: ignore[reportMissingImports]
+from array import array; from machine import Pin # pyright: ignore[reportMissingImports]
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
@@ -93,11 +93,16 @@ def run_layer(f, idx, x, pos):
     v = qkv[EMBED_DIM + HEAD_DIM :]
     
     # RoPE on Query heads and Key
+    c_tab, s_tab = cos_tab[min(pos, BLOCK_SIZE-1)], sin_tab[min(pos, BLOCK_SIZE-1)]
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
-        apply_rope(memoryview(q)[ho : ho + HEAD_DIM], pos)
+        for i in range(HEAD_DIM // 2):
+            i2 = ho + i * 2
+            x0, x1 = q[i2], q[i2+1]
+            q[i2]   = x0 * c_tab[i] - x1 * s_tab[i]
+            q[i2+1] = x0 * s_tab[i] + x1 * c_tab[i]
     apply_rope(k, pos)
-    
+
     kv[idx]['k'].append(array('f', k))
     kv[idx]['v'].append(array('f', v))
     
@@ -107,11 +112,14 @@ def run_layer(f, idx, x, pos):
         kv[idx]['v'].pop(SINK_SIZE)
         
     ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(HEAD_DIM)
+    seq_len = len(kv[idx]['k'])
+    avg_attn = [0.0] * seq_len
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM; qh = q[ho : ho + HEAD_DIM]
-        scs = [sum(qh[i]*kv[idx]['k'][t][i] for i in range(HEAD_DIM))*sc for t in range(len(kv[idx]['k']))]
+        scs = [sum(qh[i]*kv[idx]['k'][t][i] for i in range(HEAD_DIM))*sc for t in range(seq_len)]
         ms = max(scs); wts = [math.exp(s-ms) for s in scs]; s_wts = sum(wts); wts = [e/s_wts for e in wts]
-        for t in range(len(wts)):
+        for t in range(seq_len):
+            avg_attn[t] += wts[t] / NUM_HEADS
             for i in range(HEAD_DIM): ao[ho+i] += wts[t] * kv[idx]['v'][t][i]
             
     proj = stream_linear(f, EMBED_DIM, EMBED_DIM, ao)
@@ -119,10 +127,10 @@ def run_layer(f, idx, x, pos):
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
     h1 = stream_linear(f, 4*EMBED_DIM, EMBED_DIM, nx)
     h2 = stream_linear(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, val) for val in h1])
-    return [x[i] + h2[i] for i in range(EMBED_DIM)]
+    return [x[i] + h2[i] for i in range(EMBED_DIM)], avg_attn
 
 print("\n" + "="*50)
-print("[MEOW] Initializing Dual-Core Engine (3L RoPE + FIFO)...")
+print("[MEOW] Initializing Dual-Core Engine (3L RoPE + Attention Telemetry)...")
 
 try: network.hostname('meow')
 except: pass
@@ -270,15 +278,17 @@ while True:
         ct_ranks = [0, 0, 0, 0, 0]
         aborted = False
         
-        # Phase 1: Prefill prompt tokens into KV cache with RoPE
+        # Phase 1: Prefill prompt tokens into KV cache with RoPE & Attention Capture
         for stp in range(len(tks)):
             if not client_active[0]: aborted = True; break
             led.on()
             tid = tks[stp]
             x = read_emb(f_w, tid)
             
+            last_attn = []
             f_w.seek(L0_OFF)
-            for l in range(3): x = run_layer(f_w, l, x, stp)
+            for l in range(3):
+                x, last_attn = run_layer(f_w, l, x, stp)
             
             try:
                 pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
@@ -301,8 +311,9 @@ while True:
             ranks = [VOCAB[t] for t in ct_ranks]
             ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
             v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
+            attn_str = "[" + ",".join([f"{a:.2f}" for a in last_attn]) + "]"
             
-            telemetry_fifo.append(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n')
+            telemetry_fifo.append(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n')
             led.off()
 
         # Phase 2: Generation loop
@@ -315,8 +326,9 @@ while True:
                 v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
                 ranks = [VOCAB[t] for t in ct_ranks]
                 ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
+                attn_str = "[" + ",".join([f"{a:.2f}" for a in last_attn]) + "]"
                 
-                telemetry_fifo.append(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json}}}\n')
+                telemetry_fifo.append(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n')
                 
                 if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
                 
@@ -325,7 +337,8 @@ while True:
                 x = read_emb(f_w, tid)
                 
                 f_w.seek(L0_OFF)
-                for l in range(3): x = run_layer(f_w, l, x, pos)
+                for l in range(3):
+                    x, last_attn = run_layer(f_w, l, x, pos)
                 
                 try:
                     pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))

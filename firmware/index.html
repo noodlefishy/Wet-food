@@ -2,81 +2,233 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Meow & Miaou : Distributed Neural Engine</title>
+  <title>Meow &amp; Miaou : Distributed Neural Engine</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #050505; color: #39ff14; font-family: monospace; padding: 10px; font-size: 12px; }
-    h3 { color: #00e5ff; margin-bottom: 8px; font-size: 13px; text-shadow: 0 0 5px rgba(0,229,255,0.5); }
-    .container { display: flex; gap: 10px; }
-    .main-col { flex: 2.2; display: flex; flex-direction: column; gap: 8px; }
-    .side-col { flex: 1.1; display: flex; flex-direction: column; gap: 6px; }
-    
+    body {
+      background: #000;
+      color: #39ff14;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+      padding: 12px;
+      font-size: 12px;
+    }
+
+    .main-title {
+      color: #ff66cc;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .container { display: flex; gap: 14px; }
+    .main-col { flex: 2.3; display: flex; flex-direction: column; gap: 10px; }
+    .side-col { flex: 1.25; display: flex; flex-direction: column; gap: 8px; }
+
+    /* Left Column Elements */
     #log {
-      height: 400px; background: #000; border: 1px solid #1a3a1a; padding: 10px;
-      overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5;
-      box-shadow: inset 0 0 10px rgba(0,255,0,0.1); border-radius: 3px;
+      height: 480px;
+      background: #000;
+      border: 1px solid #ff66cc;
+      padding: 12px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.6;
+      border-radius: 2px;
+      position: relative;
     }
-    .input-row { display: flex; gap: 6px; align-items: center; }
+
+    .input-row { display: flex; gap: 8px; align-items: center; }
     input[type="text"] {
-      flex: 1; background: #0a0a0a; color: #fff; border: 1px solid #333; padding: 7px 10px;
-      font-family: monospace; font-size: 12px; border-radius: 2px;
+      flex: 1;
+      background: #000;
+      color: #fff;
+      border: 1px solid #ff66cc;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      border-radius: 2px;
     }
-    input[type="text"]:focus { outline: none; border-color: #00e5ff; box-shadow: 0 0 5px rgba(0,229,255,0.4); }
+    input[type="text"]:focus {
+      outline: none;
+      box-shadow: 0 0 6px rgba(255, 0, 127, 0.6);
+    }
     .btn {
-      padding: 7px 14px; border: none; font-weight: bold; cursor: pointer; font-family: monospace;
-      font-size: 12px; border-radius: 2px; transition: opacity 0.15s;
+      padding: 8px 16px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      border-radius: 2px;
+      transition: opacity 0.15s;
     }
     .btn:hover { opacity: 0.85; }
-    .btn-exec { background: #00e5ff; color: #000; }
+    .btn-exec { background: #ff66cc; color: #000; }
     .btn-stop { background: #ff0055; color: #fff; }
-    #timer { color: #888; font-size: 11px; min-width: 45px; }
+    #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; }
 
-    .badge { color: #ff66cc; font-size: 10px; font-weight: bold; margin-top: 2px; }
+    /* Token in Log (Hoverable) */
+    .term-tok {
+      cursor: pointer;
+      padding: 1px 2px;
+      border-radius: 2px;
+      transition: background-color 0.1s ease, color 0.1s ease;
+      display: inline-block;
+    }
+    .term-tok:hover, .tok-inspect {
+      background-color: rgba(255, 0, 127, 0.35) !important;
+      color: #fff !important;
+      outline: 1px solid #ff66cc;
+    }
+    .tok-attended {
+      background-color: rgba(255, 0, 127, var(--attn-strength, 0.2));
+      border-bottom: 1px solid #ff66cc;
+    }
+
+    /* Right Column Badges & Cards */
+    .badge {
+      color: #ff66cc;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
     .metric {
-      background: #0a0a0a; border: 1px solid #222; padding: 6px 8px; border-radius: 3px;
-      font-size: 11px; line-height: 1.4; position: relative; overflow: hidden;
+      background: #050505;
+      border: 1px solid #1c1c1c;
+      padding: 8px 10px;
+      border-radius: 2px;
+      font-size: 11px;
+      line-height: 1.5;
     }
-    .scanner-line { height: 2px; background: #1a1a1a; margin-top: 5px; position: relative; overflow: hidden; }
-    .scanner-glow {
-      position: absolute; width: 35%; height: 100%; background: #00e5ff;
-      animation: scan 1.4s ease-in-out infinite alternate;
-    }
-    @keyframes scan { from { left: 0%; } to { left: 65%; } }
+    .text-cyan { color: #00e5ff; }
+    .text-pink { color: #ff00aa; }
+    .text-green { color: #39ff14; }
 
-    .cortex-container { height: 95px; background: #000; border: 1px solid #222; padding: 3px; margin-top: 3px; }
-    .cortex-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; height: 100%; }
-    .cortex-node {
-      aspect-ratio: 1; background: #111; border: 1px solid #1a1a1a;
-      cursor: crosshair; transition: background-color 0.12s ease;
+    /* Free Heap Progress Bar */
+    .heap-bar-wrap {
+      width: 100%;
+      height: 3px;
+      background: #1a1a1a;
+      margin-top: 6px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .heap-bar-fill {
+      width: 65%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff66cc, #00e5ff);
+      transition: width 0.3s ease;
     }
 
-    #hover-tooltip {
-      position: fixed; background: rgba(5, 15, 5, 0.96); border: 1px solid #00e5ff;
-      color: #fff; padding: 5px 8px; font-size: 11px; pointer-events: none;
-      display: none; z-index: 99999; box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
-      border-radius: 3px; white-space: nowrap;
-    }
-
+    /* KV Prefill Chips */
     .chip {
-      display: inline-block; padding: 1px 5px; margin: 1px 2px; border-radius: 2px;
-      font-size: 10px; background: #161616; color: #888; border: 1px solid #282828;
+      display: inline-block;
+      padding: 2px 7px;
+      margin: 2px 3px;
+      border-radius: 3px;
+      font-size: 11px;
+      background: #000;
+      color: #39ff14;
+      border: 1px solid #1f661f;
     }
-    .chip-active { background: #002b33; color: #00e5ff; border-color: #00e5ff; }
-    .chip-done { background: #0a290a; color: #39ff14; border-color: #1f661f; }
-    .cursor { display: inline-block; width: 6px; height: 13px; background: #39ff14; animation: blink 1s step-end infinite; vertical-align: bottom; }
+    .chip-active {
+      border-color: #ff66cc;
+      color: #fff;
+      box-shadow: 0 0 5px rgba(255,0,127,0.5);
+    }
+    .chip-done {
+      background: rgba(57, 255, 20, 0.1);
+      border-color: #39ff14;
+    }
+
+    /* 80-D Synaptic Cortex Grid */
+    .cortex-container {
+      background: #000;
+      border: 1px solid #222;
+      padding: 4px;
+      margin: 5px 0 3px 0;
+    }
+    .cortex-grid {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 3px;
+      height: 95px;
+    }
+    .cortex-node {
+      background: #111;
+      border-radius: 1px;
+      cursor: crosshair;
+      transition: background-color 0.15s ease;
+    }
+    .cortex-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    /* Attention Popover */
+    #attn-popover {
+      position: fixed;
+      background: rgba(0, 0, 0, 0.95);
+      border: 1px solid #ff66cc;
+      padding: 7px 10px;
+      font-size: 10px;
+      color: #fff;
+      border-radius: 3px;
+      display: none;
+      z-index: 10000;
+      pointer-events: none;
+      box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+      min-width: 170px;
+    }
+    .attn-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 28px;
+      margin-top: 5px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 1px;
+    }
+    .attn-col {
+      flex: 1;
+      background: #ff66cc;
+      min-width: 2px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      background: #39ff14;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
     @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
 <body>
-  <div id="hover-tooltip"></div>
-  <h3>[ MEOW &amp; MIAOU : 2-NODE DISTRIBUTED NEURAL ENGINE ]</h3>
+  <div id="attn-popover">
+    <div id="pop-title" style="color:#00e5ff; font-weight:bold;"></div>
+    <div class="attn-bars" id="pop-bars"></div>
+    <div id="pop-footer" style="color:#888; font-size:9px; margin-top:3px;"></div>
+  </div>
+
+  <div class="main-title">[ MEOW AND MIAOU : DISTRIBUTED NEURAL ENGINE ]</div>
   
   <div class="container">
     <div class="main-col">
-      <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi.<br>Waiting for prompt...<br></div>
+      <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
       
       <div class="input-row">
-        <input type="text" id="prompt" value="[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]">
+        <input type="text" id="prompt" value="bob">
         <button class="btn btn-exec" id="btn-exec" onclick="gen()">Execute</button>
         <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
@@ -84,51 +236,63 @@
     </div>
     
     <div class="side-col">
-      <div class="badge">[ PIPELINE TELEMETRY ]</div>
+      <div class="badge">[ FUN FACTS ]</div>
       <div class="metric">
-        <b>Status:</b> <span id="m_stat">Idle / Ready</span><br>
-        <b>Latency:</b> <span id="m_lat">0</span> ms | <b>Speed:</b> <span id="tps-meter" style="color:#fff;">0.00</span> TPS
-        <div class="scanner-line"><div class="scanner-glow"></div></div>
+        Meow breed: <span class="text-cyan">8-Layer Transformer</span><br>
+        Miaou ages: <span class="text-cyan">316 KB (INT8 Flash)</span><br>
+        Engine Speed: <span class="text-cyan" id="tps-meter">0.00</span> TPS
+      </div>
+
+      <div class="badge">[ LIVE METRICS ]</div>
+      <div class="metric">
+        <b>Pipeline Status:</b> <span id="m_stat" class="text-pink">Idle / Ready</span><br>
+        <b>Token Latency:</b> <span id="m_lat" class="text-cyan">0</span> ms<br>
+        <b>Meow Free Heap:</b> <span id="m_ram" class="text-cyan">94400</span> bytes
+        <div class="heap-bar-wrap"><div class="heap-bar-fill" id="heap_fill"></div></div>
       </div>
       
-      <div class="badge">[ KV PREFILL PROGRESS ]</div>
-      <div class="metric" id="m_prefill" style="min-height: 48px;">Waiting for prompt...</div>
+      <div class="badge">[ PROMPT INGESTION (KV PREFILL) ]</div>
+      <div class="metric" id="m_prefill" style="min-height: 38px;">Waiting for prompt...</div>
 
-      <div class="badge">[ CANDIDATE RANKINGS (TOP 5) ]</div>
-      <div class="metric" id="m_ranks" style="font-size: 11px; line-height: 1.45;">
+      <div class="badge">[ WORD CANDIDATE RANKINGS (TOP 5) ]</div>
+      <div class="metric" id="m_ranks" style="font-size: 11px; line-height: 1.55;">
         1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---
       </div>
 
       <div class="badge">[ 80-D SYNAPTIC CORTEX ]</div>
       <div class="metric">
         <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:2px;">
-          <span style="color:#aaa;">Vector Energy:</span><span id="v_energy" style="color:#00e5ff;">0.00</span>
+          <span style="color:#aaa;">Thought Vector (Layer 2 &rarr; 3):</span>
+          <span>Energy: <b id="v_energy" class="text-cyan">0.00</b></span>
+        </div>
+        <div id="v_preview" style="color:#777; font-size:10px; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          [ 0.00, 0.00, 0.00, 0.00 ... ]
         </div>
         <div class="cortex-container">
           <div id="cortex-grid" class="cortex-grid"></div>
         </div>
-      </div>
-
-      <div class="badge">[ HARDWARE &amp; ARCHITECTURE ]</div>
-      <div class="metric" style="line-height:1.45; font-size:10px;">
-        <span style="color:#00e5ff;">Meow (Host):</span> Dual-Core RP2040 (Core 0: L0-2, Core 1: HTTP)<br>
-        <span style="color:#00e5ff;">Miaou (Worker):</span> 240 MHz RP2040 (Layers 3-7 over Wi-Fi)<br>
-        <span style="color:#00e5ff;">Position:</span> RoPE (Rotary Relative, Zero Pos Embedding)<br>
-        <span style="color:#00e5ff;">Attention:</span> MQA + Sliding Window KV Cache (SWA)<br>
-        <span style="color:#00e5ff;">Network:</span> 8-Layers | 80-D | 4 Heads | INT8 W8A32
+        <div class="cortex-legend">
+          <span style="color:#ff0055;">&#9632; Negative</span>
+          <span>80 Latent Dimensions</span>
+          <span style="color:#39ff14;">&#9632; Positive</span>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     let abortController = null;
-    let engineState = 'idle';
-    let currentVector = null;
+    let tokenHistory = [];
+    let lastActiveTelemetry = null;
     let tokenTimes = [];
 
     const Stopwatch = {
       startTime: 0, elapsed: 0, interval: null, running: false,
-      start() { this.startTime = performance.now(); this.elapsed = 0; this.running = true; clearInterval(this.interval); this.interval = setInterval(() => this.render(), 100); },
+      start() {
+        this.startTime = performance.now(); this.elapsed = 0; this.running = true;
+        clearInterval(this.interval);
+        this.interval = setInterval(() => this.render(), 100);
+      },
       stop() { this.running = false; clearInterval(this.interval); this.render(); },
       render() {
         const t = this.running ? (performance.now() - this.startTime) : this.elapsed;
@@ -139,26 +303,16 @@
     function initGrid() {
       const grid = document.getElementById('cortex-grid');
       grid.innerHTML = '';
-      const tip = document.getElementById('hover-tooltip');
       for (let i = 0; i < 80; i++) {
         const node = document.createElement('div');
         node.className = 'cortex-node';
         node.id = 'node-' + i;
-        node.addEventListener('mousemove', (e) => {
-          const val = node.getAttribute('data-val') || '0.00';
-          tip.innerHTML = `<b>Neuron #${i}</b><br>Act: <span style="color:${parseFloat(val)>=0?'#39ff14':'#ff0055'}">${val}</span>`;
-          tip.style.left = (e.clientX + 12) + 'px';
-          tip.style.top = (e.clientY + 12) + 'px';
-          tip.style.display = 'block';
-        });
-        node.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
         grid.appendChild(node);
       }
     }
 
-    function updateTelemetry(v) {
+    function renderVector(v) {
       if (!v || v.length === 0) return;
-      currentVector = v;
       let energy = 0;
       for (let i = 0; i < 80; i++) {
         const node = document.getElementById('node-' + i);
@@ -169,10 +323,17 @@
         node.style.backgroundColor = val >= 0 
           ? `rgba(57, 255, 20, ${0.12 + 0.88 * mag})` 
           : `rgba(255, 0, 85, ${0.12 + 0.88 * mag})`;
-        node.setAttribute('data-val', (val >= 0 ? '+' : '') + val.toFixed(2));
       }
-      const eEl = document.getElementById('v_energy');
-      if (eEl) eEl.innerText = (energy / 80).toFixed(2);
+      document.getElementById('v_energy').innerText = (energy / 80).toFixed(2);
+      const prev = v.slice(0, 4).map(x => (x >= 0 ? ' ' : '') + x.toFixed(2)).join(', ');
+      document.getElementById('v_preview').innerText = `[ ${prev} ... ]`;
+    }
+
+    function renderRanks(ranks) {
+      if (!ranks || ranks.length === 0) return;
+      document.getElementById('m_ranks').innerHTML = ranks.map((r, i) => 
+        `${i+1}. <b style="color:${i===0 ? '#39ff14' : '#00e5ff'}">${r}</b>`
+      ).join('<br>');
     }
 
     function setStat(txt, color='#39ff14') {
@@ -182,7 +343,6 @@
     }
 
     function setControls(running) {
-      engineState = running ? 'running' : 'idle';
       document.getElementById('btn-exec').style.display = running ? 'none' : 'block';
       document.getElementById('btn-stop').style.display = running ? 'block' : 'none';
       document.getElementById('prompt').disabled = running;
@@ -192,7 +352,54 @@
       if (abortController) { abortController.abort(); abortController = null; }
       setControls(false);
       Stopwatch.stop();
-      setStat("Stopped", "#ffaa00");
+      setStat("Stopped", "#ff66cc");
+    }
+
+    // Hover word inspection (activations & attention sparkline)
+    function inspectToken(idx, ev) {
+      const item = tokenHistory[idx];
+      if (!item) return;
+
+      renderVector(item.v);
+      renderRanks(item.ranks);
+
+      // Highlight predecessor tokens based on attention
+      if (item.attn && item.attn.length > 0) {
+        item.attn.forEach((weight, tIdx) => {
+          const pastTokEl = document.getElementById('term-tok-' + tIdx);
+          if (pastTokEl) {
+            pastTokEl.classList.add('tok-attended');
+            pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.2));
+          }
+        });
+
+        // Show attention popover mini-graph
+        const pop = document.getElementById('attn-popover');
+        document.getElementById('pop-title').innerText = `Token #${idx+1}: "${item.word}"`;
+        const barsBox = document.getElementById('pop-bars');
+        barsBox.innerHTML = item.attn.map(w => 
+          `<div class="attn-col" style="height:${Math.max(3, Math.min(26, w * 32))}px;"></div>`
+        ).join('');
+        document.getElementById('pop-footer').innerText = `Layer 2 Self-Attention (${item.attn.length} tokens)`;
+        
+        pop.style.left = (ev.clientX + 14) + 'px';
+        pop.style.top = (ev.clientY - 20) + 'px';
+        pop.style.display = 'block';
+      }
+    }
+
+    function uninspectToken() {
+      document.querySelectorAll('.tok-attended').forEach(el => {
+        el.classList.remove('tok-attended');
+        el.style.removeProperty('--attn-strength');
+      });
+      const pop = document.getElementById('attn-popover');
+      if (pop) pop.style.display = 'none';
+
+      if (lastActiveTelemetry) {
+        renderVector(lastActiveTelemetry.v);
+        renderRanks(lastActiveTelemetry.ranks);
+      }
     }
 
     async function gen() {
@@ -204,16 +411,19 @@
       setControls(true);
       Stopwatch.start();
       tokenTimes = [];
+      tokenHistory = [];
+      lastActiveTelemetry = null;
 
       const log = document.getElementById('log');
-      log.innerHTML = `<span style="color:#aaa;">&gt; ${p}</span>\n\n<span id="stream-ans"></span><span class="cursor" id="cursor"></span>`;
-      const ansSpan = document.getElementById('stream-ans');
-      const prefContainer = document.getElementById('m_prefill');
-      
-      const words = p.toLowerCase().split(/\s+/);
-      prefContainer.innerHTML = words.map((w, i) => `<span class="chip" id="pchip-${i}">${w}</span>`).join(' ');
+      const streamSpanId = 'stream-run-' + Date.now();
+      log.innerHTML += `\n&gt; <span id="${streamSpanId}"></span><span class="cursor" id="active-cursor"></span>`;
+      log.scrollTop = log.scrollHeight;
 
-      setStat("Prefilling KV Cache...", "#00e5ff");
+      const streamSpan = document.getElementById(streamSpanId);
+      const prefContainer = document.getElementById('m_prefill');
+      prefContainer.innerHTML = '';
+
+      setStat("Prompt Ingestion (KV Prefill)...", "#ff00aa");
 
       try {
         const resp = await fetch('/gen?p=' + encodeURIComponent(p), { signal: abortController.signal });
@@ -233,28 +443,56 @@
             let data;
             try { data = JSON.parse(line); } catch(e) { continue; }
 
-            if (data.v) updateTelemetry(data.v);
+            lastActiveTelemetry = data;
+            if (data.v) renderVector(data.v);
             if (data.ms) document.getElementById('m_lat').innerText = data.ms;
-
-            if (data.ranks && data.ranks.length) {
-              document.getElementById('m_ranks').innerHTML = data.ranks.map((r, i) => 
-                `${i+1}. <b style="color:${i===0?'#39ff14':'#aaa'}">${r}</b>`
-              ).join('<br>');
+            if (data.ram) {
+              document.getElementById('m_ram').innerText = data.ram;
+              const pct = Math.min(100, Math.max(10, (data.ram / 140000) * 100));
+              document.getElementById('heap_fill').style.width = pct + '%';
             }
+            if (data.ranks) renderRanks(data.ranks);
 
             if (data.stage === 'error') {
-              setStat("Error: " + (data.msg || "Unknown error"), "#ff0055");
-              ansSpan.innerText += `\n[Error: ${data.msg || "Inference failed"}]`;
+              setStat("Error: " + (data.msg || "Unknown"), "#ff0055");
+              streamSpan.innerHTML += `<span style="color:#ff0055;"> [Error: ${data.msg}]</span>`;
             } else if (data.stage === 'prefill') {
-              setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
-              const chip = document.getElementById('pchip-' + (data.cur - 1));
-              if (chip) { chip.className = 'chip chip-done'; }
-              const nextChip = document.getElementById('pchip-' + data.cur);
-              if (nextChip) { nextChip.className = 'chip chip-active'; }
-            } else if (data.stage === 'gen') {
-              setStat("Generating...", "#39ff14");
-              ansSpan.innerText += data.w + ' ';
+              // Real-time streaming of prompt ingestion
+              const tokIndex = tokenHistory.length;
+              tokenHistory.push({ word: data.tok, v: data.v, ranks: data.ranks, attn: data.attn });
+
+              const tokSpan = document.createElement('span');
+              tokSpan.className = 'term-tok';
+              tokSpan.id = 'term-tok-' + tokIndex;
+              tokSpan.innerText = data.tok + ' ';
+              tokSpan.onmouseenter = (e) => inspectToken(tokIndex, e);
+              tokSpan.onmouseleave = uninspectToken;
+              streamSpan.appendChild(tokSpan);
               log.scrollTop = log.scrollHeight;
+
+              setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
+
+              // Prefill chip update
+              const chip = document.createElement('span');
+              chip.className = 'chip chip-done';
+              chip.innerText = data.tok;
+              prefContainer.appendChild(chip);
+
+            } else if (data.stage === 'gen') {
+              // Real-time streaming of generated tokens
+              const tokIndex = tokenHistory.length;
+              tokenHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
+
+              const tokSpan = document.createElement('span');
+              tokSpan.className = 'term-tok';
+              tokSpan.id = 'term-tok-' + tokIndex;
+              tokSpan.innerText = data.w + ' ';
+              tokSpan.onmouseenter = (e) => inspectToken(tokIndex, e);
+              tokSpan.onmouseleave = uninspectToken;
+              streamSpan.appendChild(tokSpan);
+              log.scrollTop = log.scrollHeight;
+
+              setStat("Generating Answer...", "#ff00aa");
 
               const now = performance.now();
               tokenTimes.push(now);
@@ -268,14 +506,14 @@
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          ansSpan.innerText += `\n[Error: ${err.message}]`;
+          streamSpan.innerHTML += `<span style="color:#ff0055;">\n[Error: ${err.message}]</span>`;
         }
       } finally {
-        const cur = document.getElementById('cursor');
+        const cur = document.getElementById('active-cursor');
         if (cur) cur.remove();
         setControls(false);
         Stopwatch.stop();
-        setStat("Completed", "#00e5ff");
+        setStat("Ready", "#39ff14");
       }
     }
 

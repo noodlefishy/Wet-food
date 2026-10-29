@@ -110,9 +110,14 @@ def run_layer(f, idx, x, pos):
     v = qkv[EMBED_DIM + HEAD_DIM :]
     
     # RoPE on Query heads and Key
+    c_tab, s_tab = cos_tab[min(pos, BLOCK_SIZE-1)], sin_tab[min(pos, BLOCK_SIZE-1)]
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
-        apply_rope(memoryview(q)[ho : ho + HEAD_DIM], pos)
+        for i in range(HEAD_DIM // 2):
+            i2 = ho + i * 2
+            x0, x1 = q[i2], q[i2+1]
+            q[i2]   = x0 * c_tab[i] - x1 * s_tab[i]
+            q[i2+1] = x0 * s_tab[i] + x1 * c_tab[i]
     apply_rope(k, pos)
     
     kv[idx]['k'].append(array('f', k))

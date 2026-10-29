@@ -1,4 +1,4 @@
-import os, sys, json, re, time, struct, math, torch, numpy as np, torch.nn as nn
+import os, sys, json, re, time, struct, torch, numpy as np, torch.nn as nn
 from torch.nn import functional as F
 
 projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,7 +16,9 @@ NUM_LAYERS   = modCfg["architecture"]["num_layers"]
 MEOW_LAYERS  = modCfg["architecture"]["meow_layers"]
 MIAOU_LAYERS = modCfg["architecture"]["miaou_layers"]
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
-device       = "mps" if torch.backends.mps.is_available() else "cpu"
+
+# Prioritize CUDA on Colab GPU runtimes
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 def precomputeRope(headDim, maxLen=BLOCK_SIZE):
     inv = 1.0 / (10000.0 ** (torch.arange(0, headDim, 2).float() / headDim))
@@ -39,7 +41,8 @@ class RoPE_MQA(nn.Module):
     def __init__(self):
         super().__init__()
         self.qkvProj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * HEAD_DIM)
-        self.outProj  = nn.Linear(EMBED_DIM, EMBED_DIM)
+        self.outProj = nn.Linear(EMBED_DIM, EMBED_DIM)
+
     def forward(self, x):
         B, T, C = x.shape
         qkv = self.qkvProj(x)
@@ -58,7 +61,8 @@ class Block(nn.Module):
         self.ln1 = nn.LayerNorm(EMBED_DIM)
         self.sa  = RoPE_MQA()
         self.ln2 = nn.LayerNorm(EMBED_DIM)
-        self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4*EMBED_DIM), nn.ReLU(), nn.Linear(4*EMBED_DIM, EMBED_DIM))
+        self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4 * EMBED_DIM), nn.ReLU(), nn.Linear(4 * EMBED_DIM, EMBED_DIM))
+
     def forward(self, x):
         return x + self.mlp(self.ln2(x + self.sa(self.ln1(x))))
 
@@ -66,9 +70,10 @@ class BabyStories(nn.Module):
     def __init__(self):
         super().__init__()
         self.tokEmb = nn.Embedding(VOCAB_SIZE, EMBED_DIM)
-        self.layers  = nn.ModuleList([Block() for _ in range(NUM_LAYERS)])
+        self.layers = nn.ModuleList([Block() for _ in range(NUM_LAYERS)])
         self.lnF    = nn.LayerNorm(EMBED_DIM)
         self.lmHead = nn.Linear(EMBED_DIM, VOCAB_SIZE)
+
     def forward(self, idx):
         x = self.tokEmb(idx)
         for layer in self.layers: x = layer(x)
@@ -85,7 +90,8 @@ def loadParam(f, tensor, quantized=True):
             data[r] = np.frombuffer(f.read(cols), dtype=np.int8).astype(np.float32) * s
         tensor.data.copy_(torch.from_numpy(data))
     else:
-        tensor.data.copy_(torch.from_numpy(np.frombuffer(f.read(tensor.numel() * 4), dtype=np.float32)).view_as(tensor))
+        rawBuf = np.frombuffer(f.read(tensor.numel() * 4), dtype=np.float32).copy()
+        tensor.data.copy_(torch.from_numpy(rawBuf).view_as(tensor))
 
 p1 = os.path.join(projectRoot, "models", "local", "pico1 weights.model")
 p2 = os.path.join(projectRoot, "models", "local", "pico2 weights.model")
@@ -105,9 +111,17 @@ with open(p2, "rb") as f:
     loadParam(f, model.lmHead.bias)
 
 model.eval()
-print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE, no pos_emb) on {device}\n")
+print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
 
-suitePath = sys.argv[1] if len(sys.argv) > 1 else os.path.join(projectRoot, "config", "stressTest.json")
+# Locate questions file
+if len(sys.argv) > 1:
+    suitePath = sys.argv[1]
+elif os.path.exists(os.path.join(projectRoot, "config", "questions.json")):
+    suitePath = os.path.join(projectRoot, "config", "questions.json")
+else:
+    suitePath = os.path.join(projectRoot, "config", "stressTest.json")
+
+print(f"[*] Loading evaluation suite: {suitePath}")
 with open(suitePath) as f: rawData = json.load(f)
 
 aId, padId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1)
@@ -115,13 +129,22 @@ aId, padId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1)
 def tokenize(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.?:]", s.lower())]
 
-allTests = [(cat, item["q"], item["target"]) for cat, items in rawData.items() for item in items]
+allTests, storyTests = [], []
+for cat, items in rawData.items():
+    for item in items:
+        q = item.get("q", "")
+        tgt = item.get("target")
+        if tgt is None:
+            storyTests.append((cat, q))
+        else:
+            allTests.append((cat, q, str(tgt)))
+
 total = len(allTests)
-print(f"[*] Running {total:,} tests on {len(rawData)} categories...\n")
+print(f"[*] Running {total:,} QA tests across {len(rawData)} categories...\n")
 
 catStats, totalPassed, failures = {}, 0, []
 t0 = time.time()
-BATCH = 512
+BATCH = 256 if device == "cuda" else 64
 
 with torch.no_grad():
     for i in range(0, total, BATCH):
@@ -154,30 +177,32 @@ with torch.no_grad():
             else:
                 failures.append((cat, batch[j][1], target, pred))
 
-        done = min(i + BATCH, total)
-        pct = totalPassed / done * 100
-        elapsed = time.time() - t0
-        eta = (total - done) * (elapsed / done) if done else 0
-        print(f"  {done:>7,}/{total:,}  acc={pct:5.1f}%  eta={eta/60:.1f}m", end="\r", flush=True)
-
 elapsed = time.time() - t0
-print(f"\n\n{'='*60}")
-print(f" RESULTS: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.1f}s)")
-print(f"{'='*60}")
+print(f"\n{'='*65}")
+print(f" REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
+print(f"{'='*65}")
 
-perfect, struggling = [], []
 for cat in sorted(catStats.keys()):
     passed, n = catStats[cat]
-    pct = passed / n * 100
-    mark = "✓" if pct == 100 else ("~" if pct >= 80 else "✗")
-    print(f"  [{mark}] {cat:<35} {passed:>6}/{n:<6} {pct:5.1f}%")
-    if pct == 100: perfect.append(cat)
-    elif pct < 70:  struggling.append(cat)
+    pct = (passed / n * 100) if n else 0
+    mark = "✓" if pct >= 90 else ("~" if pct >= 70 else "✗")
+    print(f"  [{mark}] {cat:<38} {passed:>4}/{n:<4} {pct:5.1f}%")
 
-print(f"\n[✓] Perfect (100%): {', '.join(perfect) or 'none'}")
-print(f"[✗] Struggling (<70%): {', '.join(struggling) or 'none'}")
-
-if "--failures" in sys.argv and failures:
-    print(f"\n--- Sample Failures (first 20) ---")
-    for cat, q, tgt, pred in failures[:20]:
-        print(f"  [{cat}] Q: {q!r}  expected={tgt!r}  got={pred!r}")
+if storyTests:
+    print(f"\n{'='*65}")
+    print(" STORYTELLING GENERATION PREVIEW")
+    print(f"{'='*65}")
+    for _, prompt in storyTests[:3]:
+        curToks = tokenize(prompt)
+        genWords = []
+        with torch.no_grad():
+            for _ in range(16):
+                padded = curToks + [padId] * (BLOCK_SIZE - len(curToks))
+                x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
+                nxt = model(x)[0, len(curToks)-1].argmax().item()
+                w = VOCAB[nxt]
+                if w in ("<eos>", "<pad>"): break
+                genWords.append(w)
+                curToks.append(nxt)
+                if len(curToks) >= BLOCK_SIZE: break
+        print(f"Prompt: {prompt}\nStory : {' '.join(genWords)}\n")
