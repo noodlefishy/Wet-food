@@ -164,7 +164,7 @@ with torch.no_grad():
         pct = total_passed / done * 100
         elapsed = time.time() - t0
         eta = (total - done) * (elapsed / done) if done else 0
-        print(f"  {done:>7,}/{total:,}  acc={pct:5.1f}%  eta={eta/60:.1f}m", end="\r")
+        print(f"  {done:>7,}/{total:,}  acc={pct:5.1f}%  eta={eta/60:.1f}m", end="\r", flush=True)
 
 elapsed = time.time() - t0
 print(f"\n\n{'='*60}")

@@ -218,7 +218,7 @@ try:
             elapsed = time.time() - t_start
             s_per_step = elapsed / max(step, 1)
             eta_min = (TOTAL_STEPS - step) * s_per_step / 60
-            print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f} | ETA: {eta_min:.1f}m")
+            print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {loss_qa.item():.4f} | Story: {loss_st.item():.4f} | ETA: {eta_min:.1f}m", flush=True)
 except KeyboardInterrupt:
     print(f"\n[!] Training paused. Saving current checkpoint...")
 

@@ -15,48 +15,69 @@ print("="*65)
 print("     picoAI UNIFIED COLAB BUILD & TEST RUNNER")
 print("="*65)
 
-# Step 1: Detect Colab environment & install requirements
+import torch
+
+# Enforce running in Google Colab with CUDA
 in_colab = False
 try:
     import google.colab
     in_colab = True
-    print("[✓] Running inside Google Colab environment.")
 except ImportError:
-    print("[*] Running in standalone local environment.")
+    pass
 
-if in_colab:
-    repo_dir = "/content/Wet-food"
-    if not os.path.exists(repo_dir) and not os.path.exists("config/model.json"):
-        print("[*] Cloning repository...")
-        subprocess.run(["git", "clone", "https://github.com/noodlefishy/Wet-food.git", repo_dir], check=True)
-        os.chdir(repo_dir)
-    elif os.path.exists(repo_dir):
-        os.chdir(repo_dir)
+if not in_colab:
+    print("\n[!] ERROR: colab_runner.py is designed exclusively to run inside a Google Colab GPU environment!")
+    print("    Running this locally on your Mac CPU will take too long.")
+    print("\n    To run this on Colab with GPU (CUDA):")
+    print("    1. Open your Colab notebook (Runtime -> Change runtime type -> T4 GPU)")
+    print("    2. Run this command in a Colab code cell:")
+    print("       !git clone https://github.com/noodlefishy/Wet-food.git /content/Wet-food && cd /content/Wet-food && python3 colab_runner.py\n")
+    sys.exit(1)
 
-print(f"[*] Working directory: {os.getcwd()}")
+if not torch.cuda.is_available():
+    print("\n[!] WARNING: CUDA GPU is not detected in this Colab session!")
+    print("    Please switch runtime to GPU: Runtime -> Change runtime type -> T4 GPU.")
+    print("    Exiting to avoid slow CPU training.")
+    sys.exit(1)
+
+print(f"[✓] Google Colab CUDA environment verified: {torch.cuda.get_device_name(0)}")
+repo_dir = "/content/Wet-food"
+if not os.path.exists(repo_dir) and not os.path.exists("config/model.json"):
+    print("[*] Cloning repository...", flush=True)
+    subprocess.run(["git", "clone", "https://github.com/noodlefishy/Wet-food.git", repo_dir], check=True)
+    os.chdir(repo_dir)
+elif os.path.exists(repo_dir):
+    os.chdir(repo_dir)
+    print("[*] Updating repository to latest commit...", flush=True)
+    subprocess.run(["git", "pull", "origin", "main"], check=False)
+
+# Force unbuffered stdout across the entire session
+sys.stdout.reconfigure(line_buffering=True)
 
 # Step 2: Run Training & Quantization
-print("\n" + "="*65)
-print(" STAGE 1: TRAINING & QUANTIZATION (training/local.py)")
-print("="*65)
-subprocess.run([sys.executable, "training/local.py"], check=True)
+print("\n" + "="*65, flush=True)
+print(" STAGE 1: TRAINING & QUANTIZATION (training/local.py)", flush=True)
+print("="*65, flush=True)
+env = os.environ.copy()
+env["PYTHONUNBUFFERED"] = "1"
+subprocess.run([sys.executable, "-u", "training/local.py"], check=True, env=env)
 
 # Step 3: Run Fast Evaluator (Full 69k stress test)
-print("\n" + "="*65)
-print(" STAGE 2: FAST EVALUATION BENCHMARK (benchmarks/fast_evaluator.py)")
-print("="*65)
-subprocess.run([sys.executable, "benchmarks/fast_evaluator.py"], check=True)
+print("\n" + "="*65, flush=True)
+print(" STAGE 2: FAST EVALUATION BENCHMARK (benchmarks/fast_evaluator.py)", flush=True)
+print("="*65, flush=True)
+subprocess.run([sys.executable, "-u", "benchmarks/fast_evaluator.py"], check=True, env=env)
 
 # Step 4: Run Out-of-Distribution Generalization Probe
-print("\n" + "="*65)
-print(" STAGE 3: OUT-OF-DISTRIBUTION (OOD) GENERALIZATION")
-print("="*65)
-subprocess.run([sys.executable, "benchmarks/ood_evaluator.py"], check=True)
+print("\n" + "="*65, flush=True)
+print(" STAGE 3: OUT-OF-DISTRIBUTION (OOD) GENERALIZATION", flush=True)
+print("="*65, flush=True)
+subprocess.run([sys.executable, "-u", "benchmarks/ood_evaluator.py"], check=True, env=env)
 
 # Step 5: Run Simulator Smoke Test
-print("\n" + "="*65)
-print(" STAGE 4: SIMULATOR SMOKE TEST")
-print("="*65)
+print("\n" + "="*65, flush=True)
+print(" STAGE 4: SIMULATOR SMOKE TEST", flush=True)
+print("="*65, flush=True)
 test_prompts = [
     "[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]",
     "[c] alice went to the kitchen . bob went to the garden . [q] is alice in the kitchen ? [a]",
@@ -88,6 +109,10 @@ for src, name in files_to_pack:
 
 shutil.make_archive(zip_filename, 'zip', "export_pack")
 zip_path = f"{zip_filename}.zip"
+try:
+    shutil.copyfile(zip_path, "/content/pico_weights_latest.zip")
+except Exception:
+    pass
 print(f"\n[✓] Created {zip_path} ({os.path.getsize(zip_path)/1024:.1f} KB)")
 
 if in_colab:
