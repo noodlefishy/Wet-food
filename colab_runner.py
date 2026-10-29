@@ -20,7 +20,7 @@ import torch
 # Enforce running in Google Colab with CUDA
 in_colab = False
 try:
-    import google.colab
+    import google.colab  # pyright: ignore[reportMissingImports]
     in_colab = True
 except ImportError:
     pass
@@ -51,11 +51,6 @@ elif os.path.exists(repo_dir):
     print("[*] Updating repository to latest commit...", flush=True)
     subprocess.run(["git", "pull", "origin", "main"], check=False)
 
-if hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(line_buffering=True)
-    except Exception:
-        pass
 
 def run_streaming(cmd, env_vars=None):
     e = os.environ.copy()
@@ -70,10 +65,10 @@ def run_streaming(cmd, env_vars=None):
         universal_newlines=True,
         env=e
     )
-    for line in iter(proc.stdout.readline, ""):
+    for line in iter(proc.stdout.readline, ""): # type: ignore
         sys.stdout.write(line)
         sys.stdout.flush()
-    proc.stdout.close()
+    proc.stdout.close() # pyright: ignore[reportOptionalMemberAccess]
     ret = proc.wait()
     if ret != 0:
         raise subprocess.CalledProcessError(ret, cmd)
@@ -139,7 +134,7 @@ print(f"\n[✓] Created {zip_path} ({os.path.getsize(zip_path)/1024:.1f} KB)")
 
 if in_colab:
     try:
-        from google.colab import files
+        from google.colab import files # pyright: ignore[reportMissingImports]
         print("[*] Triggering automatic browser download of weights package...")
         files.download(zip_path)
     except Exception as e:

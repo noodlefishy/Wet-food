@@ -442,7 +442,7 @@ def eval_gpu(prompt_text, max_tokens=30, temp=0.05):
                 probs = F.softmax(top_vals, dim=-1)
                 next_tok = top_idx[0, torch.multinomial(probs, 1)[0, 0]].item()
 
-            w = VOCAB[next_tok]
+            w = VOCAB[next_tok] # pyright: ignore[reportCallIssue, reportArgumentType]
             if w in ("<eos>", "<pad>"): break
             out_words.append(w)
             x = torch.cat((x, torch.tensor([[next_tok]], device=device)), dim=1)
