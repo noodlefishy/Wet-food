@@ -19,6 +19,9 @@ HEAD_DIM     = EMBED_DIM // NUM_HEADS
 
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
+
+# if __name__ != "__main__": quit()
+
 def precomputeRope(headDim, maxLen=BLOCK_SIZE):
     inv = 1.0 / (10000.0 ** (torch.arange(0, headDim, 2).float() / headDim))
     f = torch.outer(torch.arange(maxLen).float(), inv)
@@ -107,110 +110,113 @@ with open(p2, "rb") as f:
     loadParam(f, model.lmHead.weight)
     loadParam(f, model.lmHead.bias)
 
-model.eval()
-print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
-
-suitePath = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else os.path.join(projectRoot, "config", "stressTest.json")
-if not os.path.exists(suitePath): suitePath = os.path.join(projectRoot, "config", "questions.json")
-
-print(f"[*] Loading evaluation suite: {suitePath}")
-with open(suitePath) as f: rawData = json.load(f)
-
 aId, padId, dotId, eosId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1), WORD_TO_ID.get(".", 3), WORD_TO_ID.get("<eos>", 2)
 TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
 
-def tokenize(s):
-    for c in [".", "?", "!", ",", ":"]: s = s.replace(c, f" {c} ")
-    s = s.replace("'s", " 's ")
-    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
+if __name__ == "__main__":
+    model.eval()
+    print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
 
-allTests = []
-for cat, items in rawData.items():
-    for item in items:
-        if item.get("target") is not None:
-            allTests.append((cat, item["q"], str(item["target"])))
+    suitePath = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else os.path.join(projectRoot, "config", "stressTest.json")
+    if not os.path.exists(suitePath): suitePath = os.path.join(projectRoot, "config", "questions.json")
 
-total = len(allTests)
-print(f"[*] Evaluating {total:,} QA tests across {len(rawData)} categories...\n")
+    print(f"[*] Loading evaluation suite: {suitePath}")
+    with open(suitePath) as f: rawData = json.load(f)
 
-catStats, totalPassed, failures = {}, 0, []
-t0 = time.time()
-BATCH = 512
+    
 
-def extract_answer(text):
-    if not text or not text.strip(): return ""
-    clean = text.strip().rstrip(".")
-    if ":" in clean:
-        parts = clean.split(":")[-1].strip().split()
-        if parts: return parts[0]
-        before = clean.split(":")[0].strip().split()
-        return before[-1] if before else ""
-    words = clean.split()
-    return words[-1] if words else ""
+    def tokenize(s):
+        for c in [".", "?", "!", ",", ":"]: s = s.replace(c, f" {c} ")
+        s = s.replace("'s", " 's ")
+        return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
 
-with torch.no_grad():
-    for i in range(0, total, BATCH):
-        batch = allTests[i:i+BATCH]
-        prompts = [tokenize(q) for _, q, _ in batch]
-        lens = [len(p) for p in prompts]
-        
-        padded = [p + [padId] * (BLOCK_SIZE - len(p)) for p in prompts]
-        x = torch.tensor(padded, dtype=torch.long, device=device)
-        
-        genTokens = [[] for _ in batch]
-        active = [True] * len(batch)
-        
-        # Micro-CoT multi-step generation (up to 4 tokens)
-        for step in range(4):
-            logits = model(x)
-            for j in range(len(batch)):
-                if not active[j]: continue
-                pos = lens[j] + step - 1
-                if pos >= BLOCK_SIZE:
-                    active[j] = False
-                    continue
-                predId = logits[j, pos].argmax().item()
-                genTokens[j].append(VOCAB[predId])
-                if predId in (dotId, eosId): active[j] = False
-                if pos + 1 < BLOCK_SIZE: x[j, pos + 1] = predId
-            if not any(active): break
+    allTests = []
+    for cat, items in rawData.items():
+        for item in items:
+            if item.get("target") is not None:
+                allTests.append((cat, item["q"], str(item["target"])))
 
-        for j, (cat, q, target) in enumerate(batch):
-            genStr = " ".join(genTokens[j])
-            predAns = extract_answer(genStr)
-            expectedAns = extract_answer(target)
+    total = len(allTests)
+    print(f"[*] Evaluating {total:,} QA tests across {len(rawData)} categories...\n")
+
+    catStats, totalPassed, failures = {}, 0, []
+    t0 = time.time()
+    BATCH = 512
+
+    def extract_answer(text):
+        if not text or not text.strip(): return ""
+        clean = text.strip().rstrip(".")
+        if ":" in clean:
+            parts = clean.split(":")[-1].strip().split()
+            if parts: return parts[0]
+            before = clean.split(":")[0].strip().split()
+            return before[-1] if before else ""
+        words = clean.split()
+        return words[-1] if words else ""
+
+    with torch.no_grad():
+        for i in range(0, total, BATCH):
+            batch = allTests[i:i+BATCH]
+            prompts = [tokenize(q) for _, q, _ in batch]
+            lens = [len(p) for p in prompts]
             
-            ok = (predAns == expectedAns and predAns != "")
-            if cat not in catStats: catStats[cat] = [0, 0]
-            catStats[cat][1] += 1
-            if ok:
-                catStats[cat][0] += 1
-                totalPassed += 1
-            else:
-                if len(failures) < 50:
-                    failures.append((cat, q, target, genStr))
+            padded = [p + [padId] * (BLOCK_SIZE - len(p)) for p in prompts]
+            x = torch.tensor(padded, dtype=torch.long, device=device)
+            
+            genTokens = [[] for _ in batch]
+            active = [True] * len(batch)
+            
+            # Micro-CoT multi-step generation (up to 4 tokens)
+            for step in range(4):
+                logits = model(x)
+                for j in range(len(batch)):
+                    if not active[j]: continue
+                    pos = lens[j] + step - 1
+                    if pos >= BLOCK_SIZE:
+                        active[j] = False
+                        continue
+                    predId = logits[j, pos].argmax().item()
+                    genTokens[j].append(VOCAB[predId])
+                    if predId in (dotId, eosId): active[j] = False
+                    if pos + 1 < BLOCK_SIZE: x[j, pos + 1] = predId
+                if not any(active): break
 
-        done = min(i + BATCH, total)
-        pct = (totalPassed / done * 100) if done else 0
-        elapsed = time.time() - t0
-        eta = (total - done) * (elapsed / done) if done else 0
-        sys.stdout.write(f"\r  [Evaluator] Progress: {done:>7,}/{total:,} [{done/total*100:5.1f}%] | Acc: {pct:5.1f}% | Elapsed: {elapsed:4.1f}s | ETA: {eta:4.1f}s")
-        sys.stdout.flush()
+            for j, (cat, q, target) in enumerate(batch):
+                genStr = " ".join(genTokens[j])
+                predAns = extract_answer(genStr)
+                expectedAns = extract_answer(target)
+                
+                ok = (predAns == expectedAns and predAns != "")
+                if cat not in catStats: catStats[cat] = [0, 0]
+                catStats[cat][1] += 1
+                if ok:
+                    catStats[cat][0] += 1
+                    totalPassed += 1
+                else:
+                    if len(failures) < 50:
+                        failures.append((cat, q, target, genStr))
 
-elapsed = time.time() - t0
-print(f"\n\n{'='*65}")
-print(f" FINAL REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
-print(f"{'='*65}")
+            done = min(i + BATCH, total)
+            pct = (totalPassed / done * 100) if done else 0
+            elapsed = time.time() - t0
+            eta = (total - done) * (elapsed / done) if done else 0
+            sys.stdout.write(f"\r  [Evaluator] Progress: {done:>7,}/{total:,} [{done/total*100:5.1f}%] | Acc: {pct:5.1f}% | Elapsed: {elapsed:4.1f}s | ETA: {eta:4.1f}s")
+            sys.stdout.flush()
 
-for cat in sorted(catStats.keys()):
-    passed, n = catStats[cat]
-    pct = (passed / n * 100) if n else 0
-    mark = "✓" if pct >= 90 else ("~" if pct >= 70 else "✗")
-    print(f"  [{mark}] {cat:<38} {passed:>6}/{n:<6} {pct:5.1f}%")
-
-if "--failures" in sys.argv and failures:
-    print(f"\n{'='*65}")
-    print(" SAMPLE MISPREDICTIONS (First 15)")
+    elapsed = time.time() - t0
+    print(f"\n\n{'='*65}")
+    print(f" FINAL REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
     print(f"{'='*65}")
-    for cat, q, tgt, pred in failures[:15]:
-        print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r}\n    Generated CoT: {pred!r}\n")
+
+    for cat in sorted(catStats.keys()):
+        passed, n = catStats[cat]
+        pct = (passed / n * 100) if n else 0
+        mark = "✓" if pct >= 90 else ("~" if pct >= 70 else "✗")
+        print(f"  [{mark}] {cat:<38} {passed:>6}/{n:<6} {pct:5.1f}%")
+
+    if "--failures" in sys.argv and failures:
+        print(f"\n{'='*65}")
+        print(" SAMPLE MISPREDICTIONS (First 15)")
+        print(f"{'='*65}")
+        for cat, q, tgt, pred in failures[:15]:
+            print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r}\n    Generated CoT: {pred!r}\n")
