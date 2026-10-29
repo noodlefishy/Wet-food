@@ -56,7 +56,7 @@ def generate(promptTxt, maxTokens=20):
             predWord = VOCAB[predId] # type: ignore
             if predWord in ("<eos>", "<pad>"): break
             out_words.append(predWord)
-            if isLog and predWord == ".": break
+
             
             # Feed prediction back into sequence
             x[0, pos + 1] = predId

@@ -354,7 +354,7 @@ while True:
                 word_display = VOCAB[cur].replace("_", " ")
                 telemetry_fifo.append(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n')
                 
-                if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break
+                if word in ("<eos>", "<pad>"): led.off(); break
                 
                 pos = len(tks) + gen_stp
                 tid = cur

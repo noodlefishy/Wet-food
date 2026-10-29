@@ -29,6 +29,7 @@ echo ""
 echo "[*] Downloading trained weights and vocab back to local disk..."
 mkdir -p models/local firmware
 .venv/bin/colab download -s "${sessionName}" /content/pico_weights_latest.zip models/local/pico_weights_latest.zip
+.venv/bin/colab download -s "${sessionName}" /content/failures.json failures.json
 
 echo "[*] Unpacking weights to models/local and firmware/vocab.py..."
 unzip -o models/local/pico_weights_latest.zip -d models/local/

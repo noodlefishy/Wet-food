@@ -154,13 +154,8 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
     elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
         dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
         rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
-        dist_loc = dist_actor.replace("actor", "location")
-        dist_item = dist_actor.replace("actor", "item")
-        rec_loc = rec_actor.replace("actor", "location")
-        rec_item = rec_actor.replace("actor", "item")
         
-        # Search the entire QA unit so both "where is X" and "who went to Y" are captured
-        if random.random() < 0.65:
+        if random.random() < 0.50:
             d = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
             queryObj = random.choice(d) if d else random.choice(queries)
         else:

@@ -82,7 +82,7 @@ runStreaming(["python3", "-u", "benchmarks/stressTest.py"])
 print("\n" + "=" * 65)
 print(" STAGE 3: RUNNING FAST EVALUATION")
 print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py", "config/stressTest.json"])
+runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py", "config/stressTest.json", "--failures"])
 
 print(" STAGE 4: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)")
 print("=" * 65, flush=True)

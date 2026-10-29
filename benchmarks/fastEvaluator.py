@@ -162,19 +162,22 @@ if __name__ == "__main__":
             genTokens = [[] for _ in batch]
             active = [True] * len(batch)
             
-            # Micro-CoT multi-step generation (up to 4 tokens) & more (6) & more again(10) & even more again (16)
-            for step in range(16):
+            # Micro-CoT multi-step generation (up to 4 tokens) & more (6) & more again(10) & even more again (16) & an extra even more again (20)
+            for step in range(20):
                 logits = model(x)
                 for j in range(len(batch)):
                     if not active[j]: continue
                     pos = lens[j] + step - 1
-                    if pos >= BLOCK_SIZE:
+                    if pos >= BLOCK_SIZE - 1:
                         active[j] = False
                         continue
                     predId = logits[j, pos].argmax().item()
                     genTokens[j].append(VOCAB[predId])
-                    if predId in (dotId, eosId): active[j] = False
-                    if pos + 1 < BLOCK_SIZE: x[j, pos + 1] = predId
+                    # Stop ONLY on <eos> or <pad>, allowing multiple '.' periods in the chain
+                    if predId in (eosId, padId): 
+                        active[j] = False
+                    if pos + 1 < BLOCK_SIZE: 
+                        x[j, pos + 1] = predId
                 if not any(active): break
 
             for j, (cat, q, target) in enumerate(batch):
