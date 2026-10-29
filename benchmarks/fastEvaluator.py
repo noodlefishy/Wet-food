@@ -5,7 +5,6 @@ projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
 with open(os.path.join(projectRoot, "config", "model.json")) as f: modCfg = json.load(f)
 from models.local import vocab
-from chunks import preprocess_chunks, decode_token, TOKEN_REGEX
 
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
@@ -14,8 +13,8 @@ EMBED_DIM    = modCfg["architecture"]["embed_dim"]
 BLOCK_SIZE   = modCfg["architecture"]["block_size"]
 NUM_HEADS    = modCfg["architecture"]["num_heads"]
 NUM_LAYERS   = modCfg["architecture"]["num_layers"]
-MEOW_LAYERS  = modCfg["architecture"].get("meow_layers", NUM_LAYERS // 2)
-MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", NUM_LAYERS - MEOW_LAYERS)
+MEOW_LAYERS  = modCfg["architecture"].get("meow_layers", 3)
+MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", 3)
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
 
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
@@ -118,10 +117,12 @@ print(f"[*] Loading evaluation suite: {suitePath}")
 with open(suitePath) as f: rawData = json.load(f)
 
 aId, padId, dotId, eosId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1), WORD_TO_ID.get(".", 3), WORD_TO_ID.get("<eos>", 2)
+TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
 
 def tokenize(s):
-    p = preprocess_chunks(s)
-    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, p)]
+    for c in [".", "?", "!", ",", ":"]: s = s.replace(c, f" {c} ")
+    s = s.replace("'s", " 's ")
+    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
 
 allTests = []
 for cat, items in rawData.items():
@@ -130,7 +131,7 @@ for cat, items in rawData.items():
             allTests.append((cat, item["q"], str(item["target"])))
 
 total = len(allTests)
-print(f"[*] Evaluating {total:,} QA tests across {len(rawData)} categories with Micro-CoT validation...\n")
+print(f"[*] Evaluating {total:,} QA tests across {len(rawData)} categories...\n")
 
 catStats, totalPassed, failures = {}, 0, []
 t0 = time.time()
@@ -138,32 +139,29 @@ BATCH = 512
 
 def extract_answer(text):
     if not text or not text.strip(): return ""
-    t = preprocess_chunks(text).strip().rstrip(".")
-    if ":" in t:
-        after_colon = t.split(":")[-1].strip().split()
-        if after_colon: return after_colon[0]
-        before_colon = t.split(":")[0].strip().split()
-        return before_colon[-1] if before_colon else ""
-    words = t.split()
+    clean = text.strip().rstrip(".")
+    if ":" in clean:
+        parts = clean.split(":")[-1].strip().split()
+        if parts: return parts[0]
+        before = clean.split(":")[0].strip().split()
+        return before[-1] if before else ""
+    words = clean.split()
     return words[-1] if words else ""
 
 with torch.no_grad():
     for i in range(0, total, BATCH):
         batch = allTests[i:i+BATCH]
         prompts = [tokenize(q) for _, q, _ in batch]
-        
-        # Determine max prompt length in this batch
         lens = [len(p) for p in prompts]
-        maxLen = max(lens)
         
         padded = [p + [padId] * (BLOCK_SIZE - len(p)) for p in prompts]
         x = torch.tensor(padded, dtype=torch.long, device=device)
         
-        # Autoregressive Micro-CoT generation (up to 5 tokens)
         genTokens = [[] for _ in batch]
         active = [True] * len(batch)
         
-        for step in range(5):
+        # Micro-CoT multi-step generation (up to 4 tokens)
+        for step in range(4):
             logits = model(x)
             for j in range(len(batch)):
                 if not active[j]: continue
@@ -182,7 +180,7 @@ with torch.no_grad():
             predAns = extract_answer(genStr)
             expectedAns = extract_answer(target)
             
-            ok = (predAns == expectedAns)
+            ok = (predAns == expectedAns and predAns != "")
             if cat not in catStats: catStats[cat] = [0, 0]
             catStats[cat][1] += 1
             if ok:
@@ -201,7 +199,7 @@ with torch.no_grad():
 
 elapsed = time.time() - t0
 print(f"\n\n{'='*65}")
-print(f" FINAL MICRO-COT ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
+print(f" FINAL REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
 print(f"{'='*65}")
 
 for cat in sorted(catStats.keys()):

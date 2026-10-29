@@ -6,7 +6,6 @@ projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
 with open(os.path.join(projectRoot, "config", "model.json"), "r") as f: modCfg = json.load(f)
 from models.local import vocab
-from chunks import preprocess_chunks, decode_token, TOKEN_REGEX
 
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
@@ -14,8 +13,8 @@ EMBED_DIM = modCfg["architecture"]["embed_dim"]
 BLOCK_SIZE = modCfg["architecture"]["block_size"]
 NUM_HEADS = modCfg["architecture"]["num_heads"]
 NUM_LAYERS = modCfg["architecture"]["num_layers"]
-MEOW_LAYERS = modCfg["architecture"].get("meow_layers", NUM_LAYERS // 2)
-MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", NUM_LAYERS - MEOW_LAYERS)
+MEOW_LAYERS = modCfg["architecture"].get("meow_layers", 3)
+MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", 3)
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 SINK_SIZE = 4; WINDOW_SIZE = 32
 ROW_B = 4 + EMBED_DIM; L0_OFF = 1024 * ROW_B
@@ -100,20 +99,26 @@ def runLayer(f, x, kv, pos):
     h2 = streamLinear(f, EMBED_DIM, 4 * EMBED_DIM, [max(0.0, val) for val in h1])
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
-def generate(promptTxt, maxTokens=25):
+TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
+
+def generate(promptTxt, maxTokens=20):
     isLog = any(t in promptTxt for t in ("[c]", "[q]", "[a]")) or any(promptTxt.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
     p = promptTxt.strip()
     if isLog:
         if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
         if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
 
-    pClean = preprocess_chunks(p)
-    toks = [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, pClean)]
+    for c in [".", "?", "!", ",", ":"]: p = p.replace(c, f" {c} ")
+    p = p.replace("'s", " 's ")
+
+    toks = [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, p.lower())]
     if not toks: return ""
 
     mKv = [{"k":[], "v":[]} for _ in range(MEOW_LAYERS)]
     miKv = [{"k":[], "v":[]} for _ in range(MIAOU_LAYERS)]
-    curr, out = toks[-1], []
+    curr = toks[-1]
+    out_words = []
+    gen_token_ids = []
     
     for step in range(len(toks) + maxTokens):
         tid = toks[step] if step < len(toks) else curr
@@ -129,7 +134,9 @@ def generate(promptTxt, maxTokens=25):
         if isLog:
             curr = max(range(1024), key=lambda i: lg[i])
         else:
-            for pastTok in set(toks + out[-8:]): lg[pastTok] -= 1.8
+            # Safe integer repetition penalty
+            for past_id in set(toks + gen_token_ids[-8:]):
+                lg[past_id] -= 1.8
             scaled = [v / 0.7 for v in lg]; ms = max(scaled); exps = [math.exp(v - ms) for v in scaled]
             probs = [e / sum(exps) for e in exps]; r, acc, curr = random.random(), 0.0, len(probs) - 1
             for i, pr in enumerate(probs):
@@ -137,16 +144,17 @@ def generate(promptTxt, maxTokens=25):
                 if r <= acc: curr = i; break
                 
         if step >= len(toks) - 1:
+            gen_token_ids.append(curr)
             w = VOCAB[curr]
             if w in ("<eos>", "<pad>"): break
-            out.append(decode_token(w))
+            out_words.append(w)
             if isLog and w == ".": break
             
-    return " ".join(out)
+    return " ".join(out_words)
 
 if __name__ == "__main__":
     print("=" * 65)
-    print("      WET FOOD LOCAL SIMULATOR (MICRO-COT + CHUNKS ACTIVE)     ")
+    print("          WET FOOD LOCAL SIMULATOR (ANCHOR COT ACTIVE)         ")
     print("=" * 65)
     print("Type a prompt or 'exit' to quit.\n")
     while True:

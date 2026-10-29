@@ -5,12 +5,14 @@
     "embed_dim": 80,
     "num_heads": 4,
     "num_layers": 6,
+    "meow_layers": 3,
+    "miaou_layers": 3,
     "pos_embedding": "rope",
     "window_size": 32,
     "sink_size": 4
   },
   "training": {
-    "device": "cpu",
+    "device": "cuda",
     "total_steps": 25000,
     "warmup_steps": 1000,
     "base_lr": 0.0015,
@@ -20,38 +22,39 @@
     "weight_decay": 0.01,
     "grad_clip": 1.0,
     "loss_weights": {
-      "qa": 1,
-      "story_base": 1,
-      "story_min": 0.8
+      "qa": 1.2,
+      "story_base": 0.35,
+      "story_min": 0.15
     }
   },
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
     "logic_samples_target": 50000,
-    "eval_samples_per_category": 15,
-    "name_replacements": {
-      "bob": ["timmy", "tom", "jack"],
-      "alice": ["lily", "anna", "sarah"],
-      "felix": ["jane", "lucy", "emma"],
-      "luna": ["billy", "sam"]
-    },
     "core_words": [
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
       "question", "answer", "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
       "who", "what", "where", "how", "many", "why", "is", "are", "was", "were", "does", "did",
       "he", "she", "they", "it", "alice", "bob", "felix", "luna", "cat", "cats",
-      "garden", "kitchen", "park", "room", "ball", "box", "book", "cup", "key", "bag",
-      "red", "blue", "yellow", "green", "colour", "hot", "cold", "heavy", "light",
+      "garden", "kitchen", "park", "room", "ball", "balls", "box", "boxes", "book", "books",
+      "cup", "cups", "key", "keys", "bag", "bags", "toy", "toys",
+      "red", "blue", "yellow", "green", "white", "black", "colour", "hot", "cold", "heavy", "light",
       "clean", "dirty", "open", "closed", "north", "south", "left", "right",
       "bigger", "smaller", "faster", "slower", "biggest", "smallest", "fastest", "slowest",
       "plus", "minus", "equals", "sum", "difference", "calculate",
       "if", "then", "true", "false", "so", "because",
       "hello", "hi", "hey", "good", "morning", "day", "night", "doing", "great", "fine", "nice",
       "thanks", "thank", "you", "welcome", "bye", "goodbye", "help", "think", "talk", "ai", "friend",
-      "first", "then", "now", "before", "after", "yes", "no", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "none",
-      "nobody", "nothing", "nowhere", "went", "gave", "got", "has", "had", "have", "found", "find",
+      "first", "then", "now", "before", "after", "yes", "no", "zero", "one", "two", "three", "four",
+      "five", "six", "seven", "eight", "nine", "ten", "none", "nobody", "nothing", "nowhere",
+      "went", "walked", "arrived", "gave", "got", "has", "had", "have", "found", "find",
       "put", "left", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
-    ]
+    ],
+    "name_replacements": {
+      "bob": ["timmy", "tom", "jack"],
+      "alice": ["lily", "anna", "sarah"],
+      "felix": ["jane", "lucy", "emma"],
+      "luna": ["billy", "sam"]
+    }
   },
   "paths": {
     "models_dir": "models/local",
