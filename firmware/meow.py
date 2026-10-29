@@ -1,5 +1,5 @@
 # meow.py - Host (Master) node for distributed transformer
-import network, socket, struct, math, gc, time, machine, random, _thread # pyright: ignore[reportMissingImports]
+import network, socket, struct, math, gc, time, machine, random, _thread, ure as re # pyright: ignore[reportMissingImports]
 from array import array; from machine import Pin # pyright: ignore[reportMissingImports]
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
@@ -250,12 +250,19 @@ while True:
             continue
 
         p = job_queue.pop(0)
-        is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
+        
+        for char in [".", "?", "!", ",", ":"]:
+            p = p.replace(char, f" {char} ")
+        p = p.replace("'s", " 's ")
+
+        is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
         if is_logic:
             if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
             if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
             
-        tks = [WORD_TO_ID.get(w, 0) for w in p.split()]
+        tks = [WORD_TO_ID.get(w, 0) for w in p.split() if w]
+        if not tks:
+            continue
         for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
         
         # Reset signal to Miaou

@@ -65,29 +65,68 @@ evalBenchmarks["Storytelling"] = [{"q": p, "target": None} for p in [
 ]]
 with open(QUESTIONS_FILE, "w") as f: json.dump(evalBenchmarks, f, indent=2)
 
-CAT_CORE_WORDS = modCfg["dataset"]["core_words"]
-allWords = re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", rawStories + " " + " ".join(allQaTasks[:8000]))
-counts = Counter(allWords)
-for w in CAT_CORE_WORDS: counts.pop(w, None)
-VOCAB = CAT_CORE_WORDS + [w for w, _ in counts.most_common(VOCAB_SIZE - len(CAT_CORE_WORDS))]
+def pluralize(word):
+    if word.endswith(("s", "x", "z", "ch", "sh")): return word + "es"
+    if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou": return word[:-1] + "ies"
+    return word + "s"
+
+autoPoolWords = set()
+for poolKey, poolList in logCfg.get("pools", {}).items():
+    if isinstance(poolList, list):
+        for item in poolList:
+            autoPoolWords.add(item.lower())
+            if poolKey in ("item"):
+                autoPoolWords.add(pluralize(item.lower()))
+
+BASE_CORE = modCfg["dataset"]["core_words"]
+CAT_CORE_WORDS = list(dict.fromkeys(BASE_CORE + sorted(list(autoPoolWords))))
+TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
+
+def tokenizeStr(s):
+    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
+
+rawStoryWords = re.findall(TOKEN_REGEX, rawStories)
+cleanStoryWords = [
+    w for w in rawStoryWords 
+    if (w in CAT_CORE_WORDS or (w.isalpha() and len(w) > 1 and not w.endswith("n't")))
+]
+counts = Counter(cleanStoryWords + re.findall(TOKEN_REGEX, " ".join(allQaTasks[:8000])))
+for w in CAT_CORE_WORDS: 
+    counts.pop(w, None)
+
+remainingSlots = VOCAB_SIZE - len(CAT_CORE_WORDS)
+VOCAB = CAT_CORE_WORDS + [w for w, _ in counts.most_common(remainingSlots)]
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 padId, aTokenId = WORD_TO_ID["<pad>"], WORD_TO_ID["[a]"]
 
-def tokenizeStr(s):
-    return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", s.lower())]
+print(f"[✓] Vocab constructed: {len(CAT_CORE_WORDS)} core/pool words guaranteed + {len(VOCAB) - len(CAT_CORE_WORDS)} top natural words.")
+
 
 print("[*] Tokenizing logic and story streams...")
+# qaTensorX, qaTensorY = [], []
+# for task in allQaTasks:
+#     toks = tokenizeStr(task)
+#     if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
+#     x = toks + [padId] * (BLOCK_SIZE - len(toks))
+#     y = [-100] * BLOCK_SIZE
+#     ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
+#     if ansStart != -1:
+#         for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
+#     qaTensorX.append(torch.tensor(x, dtype=torch.long))
+#     qaTensorY.append(torch.tensor(y, dtype=torch.long))
+
 qaTensorX, qaTensorY = [], []
 for task in allQaTasks:
     toks = tokenizeStr(task)
     if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
+    
+    # Input x padded with padId
     x = toks + [padId] * (BLOCK_SIZE - len(toks))
+    
+    # Target y is shifted by 1 position across ALL real tokens
     y = [-100] * BLOCK_SIZE
-    ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
-    if ansStart != -1:
-        for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
-    qaTensorX.append(torch.tensor(x, dtype=torch.long))
-    qaTensorY.append(torch.tensor(y, dtype=torch.long))
+    for idx in range(len(toks) - 1):
+        y[idx] = toks[idx + 1]
 
 qaXData = torch.stack(qaTensorX).to(DEVICE)
 qaYData = torch.stack(qaTensorY).to(DEVICE)

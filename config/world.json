@@ -1,35 +1,23 @@
 {
   "pools": {
+    "pools": {
     "actor": [
-      "alice",
-      "bob",
-      "felix",
-      "luna"
+      "alice", "bob", "felix", "luna", "charlie", "daisy", "leo", "milo",
+      "oliver", "bella", "max", "lucy", "simba", "chloe", "rocky", "lily",
+      "jack", "sophie", "toby", "mia", "sam", "ruby", "oscar", "zoe", "buster"
     ],
     "location": [
-      "garden",
-      "kitchen",
-      "park",
-      "room"
+      "garden", "kitchen", "park", "room", "bedroom", "attic", "basement",
+      "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony"
     ],
     "item": [
-      "ball",
-      "box",
-      "book",
-      "cup"
+      "ball", "box", "book", "cup", "key", "toy", "stick", "blanket",
+      "apple", "hat", "bottle", "bowl", "plate", "pencil", "coin"
     ],
     "colour": [
-      "red",
-      "blue",
-      "yellow",
-      "green"
-    ],
-    "container": [
-      "box",
-      "bag",
-      "basket",
-      "drawer"
+      "red", "blue", "yellow", "green", "white", "black", "orange", "pink"
     ]
+  }
   },
   "pair_pools": {
     "agent": [
@@ -850,17 +838,15 @@
       "weight": 2.5,
       "type": "arithmetic",
       "premise": [
-        "{actor1} had {n1_word} {item1} . {actor2} gave {actor1} {n2_word} {item1}",
-        "{actor2} gave {actor1} {n2_word} {item1} . {actor1} already had {n1_word} {item1}",
-        "{actor1} had {n1_word} {item1} . {actor1} found {n2_word} {item1}",
-        "{actor1} had {n1_word} {item1} . {actor1} gave {n2_word} {item1} to {actor2}",
-        "{actor1} had {n1_word} {item1} and gave {n2_word} to {actor2}"
+        "{actor1} had {n1_word} {item1_n1} . {actor2} gave {actor1} {n2_word} {item1_n2}",
+        "{actor1} had {n1_word} {item1_n1} . {actor1} found {n2_word} {item1_n2}",
+        "{actor1} had {n1_word} {item1_n1} . {actor1} gave {n2_word} {item1_n2} to {actor2}"
       ],
       "queries": [
         {
           "q": [
-            "how many {item1} does {actor1} have",
-            "how many {item1} does {actor1} have now"
+            "how many {item1_ans} does {actor1} have",
+            "how many {item1_ans} does {actor1} have now"
           ],
           "a": "{ans_word}"
         }

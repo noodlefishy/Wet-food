@@ -14,6 +14,12 @@ def splitQa(sequenceStr):
     parts = sequenceStr.split(" [a] ")
     return parts[0].strip() + " [a]", parts[1].replace("<eos>", "").strip()
 
+def pluralize(word, count=2):
+    if count == 1: return word
+    if word.endswith(("s", "x", "z", "ch", "sh")): return word + "es"
+    if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou": return word[:-1] + "ies"
+    return word + "s"
+
 VERB_JITTER = {
     "went to the": ["went to the", "walked to the", "ran to the", "arrived at the"],
     "is in the":   ["is in the", "was in the", "went to the"],
@@ -196,9 +202,15 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
             n1 = random.randint(1, 5); n2 = random.randint(1, n1); ans = n1 - n2
         else:
             n1 = random.randint(1, 4); n2 = random.randint(1, 4); ans = n1 + n2
+        
         bindings["n1_word"]  = NUM_WORDS[n1]
         bindings["n2_word"]  = NUM_WORDS[n2]
         bindings["ans_word"] = NUM_WORDS[ans] if ans > 0 else "none"
+        
+        baseItem = bindings["item1"]
+        bindings["item1_n1"] = pluralize(baseItem, n1)
+        bindings["item1_n2"] = pluralize(baseItem, n2)
+        bindings["item1_ans"] = pluralize(baseItem, ans)
 
     rawQ     = queryObj["q"]
     qStr     = random.choice(rawQ) if isinstance(rawQ, list) else rawQ

@@ -64,7 +64,7 @@ def runLayer(f, x, kv, pos):
     q = qkv[:EMBED_DIM]
     k = qkv[EMBED_DIM : EMBED_DIM + HEAD_DIM]
     v = qkv[EMBED_DIM + HEAD_DIM :]
-    
+
     cTab, sTab = cosTab[min(pos, BLOCK_SIZE - 1)], sinTab[min(pos, BLOCK_SIZE - 1)]
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
@@ -100,7 +100,10 @@ def generate(promptTxt, maxTokens=30):
     if isLog:
         if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
         if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
-    toks = [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", p.lower())] or [WORD_TO_ID["alice"]]
+    TOKENREGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
+    toks = [WORD_TO_ID.get(w, 0) for w in re.findall(TOKENREGEX, p.lower())]
+    if not toks:
+        return  ""   
     mKv = [{"k":[], "v":[]} for _ in range(LAYERS)]
     miKv = [{"k":[], "v":[]} for _ in range(LAYERS)]
     curr, out = toks[-1], []

@@ -20,9 +20,9 @@
     "weight_decay": 0.01,
     "grad_clip": 1.0,
     "loss_weights": {
-      "qa": 2.0,
-      "story_base": 0.35,
-      "story_min": 0.15
+      "qa": 1,
+      "story_base": 1,
+      "story_min": 0.8
     }
   },
   "dataset": {

@@ -113,13 +113,15 @@ with open(p2, "rb") as f:
 model.eval()
 print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
 
-# Locate questions file
+# Locate evaluation suite (supports stressTest.json or questions.json)
 if len(sys.argv) > 1:
     suitePath = sys.argv[1]
+elif os.path.exists(os.path.join(projectRoot, "config", "stressTest.json")):
+    suitePath = os.path.join(projectRoot, "config", "stressTest.json")
 elif os.path.exists(os.path.join(projectRoot, "config", "questions.json")):
     suitePath = os.path.join(projectRoot, "config", "questions.json")
 else:
-    suitePath = os.path.join(projectRoot, "config", "stressTest.json")
+    suitePath = os.path.join(projectRoot, "config", "questions.json")
 
 print(f"[*] Loading evaluation suite: {suitePath}")
 with open(suitePath) as f: rawData = json.load(f)
@@ -144,7 +146,7 @@ print(f"[*] Running {total:,} QA tests across {len(rawData)} categories...\n")
 
 catStats, totalPassed, failures = {}, 0, []
 t0 = time.time()
-BATCH = 256 if device == "cuda" else 64
+BATCH = 512*2  # Process in blocks of 512
 
 with torch.no_grad():
     for i in range(0, total, BATCH):
@@ -177,8 +179,17 @@ with torch.no_grad():
             else:
                 failures.append((cat, batch[j][1], target, pred))
 
+        done = min(i + BATCH, total)
+        pct = (totalPassed / done * 100) if done else 0
+        elapsed = time.time() - t0
+        eta = ((total - done) * (elapsed / done) if done else 0 ) / 60
+        
+        # Real-time single-line refreshing progress with \r
+        sys.stdout.write(f"\r  [Evaluator] Progress: {done:>7,}/{total:,} [{done/total*100:5.1f}%] | Acc: {pct:5.1f}% | Elapsed: {elapsed:4.1f}s | ETA: {eta:4.1f}m")
+        sys.stdout.flush()
+
 elapsed = time.time() - t0
-print(f"\n{'='*65}")
+print(f"\n\n{'='*65}")
 print(f" REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
 print(f"{'='*65}")
 

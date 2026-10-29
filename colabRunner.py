@@ -8,7 +8,7 @@ import torch
 
 inColab = False
 try:
-    import google.colab
+    import google.colab # pyright: ignore[reportMissingImports]
     inColab = True
 except ImportError:
     pass
