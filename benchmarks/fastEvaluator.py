@@ -3,7 +3,10 @@ from torch.nn import functional as F
 
 projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
-with open(os.path.join(projectRoot, "config", "model.json")) as f: modCfg = json.load(f)
+
+with open(os.path.join(projectRoot, "config", "model.json")) as f:
+    modCfg = json.load(f)
+
 from models.local import vocab
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
@@ -17,7 +20,6 @@ MEOW_LAYERS  = 3
 MIAOU_LAYERS = 3
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
 
-# Prioritize CUDA on Colab GPU runtimes
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 def precomputeRope(headDim, maxLen=BLOCK_SIZE):
@@ -113,23 +115,25 @@ with open(p2, "rb") as f:
 model.eval()
 print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
 
-# Locate evaluation suite (supports stressTest.json or questions.json)
-if len(sys.argv) > 1:
+# Locate evaluation suite
+if len(sys.argv) > 1 and not sys.argv[1].startswith("--"):
     suitePath = sys.argv[1]
 elif os.path.exists(os.path.join(projectRoot, "config", "stressTest.json")):
     suitePath = os.path.join(projectRoot, "config", "stressTest.json")
 elif os.path.exists(os.path.join(projectRoot, "config", "questions.json")):
     suitePath = os.path.join(projectRoot, "config", "questions.json")
 else:
-    suitePath = os.path.join(projectRoot, "config", "questions.json")
+    raise FileNotFoundError("Could not locate stressTest.json or questions.json")
 
 print(f"[*] Loading evaluation suite: {suitePath}")
-with open(suitePath) as f: rawData = json.load(f)
+with open(suitePath) as f:
+    rawData = json.load(f)
 
 aId, padId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1)
+TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
 
 def tokenize(s):
-    return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.?:]", s.lower())]
+    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
 
 allTests, storyTests = [], []
 for cat, items in rawData.items():
@@ -146,7 +150,7 @@ print(f"[*] Running {total:,} QA tests across {len(rawData)} categories...\n")
 
 catStats, totalPassed, failures = {}, 0, []
 t0 = time.time()
-BATCH = 512*2  # Process in blocks of 512
+BATCH = 512
 
 with torch.no_grad():
     for i in range(0, total, BATCH):
@@ -177,43 +181,31 @@ with torch.no_grad():
                 catStats[cat][0] += 1
                 totalPassed += 1
             else:
-                failures.append((cat, batch[j][1], target, pred))
+                if len(failures) < 50:
+                    failures.append((cat, batch[j][1], target, pred))
 
         done = min(i + BATCH, total)
         pct = (totalPassed / done * 100) if done else 0
         elapsed = time.time() - t0
-        eta = ((total - done) * (elapsed / done) if done else 0 ) / 60
+        eta = (total - done) * (elapsed / done) if done else 0
         
-        # Real-time single-line refreshing progress with \r
-        sys.stdout.write(f"\r  [Evaluator] Progress: {done:>7,}/{total:,} [{done/total*100:5.1f}%] | Acc: {pct:5.1f}% | Elapsed: {elapsed:4.1f}s | ETA: {eta:4.1f}m")
+        sys.stdout.write(f"\r  [Evaluator] Progress: {done:>7,}/{total:,} [{done/total*100:5.1f}%] | Acc: {pct:5.1f}% | Elapsed: {elapsed:4.1f}s | ETA: {eta:4.1f}s")
         sys.stdout.flush()
 
 elapsed = time.time() - t0
 print(f"\n\n{'='*65}")
-print(f" REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
+print(f" FINAL REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
 print(f"{'='*65}")
 
 for cat in sorted(catStats.keys()):
     passed, n = catStats[cat]
     pct = (passed / n * 100) if n else 0
     mark = "✓" if pct >= 90 else ("~" if pct >= 70 else "✗")
-    print(f"  [{mark}] {cat:<38} {passed:>4}/{n:<4} {pct:5.1f}%")
+    print(f"  [{mark}] {cat:<38} {passed:>6}/{n:<6} {pct:5.1f}%")
 
-if storyTests:
+if "--failures" in sys.argv and failures:
     print(f"\n{'='*65}")
-    print(" STORYTELLING GENERATION PREVIEW")
+    print(" SAMPLE MISPREDICTIONS (First 15)")
     print(f"{'='*65}")
-    for _, prompt in storyTests[:3]:
-        curToks = tokenize(prompt)
-        genWords = []
-        with torch.no_grad():
-            for _ in range(16):
-                padded = curToks + [padId] * (BLOCK_SIZE - len(curToks))
-                x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
-                nxt = model(x)[0, len(curToks)-1].argmax().item()
-                w = VOCAB[nxt]
-                if w in ("<eos>", "<pad>"): break
-                genWords.append(w)
-                curToks.append(nxt)
-                if len(curToks) >= BLOCK_SIZE: break
-        print(f"Prompt: {prompt}\nStory : {' '.join(genWords)}\n")
+    for cat, q, tgt, pred in failures[:15]:
+        print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r} | Predicted: {pred!r}\n")

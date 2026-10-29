@@ -102,8 +102,9 @@
       "weight": 3,
       "premise": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
-        "{actor1} is in the {location1} . {actor2} is in the {location2}",
         "{actor2} went to the {location2} . {actor1} went to the {location1}",
+        "{actor1} is in the {location1} . {actor2} is in the {location2}",
+        "{actor2} is in the {location2} while {actor1} went to the {location1}",
         "{actor1} went to the {location1} and {actor2} went to the {location2}"
       ],
       "queries": [
@@ -315,38 +316,15 @@
         "{actor1} is in the {location1} and {actor2} is in the {location2}"
       ],
       "queries": [
-        {
-          "q": "is {actor1} in the {location1}",
-          "a": "yes"
-        },
-        {
-          "q": "is {actor1} in the {location2}",
-          "a": "no"
-        },
-        {
-          "q": "is {actor2} in the {location2}",
-          "a": "yes"
-        },
-        {
-          "q": "is {actor2} in the {location1}",
-          "a": "no"
-        },
-        {
-          "q": "is {actor1} in the {location3}",
-          "a": "no"
-        },
-        {
-          "q": "was {actor1} in the {location1}",
-          "a": "yes"
-        },
-        {
-          "q": "is {actor3} in the {location1}",
-          "a": "no"
-        },
-        {
-          "q": "was {actor2} in the {location2}",
-          "a": "yes"
-        }
+        { "q": "is {actor1} in the {location1}", "a": "yes" },
+        { "q": "is {actor1} in the {location2}", "a": "no" },
+        { "q": "is {actor1} in the {location3}", "a": "no" },
+        { "q": "is {actor2} in the {location2}", "a": "yes" },
+        { "q": "is {actor2} in the {location1}", "a": "no" },
+        { "q": "is {actor2} in the {location3}", "a": "no" },
+        { "q": "was {actor1} in the {location1}", "a": "yes" },
+        { "q": "is {actor3} in the {location1}", "a": "no" },
+        { "q": "is {actor3} in the {location2}", "a": "no" }
       ]
     },
     {
@@ -813,22 +791,13 @@
         "{actor1} got the {item1} . {actor2} got the {item2}"
       ],
       "queries": [
-        {
-          "q": "does {actor1} have the {item1}",
-          "a": "yes"
-        },
-        {
-          "q": "does {actor1} have the {item2}",
-          "a": "no"
-        },
-        {
-          "q": "does {actor2} have the {item2}",
-          "a": "yes"
-        },
-        {
-          "q": "does {actor2} have the {item1}",
-          "a": "no"
-        }
+        { "q": "does {actor1} have the {item1}", "a": "yes" },
+        { "q": "does {actor1} have the {item2}", "a": "no" },
+        { "q": "does {actor1} have the {item3}", "a": "no" },
+        { "q": "does {actor2} have the {item2}", "a": "yes" },
+        { "q": "does {actor2} have the {item1}", "a": "no" },
+        { "q": "does {actor2} have the {item3}", "a": "no" },
+        { "q": "does {actor3} have the {item1}", "a": "no" }
       ]
     },
     {
