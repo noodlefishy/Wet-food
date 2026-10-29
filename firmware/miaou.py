@@ -3,7 +3,7 @@ import network, socket, struct, math, gc, time, machine
 from machine import Pin; from array import array
 machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
 
-EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
+EMBED_DIM = 96; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 
 try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD

@@ -4,7 +4,7 @@ from array import array; from machine import Pin # pyright: ignore[reportMissing
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
-EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
+EMBED_DIM = 96; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B
 SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 

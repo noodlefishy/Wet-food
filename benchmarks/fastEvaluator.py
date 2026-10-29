@@ -147,12 +147,8 @@ if __name__ == "__main__":
         if not text or not text.strip(): return ""
         clean = text.strip().rstrip(".")
         if ":" in clean:
-            parts = clean.split(":")[-1].strip().split()
-            if parts: return parts[0]
-            before = clean.split(":")[0].strip().split()
-            return before[-1] if before else ""
-        words = clean.split()
-        return words[-1] if words else ""
+            return " ".join(clean.split(":")[-1].strip().split())
+        return " ".join(clean.split())
 
     with torch.no_grad():
         for i in range(0, total, BATCH):

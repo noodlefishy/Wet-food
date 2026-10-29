@@ -2,7 +2,7 @@
   "architecture": {
     "vocab_size": 1024,
     "block_size": 64,
-    "embed_dim": 80,
+    "embed_dim": 96,
     "num_heads": 4,
     "num_layers": 6,
     "meow_layers": 3,
