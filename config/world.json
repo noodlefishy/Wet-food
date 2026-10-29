@@ -844,6 +844,27 @@
           "a": "no"
         }
       ]
+    },
+    {
+      "name": "23: Basic Arithmetic",
+      "weight": 2.5,
+      "type": "arithmetic",
+      "premise": [
+        "{actor1} had {n1_word} {item1} . {actor2} gave {actor1} {n2_word} {item1}",
+        "{actor2} gave {actor1} {n2_word} {item1} . {actor1} already had {n1_word} {item1}",
+        "{actor1} had {n1_word} {item1} . {actor1} found {n2_word} {item1}",
+        "{actor1} had {n1_word} {item1} . {actor1} gave {n2_word} {item1} to {actor2}",
+        "{actor1} had {n1_word} {item1} and gave {n2_word} to {actor2}"
+      ],
+      "queries": [
+        {
+          "q": [
+            "how many {item1} does {actor1} have",
+            "how many {item1} does {actor1} have now"
+          ],
+          "a": "{ans_word}"
+        }
+      ]
     }
   ]
 }

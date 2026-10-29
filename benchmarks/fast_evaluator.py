@@ -114,22 +114,10 @@ suite_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(project_root, "c
 with open(suite_path) as f: raw_data = json.load(f)
 
 a_id = WORD_TO_ID.get("[a]", 9)
+pad_id = WORD_TO_ID.get("<pad>", 1)
 
 def tokenize(s):
     return [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.?:]", s.lower())]
-
-def greedy_decode(prompt_ids, max_new=6):
-    ids = prompt_ids[:]
-    for _ in range(max_new):
-        ctx = ids[-BLOCK_SIZE:]
-        t = torch.tensor([ctx], dtype=torch.long, device=device)
-        with torch.no_grad():
-            logits = model(t)
-        nxt = logits[0, -1].argmax().item()
-        ids.append(nxt)
-        if VOCAB[nxt] in ("<eos>", ".") and len(ids) > len(prompt_ids) + 1:
-            break
-    return ids[len(prompt_ids):]
 
 all_tests = [(cat, item["q"], item["target"]) for cat, items in raw_data.items() for item in items]
 total = len(all_tests)
@@ -139,32 +127,44 @@ cat_stats, total_passed, failures = {}, 0, []
 t0 = time.time()
 
 BATCH = 512
-for i in range(0, total, BATCH):
-    batch = all_tests[i:i+BATCH]
-    for cat, q, target in batch:
-        toks = tokenize(q)
-        try:
-            a_pos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == a_id)
-        except StopIteration:
-            toks.append(a_id)
-            a_pos = len(toks) - 1
-        out_ids = greedy_decode(toks[:a_pos+1])
-        pred = " ".join(VOCAB[t] for t in out_ids if VOCAB[t] not in ("<pad>", "<eos>")).strip().rstrip(".")
-        tgt  = target.strip().rstrip(".")
-        ok   = pred.split()[0] == tgt.split()[0] if pred and tgt else pred == tgt
-        if cat not in cat_stats: cat_stats[cat] = [0, 0]
-        cat_stats[cat][1] += 1
-        if ok:
-            cat_stats[cat][0] += 1
-            total_passed += 1
-        else:
-            failures.append((cat, q, target, pred))
+with torch.no_grad():
+    for i in range(0, total, BATCH):
+        batch = all_tests[i:i+BATCH]
+        input_ids, answer_positions, metas = [], [], []
+        for cat, q, target in batch:
+            toks = tokenize(q)
+            try:
+                a_pos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == a_id)
+            except StopIteration:
+                toks.append(a_id)
+                a_pos = len(toks) - 1
+            prompt = toks[:a_pos+1]
+            padded = prompt + [pad_id] * (BLOCK_SIZE - len(prompt))
+            input_ids.append(padded[:BLOCK_SIZE])
+            answer_positions.append(min(a_pos, BLOCK_SIZE - 1))
+            metas.append((cat, target))
 
-    done = min(i + BATCH, total)
-    pct = total_passed / done * 100
-    elapsed = time.time() - t0
-    eta = (total - done) * (elapsed / done) if done else 0
-    print(f"  {done:>7,}/{total:,}  acc={pct:5.1f}%  eta={eta/60:.1f}m", end="\r")
+        x = torch.tensor(input_ids, dtype=torch.long, device=device)
+        logits = model(x)
+
+        for j, (cat, target) in enumerate(metas):
+            pred_id = logits[j, answer_positions[j]].argmax().item()
+            pred = VOCAB[pred_id] if pred_id < len(VOCAB) else "<unk>"
+            tgt = target.strip().rstrip(".").split()[0]
+            ok = pred == tgt
+            if cat not in cat_stats: cat_stats[cat] = [0, 0]
+            cat_stats[cat][1] += 1
+            if ok:
+                cat_stats[cat][0] += 1
+                total_passed += 1
+            else:
+                failures.append((cat, batch[j][1], target, pred))
+
+        done = min(i + BATCH, total)
+        pct = total_passed / done * 100
+        elapsed = time.time() - t0
+        eta = (total - done) * (elapsed / done) if done else 0
+        print(f"  {done:>7,}/{total:,}  acc={pct:5.1f}%  eta={eta/60:.1f}m", end="\r")
 
 elapsed = time.time() - t0
 print(f"\n\n{'='*60}")
@@ -172,7 +172,8 @@ print(f" RESULTS: {total_passed:,}/{total:,} = {total_passed/total*100:.1f}%  ({
 print(f"{'='*60}")
 
 perfect, struggling = [], []
-for cat, (passed, n) in sorted(cat_stats.items(), key=lambda x: -x[1][0]/x[1][1]):
+for cat in sorted(cat_stats.keys()):
+    passed, n = cat_stats[cat]
     pct = passed / n * 100
     mark = "✓" if pct == 100 else ("~" if pct >= 80 else "✗")
     print(f"  [{mark}] {cat:<35} {passed:>6}/{n:<6} {pct:5.1f}%")

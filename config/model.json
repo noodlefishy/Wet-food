@@ -45,7 +45,7 @@
       "garden", "kitchen", "park", "room", "ball", "box", "book", "cup", "key", "bag",
       "red", "blue", "yellow", "green", "colour", "hot", "cold", "heavy", "light",
       "clean", "dirty", "open", "closed", "north", "south", "left", "right", "bigger", "smaller",
-      "first", "then", "now", "before", "after", "yes", "no", "one", "two", "three", "none",
+      "first", "then", "now", "before", "after", "yes", "no", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "none",
       "nobody", "nothing", "nowhere", "went", "gave", "got", "has", "had", "have", "found", "find",
       "put", "left", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
     ]

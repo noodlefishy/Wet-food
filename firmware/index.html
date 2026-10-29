@@ -242,7 +242,10 @@
               ).join('<br>');
             }
 
-            if (data.stage === 'prefill') {
+            if (data.stage === 'error') {
+              setStat("Error: " + (data.msg || "Unknown error"), "#ff0055");
+              ansSpan.innerText += `\n[Error: ${data.msg || "Inference failed"}]`;
+            } else if (data.stage === 'prefill') {
               setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
               const chip = document.getElementById('pchip-' + (data.cur - 1));
               if (chip) { chip.className = 'chip chip-done'; }

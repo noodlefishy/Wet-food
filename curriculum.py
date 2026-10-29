@@ -71,6 +71,8 @@ def generate_atomic_sample(cfg, target_category=None, inject_distractor=True):
     agent_pool = pair_pools.get("agent", [])
     agents = random.sample(agent_pool, min(2, len(agent_pool))) if agent_pool else []
     
+    NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+    
     bindings = {
         "actor1": actors[0], "actor2": actors[1], "actor3": actors[2],
         "location1": locs[0], "location2": locs[1], "location3": locs[2],
@@ -80,6 +82,22 @@ def generate_atomic_sample(cfg, target_category=None, inject_distractor=True):
     if agents:
         bindings["agent1_name"] = agents[0]["name"]
         bindings["agent1_pronoun"] = agents[0]["pronoun"]
+
+    # Special handling for arithmetic category
+    if cat.get("type") == "arithmetic" or "Arithmetic" in cat.get("name", ""):
+        # Determine if premise is addition or subtraction
+        is_subtraction = "to {actor2}" in premise_tmpl or "gave {n2_word} to" in premise_tmpl
+        if is_subtraction:
+            n1 = random.randint(1, 5)
+            n2 = random.randint(1, n1)
+            ans = n1 - n2
+        else:
+            n1 = random.randint(1, 4)
+            n2 = random.randint(1, 4)
+            ans = n1 + n2
+        bindings["n1_word"] = NUM_WORDS[n1]
+        bindings["n2_word"] = NUM_WORDS[n2]
+        bindings["ans_word"] = NUM_WORDS[ans] if ans > 0 else "none"
         
     # Unpack queries if query string is a list of synonyms
     raw_q = query_obj["q"]

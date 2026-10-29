@@ -234,6 +234,12 @@ while True:
 
     # Core 0: check if Core 1 queued a prompt
     if job_queue:
+        if pb is None:
+            telemetry_fifo.append('{"stage":"error","msg":"Miaou worker not connected"}\n')
+            telemetry_fifo.append("DONE")
+            job_queue.pop(0)
+            continue
+
         p = job_queue.pop(0)
         is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
         if is_logic:
@@ -247,8 +253,16 @@ while True:
         try:
             pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0] + [0.0]*(EMBED_DIM-1))))
             ack = recv_all(pb, 2)
-            if ack != b"OK": pb = None; continue
-        except Exception: pb = None; continue
+            if ack != b"OK":
+                pb = None
+                telemetry_fifo.append('{"stage":"error","msg":"Miaou reset failed"}\n')
+                telemetry_fifo.append("DONE")
+                continue
+        except Exception:
+            pb = None
+            telemetry_fifo.append('{"stage":"error","msg":"Miaou reset socket error"}\n')
+            telemetry_fifo.append("DONE")
+            continue
         
         t_start = time.ticks_ms()
         cur = tks[0]
@@ -268,8 +282,16 @@ while True:
             try:
                 pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
                 rep = recv_all(pb, 10)
-                if not rep: aborted = True; break
-            except Exception: aborted = True; break
+                if not rep:
+                    pb = None
+                    aborted = True
+                    telemetry_fifo.append('{"stage":"error","msg":"Miaou worker dropped"}\n')
+                    break
+            except Exception:
+                pb = None
+                aborted = True
+                telemetry_fifo.append('{"stage":"error","msg":"Miaou link lost"}\n')
+                break
             
             ct_ranks = struct.unpack('5H', rep)
             cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)

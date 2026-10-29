@@ -18,7 +18,7 @@ NUM_LAYERS   = mod_cfg["architecture"]["num_layers"]       # 8 Layers Total (3 M
 MEOW_LAYERS  = mod_cfg["architecture"]["meow_layers"]      # 3 Layers
 MIAOU_LAYERS = mod_cfg["architecture"]["miaou_layers"]     # 5 Layers
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
-DEVICE       = mod_cfg["training"]["device"]
+DEVICE       = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else mod_cfg["training"].get("device", "cpu"))
 
 MODELS_DIR = mod_cfg["paths"]["models_dir"]
 STORIES_FILE = mod_cfg["paths"]["stories_file"]
