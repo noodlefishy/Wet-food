@@ -13,7 +13,7 @@
   },
   "training": {
     "device": "cuda",
-    "total_steps": 25000,
+    "total_steps": 32000,
     "warmup_steps": 1000,
     "base_lr": 0.0015,
     "min_lr": 0.0001,
