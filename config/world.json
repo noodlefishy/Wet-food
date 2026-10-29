@@ -1,6 +1,5 @@
 {
   "pools": {
-    "pools": {
     "actor": [
       "alice", "bob", "felix", "luna", "charlie", "daisy", "leo", "milo",
       "oliver", "bella", "max", "lucy", "simba", "chloe", "rocky", "lily",
@@ -17,7 +16,6 @@
     "colour": [
       "red", "blue", "yellow", "green", "white", "black", "orange", "pink"
     ]
-  }
   },
   "pair_pools": {
     "agent": [
