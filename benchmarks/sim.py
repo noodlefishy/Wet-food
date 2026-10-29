@@ -6,14 +6,19 @@ projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
 with open(os.path.join(projectRoot, "config", "model.json"), "r") as f: modCfg = json.load(f)
 from models.local import vocab
+from chunks import preprocess_chunks, decode_token, TOKEN_REGEX
+
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 EMBED_DIM = modCfg["architecture"]["embed_dim"]
 BLOCK_SIZE = modCfg["architecture"]["block_size"]
 NUM_HEADS = modCfg["architecture"]["num_heads"]
+NUM_LAYERS = modCfg["architecture"]["num_layers"]
+MEOW_LAYERS = modCfg["architecture"].get("meow_layers", NUM_LAYERS // 2)
+MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", NUM_LAYERS - MEOW_LAYERS)
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 SINK_SIZE = 4; WINDOW_SIZE = 32
-ROW_B = 4 + EMBED_DIM; L0_OFF = 1024 * ROW_B; LAYERS = 3
+ROW_B = 4 + EMBED_DIM; L0_OFF = 1024 * ROW_B
 
 p1Path = os.path.join(projectRoot, "models", "local", "pico1 weights.model")
 p2Path = os.path.join(projectRoot, "models", "local", "pico2 weights.model")
@@ -64,7 +69,7 @@ def runLayer(f, x, kv, pos):
     q = qkv[:EMBED_DIM]
     k = qkv[EMBED_DIM : EMBED_DIM + HEAD_DIM]
     v = qkv[EMBED_DIM + HEAD_DIM :]
-
+    
     cTab, sTab = cosTab[min(pos, BLOCK_SIZE - 1)], sinTab[min(pos, BLOCK_SIZE - 1)]
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
@@ -94,48 +99,55 @@ def runLayer(f, x, kv, pos):
     h1 = streamLinear(f, 4 * EMBED_DIM, EMBED_DIM, nx)
     h2 = streamLinear(f, EMBED_DIM, 4 * EMBED_DIM, [max(0.0, val) for val in h1])
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
-def generate(promptTxt, maxTokens=30):
+
+def generate(promptTxt, maxTokens=25):
     isLog = any(t in promptTxt for t in ("[c]", "[q]", "[a]")) or any(promptTxt.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
     p = promptTxt.strip()
     if isLog:
         if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
         if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
-    TOKENREGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
-    toks = [WORD_TO_ID.get(w, 0) for w in re.findall(TOKENREGEX, p.lower())]
-    if not toks:
-        return  ""   
-    mKv = [{"k":[], "v":[]} for _ in range(LAYERS)]
-    miKv = [{"k":[], "v":[]} for _ in range(LAYERS)]
+
+    pClean = preprocess_chunks(p)
+    toks = [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, pClean)]
+    if not toks: return ""
+
+    mKv = [{"k":[], "v":[]} for _ in range(MEOW_LAYERS)]
+    miKv = [{"k":[], "v":[]} for _ in range(MIAOU_LAYERS)]
     curr, out = toks[-1], []
+    
     for step in range(len(toks) + maxTokens):
         tid = toks[step] if step < len(toks) else curr
         x = readEmb(f1, tid)
         f1.seek(L0_OFF)
-        for l in range(LAYERS): x = runLayer(f1, x, mKv[l], step)
+        for l in range(MEOW_LAYERS): x = runLayer(f1, x, mKv[l], step)
         f2.seek(0)
-        for l in range(LAYERS): x = runLayer(f2, x, miKv[l], step)
+        for l in range(MIAOU_LAYERS): x = runLayer(f2, x, miKv[l], step)
         nx = layerNorm(x, readVec(f2, EMBED_DIM), readVec(f2, EMBED_DIM))
         lg = streamLinear(f2, 1024, EMBED_DIM, nx)
         lg[WORD_TO_ID["<unk>"]] = lg[WORD_TO_ID["<pad>"]] = -1e9
-        if isLog: curr = max(range(1024), key=lambda i: lg[i])
+        
+        if isLog:
+            curr = max(range(1024), key=lambda i: lg[i])
         else:
+            for pastTok in set(toks + out[-10:]): lg[pastTok] -= 1.5
             scaled = [v / 0.7 for v in lg]; ms = max(scaled); exps = [math.exp(v - ms) for v in scaled]
             probs = [e / sum(exps) for e in exps]; r, acc, curr = random.random(), 0.0, len(probs) - 1
             for i, pr in enumerate(probs):
                 acc += pr
                 if r <= acc: curr = i; break
+                
         if step >= len(toks) - 1:
             w = VOCAB[curr]
             if w in ("<eos>", "<pad>"): break
-            out.append(w)
+            out.append(decode_token(w))
             if isLog and w == ".": break
+            
     return " ".join(out)
 
 if __name__ == "__main__":
     print("=" * 65)
-    print("       WET FOOD LOCAL SIMULATOR (8-LAYER RoPE ENGINE)         ")
+    print("         WET FOOD LOCAL SIMULATOR (CHUNK TOKENS ENABLED)       ")
     print("=" * 65)
-    print("Architecture: 8 Layers (3 Meow + 5 Miaou), RoPE, INT8 W8A32")
     print("Type a prompt or 'exit' to quit.\n")
     while True:
         try:

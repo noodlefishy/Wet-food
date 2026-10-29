@@ -250,19 +250,35 @@ while True:
             continue
 
         p = job_queue.pop(0)
-        
+        CHUNKS = [
+            ("once upon a time", "once_upon_a_time"),
+            ("who went to the",  "who_went_to_the"),
+            ("who is in the",    "who_is_in_the"),
+            ("went to the",      "went_to_the"),
+            ("walked to the",    "walked_to_the"),
+            ("is in the",        "is_in_the"),
+            ("was in the",       "was_in_the"),
+            ("does not have",    "does_not_have"),
+            ("where is",         "where_is"),
+            ("how many",         "how_many"),
+            ("one day",          "one_day")
+        ]
+        p_clean = p.lower()
+        for phrase, chunk_tok in CHUNKS:
+            p_clean = p_clean.replace(phrase, f" {chunk_tok} ")
         for char in [".", "?", "!", ",", ":"]:
-            p = p.replace(char, f" {char} ")
-        p = p.replace("'s", " 's ")
+            p_clean = p_clean.replace(char, f" {char} ")
+        p_clean = p_clean.replace("'s", " 's ")
 
-        is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
+        is_logic = any(t in p_clean for t in ("[c]", "[q]", "[a]")) or any(p_clean.strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
         if is_logic:
-            if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
-            if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
+            if "[c]" not in p_clean and not p_clean.startswith("question"): p_clean = f"[c] {p_clean}"
+            if "[q]" in p_clean and not p_clean.endswith("[a]"): p_clean = p_clean.rstrip("?.: ") + " ? [a]"
             
-        tks = [WORD_TO_ID.get(w, 0) for w in p.split() if w]
+        tks = [WORD_TO_ID.get(w, 0) for w in p_clean.split() if w]
         if not tks:
             continue
+
         for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
         
         # Reset signal to Miaou
@@ -334,7 +350,8 @@ while True:
                 ranks = [VOCAB[t] for t in ct_ranks]
                 ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
                 attn_str = "[" + ",".join([f"{a:.2f}" for a in last_attn]) + "]"
-                
+
+                word_display = VOCAB[cur].replace("_", " ")
                 telemetry_fifo.append(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n')
                 
                 if (is_logic and word == ".") or word in ("<eos>", "<pad>"): led.off(); break

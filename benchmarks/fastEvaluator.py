@@ -173,7 +173,12 @@ with torch.no_grad():
         for j, (cat, target) in enumerate(metas):
             predId = logits[j, answerPositions[j]].argmax().item()
             pred = VOCAB[predId] if predId < len(VOCAB) else "<unk>"
-            tgt = target.strip().rstrip(".").split()[0]
+            # Extract the ground truth final answer from the Micro-CoT string
+            if ":" in target:
+                tgt = target.split(":")[-1].strip().rstrip(".").split()[0]
+            else:
+                # Handles "{actor} in {location} ."
+                tgt = target.strip().rstrip(".").split()[-1]
             ok = (pred == tgt)
             if cat not in catStats: catStats[cat] = [0, 0]
             catStats[cat][1] += 1
