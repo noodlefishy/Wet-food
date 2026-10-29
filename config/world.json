@@ -865,6 +865,70 @@
           "a": "{ans_word}"
         }
       ]
+    },
+    {
+      "name": "24: Direct Arithmetic",
+      "weight": 3.0,
+      "type": "direct_arithmetic",
+      "premise": [
+        "{n1_word} plus {n2_word}",
+        "{n1_word} plus {n2_word} equals",
+        "{n1_word} minus {n2_word}",
+        "{n1_word} minus {n2_word} equals"
+      ],
+      "queries": [
+        {
+          "q": [
+            "calculate",
+            "what does it equal",
+            "what is the result",
+            "what is the answer"
+          ],
+          "a": "{ans_word}"
+        }
+      ]
+    },
+    {
+      "name": "25: Propositional Logic",
+      "weight": 2.5,
+      "type": "propositional_logic",
+      "premise": [
+        "_generated_"
+      ],
+      "queries": [
+        {
+          "q": "_generated_",
+          "a": "_generated_"
+        }
+      ]
+    },
+    {
+      "name": "26: Comparative Chains",
+      "weight": 2.5,
+      "type": "comparative_chains",
+      "premise": [
+        "_generated_"
+      ],
+      "queries": [
+        {
+          "q": "_generated_",
+          "a": "_generated_"
+        }
+      ]
+    },
+    {
+      "name": "27: General Conversation",
+      "weight": 2.0,
+      "type": "conversation",
+      "premise": [
+        "_generated_"
+      ],
+      "queries": [
+        {
+          "q": "_generated_",
+          "a": "_generated_"
+        }
+      ]
     }
   ]
 }
