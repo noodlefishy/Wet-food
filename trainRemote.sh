@@ -37,6 +37,17 @@ if [ "$IS_BENCHMARK" = true ]; then
     echo "[*] Setting benchmark flag on remote VM..."
     touch /tmp/benchmark_mode.flag
     .venv/bin/colab upload -s "${sessionName}" /tmp/benchmark_mode.flag /content/benchmark_mode.flag
+    
+    if [ -f "models/local/pico1 weights.model" ] && [ -f "models/local/pico2 weights.model" ]; then
+        echo "[*] Uploading local trained weights to Colab VM..."
+        .venv/bin/colab exec -s "${sessionName}" "mkdir -p /content/Wet-food/models/local"
+        .venv/bin/colab upload -s "${sessionName}" "models/local/pico1 weights.model" "/content/Wet-food/models/local/pico1 weights.model"
+        .venv/bin/colab upload -s "${sessionName}" "models/local/pico2 weights.model" "/content/Wet-food/models/local/pico2 weights.model"
+        .venv/bin/colab upload -s "${sessionName}" "models/local/vocab.py" "/content/Wet-food/models/local/vocab.py"
+    else
+        echo "[!] Error: Local weights not found in models/local/. Cannot benchmark without trained weights."
+        exit 1
+    fi
 fi
 
 echo "[*] Executing pipeline on remote GPU..."
