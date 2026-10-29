@@ -15,8 +15,8 @@ BLOCK_SIZE   = modCfg["architecture"]["block_size"]
 EMBED_DIM    = modCfg["architecture"]["embed_dim"]
 NUM_HEADS    = modCfg["architecture"]["num_heads"]
 NUM_LAYERS   = modCfg["architecture"]["num_layers"]
-MEOW_LAYERS  = NUM_LAYERS / 2
-MIAOU_LAYERS = NUM_LAYERS / 2
+MEOW_LAYERS  = 3
+MIAOU_LAYERS = 3
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
 DEVICE       = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else modCfg["training"].get("device", "cpu"))
 
