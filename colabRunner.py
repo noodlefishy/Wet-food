@@ -73,12 +73,17 @@ shutil.copy(zipTarget, "models/local/pico_weights_latest.zip")
 print(f"[✓] Package created: {zipTarget} ({os.path.getsize(zipTarget)/1024:.1f} KB)")
 print("\n" + "=" * 65)
 
-print("\n" + "=" * 65)
-print(" STAGE 3: FAST EVALUATOR (benchmarks/fastEvaluator.py)")
-print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py"])
 
 print("\n" + "=" * 65)
+print(" STAGE 3: GENERATING EXHAUSTIVE STRESS SUITE (100k+ TESTS)")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "benchmarks/stressTest.py"])
+
+print("\n" + "=" * 65)
+print(" STAGE 3: RUNNING FAST EVALUATION")
+print("=" * 65, flush=True)
+runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py", "config/stressTest.json"])
+
 print(" STAGE 4: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)")
 print("=" * 65, flush=True)
 runStreaming(["python3", "-u", "benchmarks/oodEvaluator.py"])

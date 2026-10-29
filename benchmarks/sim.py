@@ -64,26 +64,36 @@ def runLayer(f, x, kv, pos):
     q = qkv[:EMBED_DIM]
     k = qkv[EMBED_DIM : EMBED_DIM + HEAD_DIM]
     v = qkv[EMBED_DIM + HEAD_DIM :]
+    
+    cTab, sTab = cosTab[min(pos, BLOCK_SIZE - 1)], sinTab[min(pos, BLOCK_SIZE - 1)]
     for h in range(NUM_HEADS):
-        applyRope(q[h * HEAD_DIM : (h + 1) * HEAD_DIM], pos)
+        ho = h * HEAD_DIM
+        for i in range(HEAD_DIM // 2):
+            i2 = ho + i * 2
+            x0, x1 = q[i2], q[i2 + 1]
+            q[i2]     = x0 * cTab[i] - x1 * sTab[i]
+            q[i2 + 1] = x0 * sTab[i] + x1 * cTab[i]
     applyRope(k, pos)
+
     kv["k"].append(k); kv["v"].append(v)
     if len(kv["k"]) > SINK_SIZE + WINDOW_SIZE:
         kv["k"].pop(SINK_SIZE); kv["v"].pop(SINK_SIZE)
+
     ao, sc = [0.0] * EMBED_DIM, 1.0 / math.sqrt(HEAD_DIM)
+    seqLen = len(kv["k"])
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM; qh = q[ho : ho + HEAD_DIM]
-        scs = [sum(qh[i] * kv["k"][t][i] for i in range(HEAD_DIM)) * sc for t in range(len(kv["k"]))]
+        scs = [sum(qh[i] * kv["k"][t][i] for i in range(HEAD_DIM)) * sc for t in range(seqLen)]
         ms = max(scs); wts = [math.exp(s - ms) for s in scs]; sWts = sum(wts); wts = [e / sWts for e in wts]
-        for t in range(len(wts)):
+        for t in range(seqLen):
             for i in range(HEAD_DIM): ao[ho + i] += wts[t] * kv["v"][t][i]
+
     proj = streamLinear(f, EMBED_DIM, EMBED_DIM, ao)
     x = [x[i] + proj[i] for i in range(EMBED_DIM)]
     nx = layerNorm(x, readVec(f, EMBED_DIM), readVec(f, EMBED_DIM))
     h1 = streamLinear(f, 4 * EMBED_DIM, EMBED_DIM, nx)
     h2 = streamLinear(f, EMBED_DIM, 4 * EMBED_DIM, [max(0.0, val) for val in h1])
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
-
 def generate(promptTxt, maxTokens=30):
     isLog = any(t in promptTxt for t in ("[c]", "[q]", "[a]")) or any(promptTxt.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
     p = promptTxt.strip()
