@@ -92,7 +92,7 @@ def generate(promptTxt, maxTokens=30):
         if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
     toks = [WORD_TO_ID.get(w, 0) for w in re.findall(r"\[[cqa]\]|<eos>|<unk>|<pad>|\w+|[.]|[?]|[:]", p.lower())] or [WORD_TO_ID["alice"]]
     mKv = [{"k":[], "v":[]} for _ in range(3)]
-    miKv = [{"k":[], "v":[]} for _ in range(5)]
+    miKv = [{"k":[], "v":[]} for _ in range(3)]
     curr, out = toks[-1], []
     for step in range(len(toks) + maxTokens):
         tid = toks[step] if step < len(toks) else curr
@@ -100,7 +100,7 @@ def generate(promptTxt, maxTokens=30):
         f1.seek(L0_OFF)
         for l in range(3): x = runLayer(f1, x, mKv[l], step)
         f2.seek(0)
-        for l in range(5): x = runLayer(f2, x, miKv[l], step)
+        for l in range(3): x = runLayer(f2, x, miKv[l], step)
         nx = layerNorm(x, readVec(f2, EMBED_DIM), readVec(f2, EMBED_DIM))
         lg = streamLinear(f2, 1024, EMBED_DIM, nx)
         lg[WORD_TO_ID["<unk>"]] = lg[WORD_TO_ID["<pad>"]] = -1e9

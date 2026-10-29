@@ -4,7 +4,7 @@ from machine import Pin; from array import array
 machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
 
 EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
-SINK_SIZE = 4; WINDOW_SIZE = 32
+SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 
 try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
 except: WIFI_SSID = ""; WIFI_PASS = ""
@@ -99,7 +99,7 @@ while not connected:
 led.off()
 
 f_w = open("pico2 weights.model", "rb")
-kv = [{'k':[], 'v':[]} for _ in range(5)]  # 5 Layers on Miaou
+kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]  # 5 Layers on Miaou
 token_counter = [0]
 
 def run_layer(f, idx, x, pos):
@@ -165,7 +165,7 @@ while True:
         
         f_w.seek(0)
         # Compute 5 layers (Layers 3, 4, 5, 6, 7)
-        for l in range(5): x = run_layer(f_w, l, x, pos)
+        for l in range(LAYERS): x = run_layer(f_w, l, x, pos)
         
         nx = layer_norm(x, read_vec(f_w, EMBED_DIM), read_vec(f_w, EMBED_DIM))
         lg = stream_linear(f_w, VOCAB_SIZE, EMBED_DIM, nx)

@@ -6,7 +6,7 @@ led = Pin("LED", Pin.OUT); led.off()
 
 EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B
-SINK_SIZE = 4; WINDOW_SIZE = 32
+SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 
 try: import vocab; VOCAB = vocab.VOCAB
 except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w" + str(i) for i in range(1021)]
@@ -83,7 +83,7 @@ def sample_top5(ranks):
     return ranks[4]
 
 f_w = open("pico1 weights.model", "rb")
-kv = [{'k':[], 'v':[]} for _ in range(3)]  # 3 Layers on Meow
+kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]  # 3 Layers on Meow
 
 def run_layer(f, idx, x, pos):
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
@@ -287,7 +287,7 @@ while True:
             
             last_attn = []
             f_w.seek(L0_OFF)
-            for l in range(3):
+            for l in range(LAYERS):
                 x, last_attn = run_layer(f_w, l, x, stp)
             
             try:
