@@ -42,7 +42,7 @@
         { "q": "where is {actor2}", "a": "{actor2} went to : {location2} . location : {location2} ." },
         { "q": "who went to the {location1}", "a": "{location1} has : {actor1} . person : {actor1} ." },
         { "q": "who went to the {location2}", "a": "{location2} has : {actor2} . person : {actor2} ." }
-    },
+  ]},
     {
       "name": "02: Two Supporting Facts",
       "weight": 2.5,
