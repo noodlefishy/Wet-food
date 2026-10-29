@@ -151,18 +151,8 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
         filtered = [q for q in queries if (": yes" in q.get("a", "")) == wantYes]
         queryObj = random.choice(filtered) if filtered else random.choice(queries)
     # 2. Anti-recency sampling: force query to target distant entity 65% of the time
-    elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
-        dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
-        rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
-        
-        if random.random() < 0.50:
-            d = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
-            queryObj = random.choice(d) if d else random.choice(queries)
-        else:
-            r = [q for q in queries if f"{{{rec_actor}}}" in str(q)]
-            queryObj = random.choice(r) if r else random.choice(queries)
-    else:
-        queryObj = random.choice(queries)
+    queryObj = random.choice(queries)
+
 
     actors  = random.sample(pools["actor"], min(5, len(pools["actor"])))
     locs    = random.sample(pools["location"], min(5, len(pools["location"])))

@@ -38,11 +38,10 @@
         "{actor2} is in the {location2} while {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "where is {actor1}", "a": "target : {actor1} . location : {location1} ." },
-        { "q": "where is {actor2}", "a": "target : {actor2} . location : {location2} ." },
-        { "q": "who went to the {location1}", "a": "target : {location1} . person : {actor1} ." },
-        { "q": "who went to the {location2}", "a": "target : {location2} . person : {actor2} ." }
-      ]
+        { "q": "where is {actor1}", "a": "{actor1} went to : {location1} . location : {location1} ." },
+        { "q": "where is {actor2}", "a": "{actor2} went to : {location2} . location : {location2} ." },
+        { "q": "who went to the {location1}", "a": "{location1} has : {actor1} . person : {actor1} ." },
+        { "q": "who went to the {location2}", "a": "{location2} has : {actor2} . person : {actor2} ." }
     },
     {
       "name": "02: Two Supporting Facts",
@@ -215,9 +214,9 @@
         "first {actor1} and {actor2} were in the {location1} . then they walked to the {location2}"
       ],
       "queries": [
-        { "q": "where is {actor1}", "a": "they moved : {location2} . location : {location2} ." },
-        { "q": "where is {actor2}", "a": "they moved : {location2} . location : {location2} ." },
-        { "q": "who is in the {location1}", "a": "both left : {location1} . person : nobody ." }
+        { "q": "where is {actor1}", "a": "both went to : {location2} . {actor1} : {location2} ." },
+        { "q": "where is {actor2}", "a": "both went to : {location2} . {actor2} : {location2} ." },
+        { "q": "who is in the {location1}", "a": "left behind : {location1} . person : nobody ." }
       ]
     },
     {
@@ -251,9 +250,10 @@
         "{actor2} has a {colour2} {item2} . {actor1} has a {colour1} {item1} . {actor3} has the {item1}"
       ],
       "queries": [
-        { "q": "what colour is the {item1}", "a": "source : {actor1} . colour : {colour1} ." },
-        { "q": "what colour is the {item2}", "a": "source : {actor2} . colour : {colour2} ." }
+        { "q": "what colour is the {item1}", "a": "{item1} belongs to : {actor1} . colour : {colour1} ." },
+        { "q": "what colour is the {item2}", "a": "{item2} belongs to : {actor2} . colour : {colour2} ." }
       ]
+
     },
     {
       "name": "17: Positional Reasoning",
