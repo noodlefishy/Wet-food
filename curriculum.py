@@ -151,13 +151,19 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
         filtered = [q for q in queries if (": yes" in q.get("a", "")) == wantYes]
         queryObj = random.choice(filtered) if filtered else random.choice(queries)
     # 2. Anti-recency sampling: force query to target distant entity 65% of the time
-    elif any("{actor1}" in q.get("q", "") or "{location1}" in q.get("a", "") for q in queries) and \
-         any("{actor2}" in q.get("q", "") or "{location2}" in q.get("a", "") for q in queries):
+    elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
+        dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
+        rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
+        dist_loc = dist_actor.replace("actor", "location")
+        dist_item = dist_actor.replace("actor", "item")
+        rec_loc = rec_actor.replace("actor", "location")
+        rec_item = rec_actor.replace("actor", "item")
+        
         if random.random() < 0.65:
-            d = [q for q in queries if "{actor1}" in str(q.get("q")) or "{location1}" in str(q.get("a"))]
+            d = [q for q in queries if f"{{{dist_actor}}}" in str(q.get("q")) or f"{{{dist_loc}}}" in str(q.get("a")) or f"{{{dist_item}}}" in str(q.get("a"))]
             queryObj = random.choice(d) if d else random.choice(queries)
         else:
-            r = [q for q in queries if "{actor2}" in str(q.get("q")) or "{location2}" in str(q.get("a"))]
+            r = [q for q in queries if f"{{{rec_actor}}}" in str(q.get("q")) or f"{{{rec_loc}}}" in str(q.get("a")) or f"{{{rec_item}}}" in str(q.get("a"))]
             queryObj = random.choice(r) if r else random.choice(queries)
     else:
         queryObj = random.choice(queries)
@@ -213,6 +219,9 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
         unused = [a for a in actors if a not in qRendered and a not in aRendered]
         if unused:
             distPhrase = random.choice(DISTRACTOR_TEMPLATES).format(actor=random.choice(unused))
-            pStr = f"{pStr} . {distPhrase}"
+            # Shuffle distractor to beginning, middle, or end to prevent "ignore last sentence" heuristics
+            parts = [s.strip() for s in pStr.split(" . ") if s.strip()]
+            parts.insert(random.randint(0, len(parts)), distPhrase)
+            pStr = " . ".join(parts)
 
     return formatQaSequence(pStr, qRendered, aRendered)

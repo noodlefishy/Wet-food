@@ -96,10 +96,12 @@
     },
     {
       "name": "06: Yes/No Truth Verification",
-      "weight": 3.0,
+      "weight": 4.0,
       "premise": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
-        "{actor2} went to the {location2} . {actor1} went to the {location1}"
+        "{actor2} went to the {location2} . {actor1} went to the {location1}",
+        "{actor1} is in the {location1} . {actor2} is in the {location2}",
+        "{actor2} is in the {location2} while {actor1} went to the {location1}"
       ],
       "queries": [
         { "q": "is {actor1} in the {location1}", "a": "{actor1} : yes ." },
@@ -137,10 +139,12 @@
     },
     {
       "name": "08: Lists and Sets",
-      "weight": 2.0,
+      "weight": 3.5,
       "premise": [
-        "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}"
+        "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
       ],
+
       "queries": [
         { "q": "what does {actor1} have", "a": "{actor1} : {item1} and {item2} ." },
         { "q": "what does {actor2} have", "a": "{actor2} : {item3} ." },
@@ -185,10 +189,12 @@
     },
     {
       "name": "12: Conjunction",
-      "weight": 2.5,
+      "weight": 3.5,
       "premise": [
-        "{actor1} and {actor2} went to the {location1} . {actor3} went to the {location2}"
+        "{actor1} and {actor2} went to the {location1} . {actor3} went to the {location2}",
+        "{actor3} went to the {location2} . {actor1} and {actor2} went to the {location1}"
       ],
+
       "queries": [
         { "q": "where is {actor1}", "a": "{actor1} : {location1} ." },
         { "q": "where is {actor2}", "a": "{actor2} : {location1} ." },
@@ -302,7 +308,7 @@
     },
     {
       "name": "23: Basic Arithmetic",
-      "weight": 2.5,
+      "weight": 0.5,
       "type": "arithmetic",
       "premise": [
         "{actor1} had {n1_word} {item1_n1} . {actor2} gave {actor1} {n2_word} {item1_n2}",

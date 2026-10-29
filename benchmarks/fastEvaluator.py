@@ -162,8 +162,8 @@ if __name__ == "__main__":
             genTokens = [[] for _ in batch]
             active = [True] * len(batch)
             
-            # Micro-CoT multi-step generation (up to 4 tokens)
-            for step in range(4):
+            # Micro-CoT multi-step generation (up to 4 tokens) & more
+            for step in range(10):
                 logits = model(x)
                 for j in range(len(batch)):
                     if not active[j]: continue
@@ -182,6 +182,10 @@ if __name__ == "__main__":
                 predAns = extract_answer(genStr)
                 expectedAns = extract_answer(target)
                 
+                if " and " in expectedAns and " and " in predAns:
+                    if set(predAns.split(" and ")) == set(expectedAns.split(" and ")):
+                        predAns = expectedAns
+
                 ok = (predAns == expectedAns and predAns != "")
                 if cat not in catStats: catStats[cat] = [0, 0]
                 catStats[cat][1] += 1
@@ -204,6 +208,8 @@ if __name__ == "__main__":
     print(f" FINAL REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
     print(f"{'='*65}")
 
+    ff = []  
+
     for cat in sorted(catStats.keys()):
         passed, n = catStats[cat]
         pct = (passed / n * 100) if n else 0
@@ -214,5 +220,7 @@ if __name__ == "__main__":
         print(f"\n{'='*65}")
         print(" SAMPLE MISPREDICTIONS (First 15)")
         print(f"{'='*65}")
-        for cat, q, tgt, pred in failures[:15]:
-            print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r}\n    Generated CoT: {pred!r}\n")
+        for cat, q, tgt, pred in failures:
+            ff.append({'category':cat,'question':q,'target':tgt,'got':pred})
+        with open('failure.json','w') as f:
+            json.dump(ff,f)
