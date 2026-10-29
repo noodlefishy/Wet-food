@@ -57,10 +57,10 @@ sinTab = [[math.sin(p * invFreq[i]) for i in range(HEAD_DIM // 2)] for p in rang
 
 def applyRope(vec, pos):
     c, s = cosTab[min(pos, BLOCK_SIZE - 1)], sinTab[min(pos, BLOCK_SIZE - 1)]
-    for i in range(10):
+    for i in range(HEAD_DIM // 2):
         i2 = i * 2
         x0, x1 = vec[i2], vec[i2 + 1]
-        vec[i2] = x0 * c[i] - x1 * s[i]
+        vec[i2]     = x0 * c[i] - x1 * s[i]
         vec[i2 + 1] = x0 * s[i] + x1 * c[i]
 
 def runLayer(f, x, kv, pos):
@@ -129,7 +129,7 @@ def generate(promptTxt, maxTokens=25):
         if isLog:
             curr = max(range(1024), key=lambda i: lg[i])
         else:
-            for pastTok in set(toks + out[-10:]): lg[pastTok] -= 1.5
+            for pastTok in set(toks + out[-8:]): lg[pastTok] -= 1.8
             scaled = [v / 0.7 for v in lg]; ms = max(scaled); exps = [math.exp(v - ms) for v in scaled]
             probs = [e / sum(exps) for e in exps]; r, acc, curr = random.random(), 0.0, len(probs) - 1
             for i, pr in enumerate(probs):
@@ -146,7 +146,7 @@ def generate(promptTxt, maxTokens=25):
 
 if __name__ == "__main__":
     print("=" * 65)
-    print("         WET FOOD LOCAL SIMULATOR (CHUNK TOKENS ENABLED)       ")
+    print("      WET FOOD LOCAL SIMULATOR (MICRO-COT + CHUNKS ACTIVE)     ")
     print("=" * 65)
     print("Type a prompt or 'exit' to quit.\n")
     while True:

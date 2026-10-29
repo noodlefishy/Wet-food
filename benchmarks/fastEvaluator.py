@@ -3,21 +3,19 @@ from torch.nn import functional as F
 
 projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
-
-with open(os.path.join(projectRoot, "config", "model.json")) as f:
-    modCfg = json.load(f)
-
+with open(os.path.join(projectRoot, "config", "model.json")) as f: modCfg = json.load(f)
 from models.local import vocab
+from chunks import preprocess_chunks, decode_token, TOKEN_REGEX
+
 VOCAB = vocab.VOCAB
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
-
 VOCAB_SIZE   = modCfg["architecture"]["vocab_size"]
 EMBED_DIM    = modCfg["architecture"]["embed_dim"]
 BLOCK_SIZE   = modCfg["architecture"]["block_size"]
 NUM_HEADS    = modCfg["architecture"]["num_heads"]
 NUM_LAYERS   = modCfg["architecture"]["num_layers"]
-MEOW_LAYERS  = 3
-MIAOU_LAYERS = 3
+MEOW_LAYERS  = modCfg["architecture"].get("meow_layers", NUM_LAYERS // 2)
+MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", NUM_LAYERS - MEOW_LAYERS)
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
 
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
@@ -98,13 +96,11 @@ def loadParam(f, tensor, quantized=True):
 p1 = os.path.join(projectRoot, "models", "local", "pico1 weights.model")
 p2 = os.path.join(projectRoot, "models", "local", "pico2 weights.model")
 
-print(f"[*] Loading Meow weights ({MEOW_LAYERS}L) from pico1...")
 with open(p1, "rb") as f:
     loadParam(f, model.tokEmb.weight)
     for i in range(MEOW_LAYERS):
         for p in model.layers[i].parameters(): loadParam(f, p)
 
-print(f"[*] Loading Miaou weights ({MIAOU_LAYERS}L) from pico2...")
 with open(p2, "rb") as f:
     for i in range(MEOW_LAYERS, NUM_LAYERS):
         for p in model.layers[i].parameters(): loadParam(f, p)
@@ -115,71 +111,74 @@ with open(p2, "rb") as f:
 model.eval()
 print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
 
-# Locate evaluation suite
-if len(sys.argv) > 1 and not sys.argv[1].startswith("--"):
-    suitePath = sys.argv[1]
-elif os.path.exists(os.path.join(projectRoot, "config", "stressTest.json")):
-    suitePath = os.path.join(projectRoot, "config", "stressTest.json")
-elif os.path.exists(os.path.join(projectRoot, "config", "questions.json")):
-    suitePath = os.path.join(projectRoot, "config", "questions.json")
-else:
-    raise FileNotFoundError("Could not locate stressTest.json or questions.json")
+suitePath = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else os.path.join(projectRoot, "config", "stressTest.json")
+if not os.path.exists(suitePath): suitePath = os.path.join(projectRoot, "config", "questions.json")
 
 print(f"[*] Loading evaluation suite: {suitePath}")
-with open(suitePath) as f:
-    rawData = json.load(f)
+with open(suitePath) as f: rawData = json.load(f)
 
-aId, padId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1)
-TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
+aId, padId, dotId, eosId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1), WORD_TO_ID.get(".", 3), WORD_TO_ID.get("<eos>", 2)
 
 def tokenize(s):
-    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
+    p = preprocess_chunks(s)
+    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, p)]
 
-allTests, storyTests = [], []
+allTests = []
 for cat, items in rawData.items():
     for item in items:
-        q = item.get("q", "")
-        tgt = item.get("target")
-        if tgt is None:
-            storyTests.append((cat, q))
-        else:
-            allTests.append((cat, q, str(tgt)))
+        if item.get("target") is not None:
+            allTests.append((cat, item["q"], str(item["target"])))
 
 total = len(allTests)
-print(f"[*] Running {total:,} QA tests across {len(rawData)} categories...\n")
+print(f"[*] Evaluating {total:,} QA tests across {len(rawData)} categories with Micro-CoT validation...\n")
 
 catStats, totalPassed, failures = {}, 0, []
 t0 = time.time()
 BATCH = 512
 
+def extract_answer(text):
+    t = preprocess_chunks(text)
+    if ":" in t:
+        return t.split(":")[-1].strip().rstrip(".").split()[0]
+    words = t.strip().rstrip(".").split()
+    return words[-1] if words else ""
+
 with torch.no_grad():
     for i in range(0, total, BATCH):
         batch = allTests[i:i+BATCH]
-        inputIds, answerPositions, metas = [], [], []
-        for cat, q, target in batch:
-            toks = tokenize(q)
-            try: aPos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == aId)
-            except StopIteration:
-                toks.append(aId); aPos = len(toks) - 1
-            prompt = toks[:aPos+1]
-            padded = prompt + [padId] * (BLOCK_SIZE - len(prompt))
-            inputIds.append(padded[:BLOCK_SIZE])
-            answerPositions.append(min(aPos, BLOCK_SIZE - 1))
-            metas.append((cat, target))
+        prompts = [tokenize(q) for _, q, _ in batch]
+        
+        # Determine max prompt length in this batch
+        lens = [len(p) for p in prompts]
+        maxLen = max(lens)
+        
+        padded = [p + [padId] * (BLOCK_SIZE - len(p)) for p in prompts]
+        x = torch.tensor(padded, dtype=torch.long, device=device)
+        
+        # Autoregressive Micro-CoT generation (up to 5 tokens)
+        genTokens = [[] for _ in batch]
+        active = [True] * len(batch)
+        
+        for step in range(5):
+            logits = model(x)
+            for j in range(len(batch)):
+                if not active[j]: continue
+                pos = lens[j] + step - 1
+                if pos >= BLOCK_SIZE:
+                    active[j] = False
+                    continue
+                predId = logits[j, pos].argmax().item()
+                genTokens[j].append(VOCAB[predId])
+                if predId in (dotId, eosId): active[j] = False
+                if pos + 1 < BLOCK_SIZE: x[j, pos + 1] = predId
+            if not any(active): break
 
-        x = torch.tensor(inputIds, dtype=torch.long, device=device)
-        logits = model(x)
-
-        for j, (cat, target) in enumerate(metas):
-            predId = logits[j, answerPositions[j]].argmax().item()
-            pred = VOCAB[predId] if predId < len(VOCAB) else "<unk>"
-            # Extract the ground truth final answer from the Micro-CoT string
-            if ":" in target:
-                tgt = target.split(":")[-1].strip().rstrip(".").split()[0]
-            else:
-                # Handles "{actor} in {location} ."
-                tgt = target.strip().rstrip(".").split()[-1]
-            ok = (pred == tgt)
+        for j, (cat, q, target) in enumerate(batch):
+            genStr = " ".join(genTokens[j])
+            predAns = extract_answer(genStr)
+            expectedAns = extract_answer(target)
+            
+            ok = (predAns == expectedAns)
             if cat not in catStats: catStats[cat] = [0, 0]
             catStats[cat][1] += 1
             if ok:
@@ -187,19 +186,18 @@ with torch.no_grad():
                 totalPassed += 1
             else:
                 if len(failures) < 50:
-                    failures.append((cat, batch[j][1], target, pred))
+                    failures.append((cat, q, target, genStr))
 
         done = min(i + BATCH, total)
         pct = (totalPassed / done * 100) if done else 0
         elapsed = time.time() - t0
         eta = (total - done) * (elapsed / done) if done else 0
-        
         sys.stdout.write(f"\r  [Evaluator] Progress: {done:>7,}/{total:,} [{done/total*100:5.1f}%] | Acc: {pct:5.1f}% | Elapsed: {elapsed:4.1f}s | ETA: {eta:4.1f}s")
         sys.stdout.flush()
 
 elapsed = time.time() - t0
 print(f"\n\n{'='*65}")
-print(f" FINAL REASONING ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
+print(f" FINAL MICRO-COT ACCURACY: {totalPassed:,}/{total:,} = {totalPassed/total*100:.1f}%  ({elapsed:.2f}s)")
 print(f"{'='*65}")
 
 for cat in sorted(catStats.keys()):
@@ -213,4 +211,4 @@ if "--failures" in sys.argv and failures:
     print(" SAMPLE MISPREDICTIONS (First 15)")
     print(f"{'='*65}")
     for cat, q, tgt, pred in failures[:15]:
-        print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r} | Predicted: {pred!r}\n")
+        print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r}\n    Generated CoT: {pred!r}\n")

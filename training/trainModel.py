@@ -23,7 +23,6 @@ DEVICE       = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends
 
 MODELS_DIR = modCfg["paths"]["models_dir"]
 STORIES_FILE = modCfg["paths"]["stories_file"]
-QUESTIONS_FILE = modCfg["paths"]["questions_file"]
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs("firmware", exist_ok=True)
 
@@ -47,13 +46,11 @@ TARGET_LOGIC = modCfg["dataset"].get("logic_samples_target", 50000)
 print(f"[*] Generating {TARGET_LOGIC} synthetic logic tasks...")
 allQaTasks = [generateAtomicSample(logCfg) for _ in range(TARGET_LOGIC)]
 
-# Plural helper for auto-harvesting
 def pluralize(word):
     if word.endswith(("s", "x", "z", "ch", "sh")): return word + "es"
     if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou": return word[:-1] + "ies"
     return word + "s"
 
-# Harvest pool words and plurals automatically
 autoPoolWords = set()
 for poolKey, poolList in logCfg.get("pools", {}).items():
     if isinstance(poolList, list):
@@ -62,27 +59,23 @@ for poolKey, poolList in logCfg.get("pools", {}).items():
             if poolKey in ("item", "container"):
                 autoPoolWords.add(pluralize(item.lower()))
 
-# Core words: includes dataset core words + chunks + all pool words
 BASE_CORE = modCfg["dataset"]["core_words"] + CHUNK_TOKENS
 CAT_CORE_WORDS = list(dict.fromkeys(BASE_CORE + sorted(list(autoPoolWords))))
 
-# Preprocess stories with chunks
 cleanStoryText = preprocess_chunks(rawStories[:4000000])
 storyWords = re.findall(TOKEN_REGEX, cleanStoryText)
 cleanStoryWords = [w for w in storyWords if w in CAT_CORE_WORDS or (w.isalpha() and len(w) > 1 and not w.endswith("n't"))]
 
-# Preprocess QA tasks with chunks
 cleanQaText = preprocess_chunks(" ".join(allQaTasks[:8000]))
 counts = Counter(cleanStoryWords + re.findall(TOKEN_REGEX, cleanQaText))
 for w in CAT_CORE_WORDS: counts.pop(w, None)
 
-# Build vocabulary
 remainingSlots = VOCAB_SIZE - len(CAT_CORE_WORDS)
 VOCAB = CAT_CORE_WORDS + [w for w, _ in counts.most_common(remainingSlots)]
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 padId, aTokenId = WORD_TO_ID["<pad>"], WORD_TO_ID["[a]"]
 
-print(f"[✓] Vocab: {len(CAT_CORE_WORDS)} core/pool/chunk words + {len(VOCAB) - len(CAT_CORE_WORDS)} top natural words.")
+print(f"[✓] Vocab: {len(CAT_CORE_WORDS)} core/pool/chunk words + {len(VOCAB) - len(CAT_CORE_WORDS)} natural words.")
 
 def tokenizeStr(s):
     preprocessed = preprocess_chunks(s)
@@ -97,7 +90,7 @@ for task in allQaTasks:
     
     x = toks + [padId] * (BLOCK_SIZE - len(toks))
     
-    # SFT Response-Only Masking: -100 on prompt, loss on answer -> . -> <eos>
+    # SFT Response Masking: -100 on prompt, loss on all tokens after [a]
     y = [-100] * BLOCK_SIZE
     ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
     if ansStart != -1:

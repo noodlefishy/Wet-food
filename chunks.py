@@ -1,7 +1,6 @@
 # chunks.py - Centralized multi-word chunk tokens & tokenizer helpers
 import re
 
-# High-frequency grammar chunks (longest phrases first for greedy matching)
 GRAMMAR_CHUNKS = [
     ("once upon a time", "once_upon_a_time"),
     ("who went to the",  "who_went_to_the"),
@@ -31,7 +30,6 @@ def preprocess_chunks(text):
     t = text.lower()
     for phrase, token in GRAMMAR_CHUNKS:
         t = t.replace(phrase, f" {token} ")
-    # Ensure punctuation is clean and separated
     for char in [".", "?", "!", ",", ":"]:
         t = t.replace(char, f" {char} ")
     t = t.replace("'s", " 's ")
