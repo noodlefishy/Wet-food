@@ -162,8 +162,8 @@ if __name__ == "__main__":
             genTokens = [[] for _ in batch]
             active = [True] * len(batch)
             
-            # Micro-CoT multi-step generation (up to 4 tokens) & more
-            for step in range(10):
+            # Micro-CoT multi-step generation (up to 4 tokens) & more (6) & more again(10) & even more again (16)
+            for step in range(16):
                 logits = model(x)
                 for j in range(len(batch)):
                     if not active[j]: continue

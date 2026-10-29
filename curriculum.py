@@ -159,11 +159,12 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
         rec_loc = rec_actor.replace("actor", "location")
         rec_item = rec_actor.replace("actor", "item")
         
+        # Search the entire QA unit so both "where is X" and "who went to Y" are captured
         if random.random() < 0.65:
-            d = [q for q in queries if f"{{{dist_actor}}}" in str(q.get("q")) or f"{{{dist_loc}}}" in str(q.get("a")) or f"{{{dist_item}}}" in str(q.get("a"))]
+            d = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
             queryObj = random.choice(d) if d else random.choice(queries)
         else:
-            r = [q for q in queries if f"{{{rec_actor}}}" in str(q.get("q")) or f"{{{rec_loc}}}" in str(q.get("a")) or f"{{{rec_item}}}" in str(q.get("a"))]
+            r = [q for q in queries if f"{{{rec_actor}}}" in str(q)]
             queryObj = random.choice(r) if r else random.choice(queries)
     else:
         queryObj = random.choice(queries)
