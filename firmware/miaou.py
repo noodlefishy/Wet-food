@@ -6,7 +6,7 @@ machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
 EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 SINK_SIZE = 4; WINDOW_SIZE = 32
 
-try: import wifi_config; WIFI_SSID = wifi_config.SSID; WIFI_PASS = wifi_config.PASSWORD
+try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
 except: WIFI_SSID = ""; WIFI_PASS = ""
 
 def read_vec(f, c): return struct.unpack(f'{c}f', f.read(c * 4))

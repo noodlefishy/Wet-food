@@ -12,7 +12,7 @@ try: import vocab; VOCAB = vocab.VOCAB
 except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w" + str(i) for i in range(1021)]
 WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 
-try: import wifi_config; WIFI_SSID = wifi_config.SSID; WIFI_PASS = wifi_config.PASSWORD
+try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
 except: WIFI_SSID = ""; WIFI_PASS = ""
 
 def read_vec(f, c): return struct.unpack(f'{c}f', f.read(c * 4))

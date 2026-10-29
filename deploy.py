@@ -9,14 +9,14 @@ if os.path.exists(HTML_SRC):
 MEOW_FILES = [
     ("models/local/pico1 weights.model", "pico1 weights.model"),
     ("models/local/vocab.py", "vocab.py"),
-    ("firmware/wifi_config.py", "wifi_config.py"),
+    ("firmware/wifiConfig.py", "wifiConfig.py"),
     ("firmware/index.html.gz", "index.html.gz"),
     ("firmware/meow.py", "main.py")
 ]
 
 MIAOU_FILES = [
     ("models/local/pico2 weights.model", "pico2 weights.model"),
-    ("firmware/wifi_config.py", "wifi_config.py"),
+    ("firmware/wifiConfig.py", "wifiConfig.py"),
     ("firmware/miaou.py", "main.py")
 ]
 

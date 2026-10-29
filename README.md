@@ -110,18 +110,18 @@ The repository ships with a **zero‑click** remote‑training pipeline that run
 source .venv/bin/activate
 
 # Run the full remote‑training, live‑streaming output and automatic download
-./train_remote.sh
+./trainRemote.sh
 ```
 The script will:
 1. Spin up a fresh Colab session on a T4 GPU.
-2. Upload the patched `colab_runner.py` (which forces unbuffered stdout).
+2. Upload `colabRunner.py` (which forces unbuffered stdout).
 3. Execute the full training pipeline **live‑streaming** each step back to your terminal.
 4. Download `pico_weights_latest.zip` from the remote VM, unzip it into `models/local/`, and copy `vocab.py` into `firmware/`.
 5. Cleanly stop the Colab session even if the script is interrupted.
 
 ### Troubleshooting
-- **No live output:** Ensure the repository contains the latest `colab_runner.py` where `PYTHONUNBUFFERED=1` and the streaming helper are applied.
-- **Download failed:** Verify the remote script writes the zip to `/content/pico_weights_latest.zip`. The path is hard‑coded in `train_remote.sh`.
+- **No live output:** Ensure the repository contains the latest `colabRunner.py` where `PYTHONUNBUFFERED=1` and the streaming helper are applied.
+- **Download failed:** Verify the remote script writes the zip to `/content/pico_weights_latest.zip`. The path is hard‑coded in `trainRemote.sh`.
 - **Session leaks:** The script installs a `trap` that calls `colab stop` on EXIT; if you abort with `Ctrl‑C` the session should still be terminated.
 
 ---

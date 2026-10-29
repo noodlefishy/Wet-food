@@ -8,5 +8,5 @@ __pycache__/
 models/
 config/questions.json
 benchmarks/failures.json
-config/stress_test.json
+config/stressTest.json
 benchmarks/.sim_history

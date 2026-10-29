@@ -20,10 +20,10 @@ cleanup() {
 trap cleanup EXIT
 
 echo "[*] Uploading runner script to Colab VM..."
-.venv/bin/colab upload -s "${sessionName}" colab_runner.py /content/colab_runner.py
+.venv/bin/colab upload -s "${sessionName}" colabRunner.py /content/colabRunner.py
 
 echo "[*] Executing build and test pipeline on remote GPU..."
-.venv/bin/colab exec -s "${sessionName}" -f colab_runner.py --timeout 1800
+.venv/bin/colab exec -s "${sessionName}" -f colabRunner.py --timeout 1800
 
 echo ""
 echo "[*] Downloading trained weights and vocab back to local disk..."

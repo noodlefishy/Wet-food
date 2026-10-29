@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 if not inColab:
-    print("\n[!] ERROR: colab_runner.py must run inside a Google Colab GPU environment!")
+    print("\n[!] ERROR: colabRunner.py must run inside a Google Colab GPU environment!")
     sys.exit(1)
 
 if not torch.cuda.is_available():
@@ -53,19 +53,19 @@ def runStreaming(cmd, envVars=None):
         raise subprocess.CalledProcessError(ret, cmd)
 
 print("\n" + "=" * 65)
-print(" STAGE 1: TRAINING & QUANTIZATION (training/local.py)")
+print(" STAGE 1: TRAINING & QUANTIZATION (training/trainModel.py)")
 print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "training/local.py"])
+runStreaming(["python3", "-u", "training/trainModel.py"])
 
 print("\n" + "=" * 65)
-print(" STAGE 2: FAST EVALUATOR (benchmarks/fast_evaluator.py)")
+print(" STAGE 2: FAST EVALUATOR (benchmarks/fastEvaluator.py)")
 print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "benchmarks/fast_evaluator.py"])
+runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py"])
 
 print("\n" + "=" * 65)
-print(" STAGE 3: OUT-OF-DISTRIBUTION PROBES (benchmarks/ood_evaluator.py)")
+print(" STAGE 3: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)")
 print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "benchmarks/ood_evaluator.py"])
+runStreaming(["python3", "-u", "benchmarks/oodEvaluator.py"])
 
 print("\n" + "=" * 65)
 print(" STAGE 4: SIMULATOR SMOKE TEST")

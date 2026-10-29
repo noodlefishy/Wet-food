@@ -107,7 +107,7 @@ with open(p2, "rb") as f:
 model.eval()
 print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE, no pos_emb) on {device}\n")
 
-suitePath = sys.argv[1] if len(sys.argv) > 1 else os.path.join(projectRoot, "config", "stress_test.json")
+suitePath = sys.argv[1] if len(sys.argv) > 1 else os.path.join(projectRoot, "config", "stressTest.json")
 with open(suitePath) as f: rawData = json.load(f)
 
 aId, padId = WORD_TO_ID.get("[a]", 9), WORD_TO_ID.get("<pad>", 1)
