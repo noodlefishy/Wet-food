@@ -137,10 +137,14 @@ t0 = time.time()
 BATCH = 512
 
 def extract_answer(text):
-    t = preprocess_chunks(text)
+    if not text or not text.strip(): return ""
+    t = preprocess_chunks(text).strip().rstrip(".")
     if ":" in t:
-        return t.split(":")[-1].strip().rstrip(".").split()[0]
-    words = t.strip().rstrip(".").split()
+        after_colon = t.split(":")[-1].strip().split()
+        if after_colon: return after_colon[0]
+        before_colon = t.split(":")[0].strip().split()
+        return before_colon[-1] if before_colon else ""
+    words = t.split()
     return words[-1] if words else ""
 
 with torch.no_grad():

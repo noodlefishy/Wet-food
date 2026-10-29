@@ -71,9 +71,9 @@ for cat in cfg["categories"]:
 
     elif ctype in ("propositional_logic", "comparative_chains", "conversation") and hasGen:
         genFunc = {
-            "propositional_logic": generatePropositionalSample,
-            "comparative_chains": generateComparativeSample,
-            "conversation": generateConversationSample
+            "propositional_logic": generatePropositionalSample, # type: ignore
+            "comparative_chains": generateComparativeSample, # type: ignore
+            "conversation": generateConversationSample # type: ignore
         }[ctype]
         seen = set()
         for _ in range(1000):
