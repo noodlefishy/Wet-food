@@ -52,10 +52,17 @@ def runStreaming(cmd, envVars=None):
     if ret != 0:
         raise subprocess.CalledProcessError(ret, cmd)
 
+benchmarkMode = any(arg in sys.argv for arg in ["--benchmark", "--no-train", "--eval-only"]) or os.path.exists("/content/benchmark_mode.flag")
+
 print("\n" + "=" * 65)
-print(" STAGE 1: TRAINING & QUANTIZATION (training/trainModel.py)")
-print("=" * 65, flush=True)
-runStreaming(["python3", "-u", "training/trainModel.py"])
+if benchmarkMode:
+    print(" STAGE 1: BENCHMARK MODE (Skipping Training Loop)")
+    print("=" * 65, flush=True)
+    runStreaming(["python3", "-u", "training/trainModel.py", "--benchmark"])
+else:
+    print(" STAGE 1: TRAINING & QUANTIZATION (training/trainModel.py)")
+    print("=" * 65, flush=True)
+    runStreaming(["python3", "-u", "training/trainModel.py"])
 
 print("\n" + "=" * 65)
 print(" STAGE 2: PACKAGING WEIGHTS")
@@ -80,9 +87,15 @@ print("=" * 65, flush=True)
 runStreaming(["python3", "-u", "benchmarks/stressTest.py"])
 
 print("\n" + "=" * 65)
-print(" STAGE 3: RUNNING FAST EVALUATION")
+print(" STAGE 3: RUNNING FAST EVALUATION (WITH FAILURE LOGGING)")
 print("=" * 65, flush=True)
 runStreaming(["python3", "-u", "benchmarks/fastEvaluator.py", "config/stressTest.json", "--failures"])
+
+if os.path.exists("failures.json"):
+    shutil.copy("failures.json", "/content/failures.json")
+elif not os.path.exists("/content/failures.json"):
+    with open("/content/failures.json", "w") as fOut:
+        fOut.write("[]")
 
 print(" STAGE 4: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)")
 print("=" * 65, flush=True)

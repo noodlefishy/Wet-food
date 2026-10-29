@@ -172,8 +172,24 @@ class BabyStories(nn.Module):
 
 rawModel = BabyStories().to(DEVICE)
 
-TOTAL_STEPS = modCfg["training"].get("total_steps", 25000)
+# Check for benchmark / no-train flag
+BENCHMARK_MODE = any(arg in sys.argv for arg in ["--benchmark", "--no-train", "--eval-only"]) or os.environ.get("BENCHMARK_ONLY") == "1"
+
+p1Path = os.path.join(MODELS_DIR, "pico1 weights.model")
+p2Path = os.path.join(MODELS_DIR, "pico2 weights.model")
+
+if BENCHMARK_MODE:
+    print("\n" + "=" * 65)
+    print(" [*] BENCHMARK MODE ACTIVE: Skipping training loop.")
+    if os.path.exists(p1Path) and os.path.exists(p2Path):
+        print(f" [✓] Found existing weights in {MODELS_DIR}. Preserving them for evaluation.")
+        sys.exit(0)
+    else:
+        print(f" [!] Warning: Weights not found in {MODELS_DIR}. Will initialize and quantize base weights.")
+    print("=" * 65 + "\n")
+
 WARMUP      = modCfg["training"].get("warmup_steps", 1000)
+TOTAL_STEPS = 0 if BENCHMARK_MODE else modCfg["training"].get("total_steps", 32000)
 BASE_LR     = modCfg["training"].get("base_lr", 0.0015)
 MIN_LR      = modCfg["training"].get("min_lr", 0.0001)
 BATCH_QA    = modCfg["training"].get("batch_qa", 16)

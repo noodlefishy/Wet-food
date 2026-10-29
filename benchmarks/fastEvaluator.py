@@ -145,9 +145,11 @@ if __name__ == "__main__":
 
     def extract_answer(text):
         if not text or not text.strip(): return ""
-        clean = text.strip().rstrip(".")
+        clean = text.replace("<eos>", "").replace("<pad>", "").strip()
+        clean = clean.rstrip(". ").strip()
         if ":" in clean:
-            return " ".join(clean.split(":")[-1].strip().split())
+            val = clean.split(":")[-1].strip()
+            return " ".join(val.rstrip(". ").split())
         return " ".join(clean.split())
 
     with torch.no_grad():
@@ -219,11 +221,21 @@ if __name__ == "__main__":
         mark = "✓" if pct >= 90 else ("~" if pct >= 70 else "✗")
         print(f"  [{mark}] {cat:<38} {passed:>6}/{n:<6} {pct:5.1f}%")
 
-    if "--failures" in sys.argv and failures:
+    ff = []
+    for cat, q, tgt, pred in failures:
+        ff.append({'category': cat, 'question': q, 'target': tgt, 'got': pred})
+
+    for out_path in ["failures.json", "/content/failures.json"]:
+        try:
+            with open(out_path, "w") as fOut:
+                json.dump(ff, fOut, indent=2)
+            print(f"[✓] Saved {len(ff)} failures to {out_path}")
+        except Exception:
+            pass
+
+    if failures:
         print(f"\n{'='*65}")
         print(" SAMPLE MISPREDICTIONS (First 15)")
         print(f"{'='*65}")
-        for cat, q, tgt, pred in failures:
-            ff.append({'category':cat,'question':q,'target':tgt,'got':pred})
-        with open('failure.json','w') as f:
-            json.dump(ff,f)
+        for cat, q, tgt, pred in failures[:15]:
+            print(f"  [{cat}]\n    Q: {q}\n    Expected: {tgt!r}\n    Generated: {pred!r}\n")
