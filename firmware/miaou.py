@@ -44,7 +44,7 @@ sin_tab = [[math.sin(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in ra
 
 def apply_rope(vec, pos):
     c, s = cos_tab[min(pos, BLOCK_SIZE - 1)], sin_tab[min(pos, BLOCK_SIZE - 1)]
-    for i in range(10):
+    for i in range(12):
         i2 = i * 2
         x0, x1 = vec[i2], vec[i2 + 1]
         vec[i2] = x0 * c[i] - x1 * s[i]

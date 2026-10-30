@@ -202,9 +202,29 @@ def getLr(step):
     return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * (step - WARMUP) / (TOTAL_STEPS - WARMUP))) * (BASE_LR - MIN_LR)
 
 def getBatch():
-    qaIdx = torch.randint(len(qaXData), (BATCH_QA,))
+    qaX_list, qaY_list = [], []
+    for _ in range(BATCH_QA):
+        task = generateAtomicSample(logCfg)
+        toks = tokenizeStr(task)
+        if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
+        x = toks + [padId] * (BLOCK_SIZE - len(toks))
+        y = [-100] * BLOCK_SIZE
+        
+        ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
+        if ansStart != -1:
+            for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
+                
+        qaX_list.append(x)
+        qaY_list.append(y)
+        
+    xQa = torch.tensor(qaX_list, dtype=torch.long, device=DEVICE)
+    yQa = torch.tensor(qaY_list, dtype=torch.long, device=DEVICE)
+    
     stIdx = torch.randint(numStChunks, (BATCH_ST,))
-    return qaXData[qaIdx], qaYData[qaIdx], stXData[stIdx], stYData[stIdx]
+    xSt = stXData[stIdx]
+    ySt = stYData[stIdx]
+    
+    return xQa, yQa, xSt, ySt
 
 print(f"\n[*] Training configuration: {TOTAL_STEPS} steps | Batch: {BATCH_QA} QA + {BATCH_ST} Story")
 rawModel.train()
