@@ -128,21 +128,25 @@ def applyRope(x, cos, sin):
     out[..., 1::2] = x1 * s + x2 * c
     return out
 
-class RoPE_MQA(nn.Module):
+class RoPE_MHA(nn.Module):
     def __init__(self):
         super().__init__()
-        self.qkvProj = nn.Linear(EMBED_DIM, EMBED_DIM + 2 * HEAD_DIM)
+        self.qkvProj = nn.Linear(EMBED_DIM, 3 * EMBED_DIM)
         self.outProj = nn.Linear(EMBED_DIM, EMBED_DIM)
 
     def forward(self, x):
         B, T, C = x.shape
         qkv = self.qkvProj(x)
-        q = qkv[:, :, :C].view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
-        k = qkv[:, :, C : C + HEAD_DIM].view(B, T, 1, HEAD_DIM).transpose(1, 2)
-        v = qkv[:, :, C + HEAD_DIM :].view(B, T, 1, HEAD_DIM).transpose(1, 2)
+        q, k, v = qkv.chunk(3, dim=-1)
+        
+        q = q.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+        k = k.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+        v = v.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+        
+        # Apply RoPE across all 4 heads for both Q and K
         q = applyRope(q, cosCached, sinCached)
-        k = applyRope(k, cosCached, sinCached).expand(-1, NUM_HEADS, -1, -1)
-        v = v.expand(-1, NUM_HEADS, -1, -1)
+        k = applyRope(k, cosCached, sinCached)
+        
         out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         return self.outProj(out.transpose(1, 2).contiguous().view(B, T, C))
 
@@ -150,9 +154,13 @@ class Block(nn.Module):
     def __init__(self):
         super().__init__()
         self.ln1 = nn.LayerNorm(EMBED_DIM)
-        self.sa  = RoPE_MQA()
+        self.sa  = RoPE_MHA()
         self.ln2 = nn.LayerNorm(EMBED_DIM)
-        self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4 * EMBED_DIM), nn.ReLU(), nn.Linear(4 * EMBED_DIM, EMBED_DIM))
+        self.mlp = nn.Sequential(
+            nn.Linear(EMBED_DIM, 4 * EMBED_DIM), 
+            nn.ReLU(), 
+            nn.Linear(4 * EMBED_DIM, EMBED_DIM)
+        )
 
     def forward(self, x):
         return x + self.mlp(self.ln2(x + self.sa(self.ln1(x))))

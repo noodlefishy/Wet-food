@@ -4,7 +4,7 @@ from array import array; from machine import Pin # pyright: ignore[reportMissing
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
-EMBED_DIM = 96; BLOCK_SIZE = 64; NUM_HEADS = 3; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
+EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B
 SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 
@@ -61,18 +61,10 @@ def layer_norm(x, w, b):
     m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v+1e-5)
     return [((x[i]-m)/s)*w[i]+b[i] for i in range(len(x))]
 
-# Precompute RoPE table for positions 0..63
-inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(HEAD_DIM // 2)]
-cos_tab = [[math.cos(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in range(BLOCK_SIZE)]
-sin_tab = [[math.sin(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in range(BLOCK_SIZE)]
-
-def apply_rope(vec, pos):
-    c, s = cos_tab[min(pos, BLOCK_SIZE - 1)], sin_tab[min(pos, BLOCK_SIZE - 1)]
-    for i in range(16):
-        i2 = i * 2
-        x0, x1 = vec[i2], vec[i2 + 1]
-        vec[i2] = x0 * c[i] - x1 * s[i]
-        vec[i2 + 1] = x0 * s[i] + x1 * c[i]
+half_head = HEAD_DIM // 2
+inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(half_head)]
+cos_tab = [[math.cos(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
+sin_tab = [[math.sin(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
 
 def sample_top5(ranks):
     r = random.random()
@@ -87,22 +79,26 @@ kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]  # 3 Layers on Meow
 
 def run_layer(f, idx, x, pos):
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    qkv = stream_linear(f, EMBED_DIM + 2*HEAD_DIM, EMBED_DIM, nx)
+    # QKV projection: 3 * EMBED_DIM = 240 rows
+    qkv = stream_linear(f, 3 * EMBED_DIM, EMBED_DIM, nx)
     q = qkv[:EMBED_DIM]
-    k = qkv[EMBED_DIM : EMBED_DIM + HEAD_DIM]
-    v = qkv[EMBED_DIM + HEAD_DIM :]
+    k = qkv[EMBED_DIM : 2 * EMBED_DIM]
+    v = qkv[2 * EMBED_DIM :]
     
-    # RoPE on Query heads and Key
-    c_tab, s_tab = cos_tab[min(pos, BLOCK_SIZE-1)], sin_tab[min(pos, BLOCK_SIZE-1)]
+    c_tab = cos_tab[min(pos, BLOCK_SIZE - 1)]
+    s_tab = sin_tab[min(pos, BLOCK_SIZE - 1)]
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
-        for i in range(HEAD_DIM // 2):
+        for i in range(half_head):
             i2 = ho + i * 2
-            x0, x1 = q[i2], q[i2+1]
-            q[i2]   = x0 * c_tab[i] - x1 * s_tab[i]
-            q[i2+1] = x0 * s_tab[i] + x1 * c_tab[i]
-    apply_rope(k, pos)
+            q0, q1 = q[i2], q[i2 + 1]
+            q[i2]     = q0 * c_tab[i] - q1 * s_tab[i]
+            q[i2 + 1] = q0 * s_tab[i] + q1 * c_tab[i]
+            k0, k1 = k[i2], k[i2 + 1]
+            k[i2]     = k0 * c_tab[i] - k1 * s_tab[i]
+            k[i2 + 1] = k0 * s_tab[i] + k1 * c_tab[i]
 
+    # Append 80-dim key and value vectors
     kv[idx]['k'].append(array('f', k))
     kv[idx]['v'].append(array('f', v))
     
@@ -111,22 +107,29 @@ def run_layer(f, idx, x, pos):
         kv[idx]['k'].pop(SINK_SIZE)
         kv[idx]['v'].pop(SINK_SIZE)
         
-    ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(HEAD_DIM)
+    ao = [0.0] * EMBED_DIM
+    sc = 1.0 / math.sqrt(HEAD_DIM)
     seq_len = len(kv[idx]['k'])
     avg_attn = [0.0] * seq_len
+    
     for h in range(NUM_HEADS):
-        ho = h * HEAD_DIM; qh = q[ho : ho + HEAD_DIM]
-        scs = [sum(qh[i]*kv[idx]['k'][t][i] for i in range(HEAD_DIM))*sc for t in range(seq_len)]
-        ms = max(scs); wts = [math.exp(s-ms) for s in scs]; s_wts = sum(wts); wts = [e/s_wts for e in wts]
+        ho = h * HEAD_DIM
+        qh = q[ho : ho + HEAD_DIM]
+        scs = [sum(qh[i] * kv[idx]['k'][t][ho + i] for i in range(HEAD_DIM)) * sc for t in range(seq_len)]
+        ms = max(scs)
+        wts = [math.exp(s - ms) for s in scs]
+        s_wts = sum(wts)
+        wts = [e / s_wts for e in wts]
         for t in range(seq_len):
             avg_attn[t] += wts[t] / NUM_HEADS
-            for i in range(HEAD_DIM): ao[ho+i] += wts[t] * kv[idx]['v'][t][i]
+            for i in range(HEAD_DIM):
+                ao[ho + i] += wts[t] * kv[idx]['v'][t][ho + i]
             
     proj = stream_linear(f, EMBED_DIM, EMBED_DIM, ao)
     x = [x[i] + proj[i] for i in range(EMBED_DIM)]
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    h1 = stream_linear(f, 4*EMBED_DIM, EMBED_DIM, nx)
-    h2 = stream_linear(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, val) for val in h1])
+    h1 = stream_linear(f, 4 * EMBED_DIM, EMBED_DIM, nx)
+    h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, [max(0.0, val) for val in h1])
     return [x[i] + h2[i] for i in range(EMBED_DIM)], avg_attn
 
 print("\n" + "="*50)

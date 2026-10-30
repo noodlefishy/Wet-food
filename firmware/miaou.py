@@ -3,7 +3,8 @@ import network, socket, struct, math, gc, time, machine
 from machine import Pin; from array import array
 machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
 
-EMBED_DIM = 96; BLOCK_SIZE = 64; NUM_HEADS = 3; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
+# 4 Heads, 80 Embedding Dimensions, 20 Dim/Head
+EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 
 try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
@@ -37,21 +38,14 @@ def layer_norm(x, w, b):
     m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v+1e-5)
     return [((x[i]-m)/s)*w[i]+b[i] for i in range(len(x))]
 
-# Precompute RoPE table for positions 0..63
-inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(HEAD_DIM // 2)]
-cos_tab = [[math.cos(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in range(BLOCK_SIZE)]
-sin_tab = [[math.sin(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in range(BLOCK_SIZE)]
-
-def apply_rope(vec, pos):
-    c, s = cos_tab[min(pos, BLOCK_SIZE - 1)], sin_tab[min(pos, BLOCK_SIZE - 1)]
-    for i in range(16):
-        i2 = i * 2
-        x0, x1 = vec[i2], vec[i2 + 1]
-        vec[i2] = x0 * c[i] - x1 * s[i]
-        vec[i2 + 1] = x0 * s[i] + x1 * c[i]
+# Precompute RoPE table for positions 0..63 (HEAD_DIM // 2 = 10)
+half_head = HEAD_DIM // 2
+inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(half_head)]
+cos_tab = [[math.cos(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
+sin_tab = [[math.sin(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
 
 print("\n" + "="*50)
-print("[MIAOU] Initializing 5-Layer Worker (Layers 3-7)...")
+print("[MIAOU] Initializing 3-Layer Worker (Layers 3-5)...")
 
 try: network.hostname('miaou')
 except: pass
@@ -99,48 +93,58 @@ while not connected:
 led.off()
 
 f_w = open("pico2 weights.model", "rb")
-kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]  # 5 Layers on Miaou
+kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]
 token_counter = [0]
 
 def run_layer(f, idx, x, pos):
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    qkv = stream_linear(f, EMBED_DIM + 2*HEAD_DIM, EMBED_DIM, nx)
+    qkv = stream_linear(f, 3 * EMBED_DIM, EMBED_DIM, nx)
     q = qkv[:EMBED_DIM]
-    k = qkv[EMBED_DIM : EMBED_DIM + HEAD_DIM]
-    v = qkv[EMBED_DIM + HEAD_DIM :]
+    k = qkv[EMBED_DIM : 2 * EMBED_DIM]
+    v = qkv[2 * EMBED_DIM :]
     
-    # RoPE on Query heads and Key
-    c_tab, s_tab = cos_tab[min(pos, BLOCK_SIZE-1)], sin_tab[min(pos, BLOCK_SIZE-1)]
+    c_tab = cos_tab[min(pos, BLOCK_SIZE - 1)]
+    s_tab = sin_tab[min(pos, BLOCK_SIZE - 1)]
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
-        for i in range(HEAD_DIM // 2):
+        for i in range(half_head):
             i2 = ho + i * 2
-            x0, x1 = q[i2], q[i2+1]
-            q[i2]   = x0 * c_tab[i] - x1 * s_tab[i]
-            q[i2+1] = x0 * s_tab[i] + x1 * c_tab[i]
-    apply_rope(k, pos)
+            q0, q1 = q[i2], q[i2 + 1]
+            q[i2]     = q0 * c_tab[i] - q1 * s_tab[i]
+            q[i2 + 1] = q0 * s_tab[i] + q1 * c_tab[i]
+            k0, k1 = k[i2], k[i2 + 1]
+            k[i2]     = k0 * c_tab[i] - k1 * s_tab[i]
+            k[i2 + 1] = k0 * s_tab[i] + k1 * c_tab[i]
     
     kv[idx]['k'].append(array('f', k))
     kv[idx]['v'].append(array('f', v))
     
-    # Sliding window KV cache with Attention Sinks
+
     if len(kv[idx]['k']) > SINK_SIZE + WINDOW_SIZE:
         kv[idx]['k'].pop(SINK_SIZE)
         kv[idx]['v'].pop(SINK_SIZE)
         
-    ao, sc = [0.0]*EMBED_DIM, 1.0/math.sqrt(HEAD_DIM)
+    ao = [0.0] * EMBED_DIM
+    sc = 1.0 / math.sqrt(HEAD_DIM)
+    seq_len = len(kv[idx]['k'])
+    
     for h in range(NUM_HEADS):
-        ho = h * HEAD_DIM; qh = q[ho : ho + HEAD_DIM]
-        scs = [sum(qh[i]*kv[idx]['k'][t][i] for i in range(HEAD_DIM))*sc for t in range(len(kv[idx]['k']))]
-        ms = max(scs); wts = [math.exp(s-ms) for s in scs]; s_wts = sum(wts); wts = [e/s_wts for e in wts]
-        for t in range(len(wts)):
-            for i in range(HEAD_DIM): ao[ho+i] += wts[t] * kv[idx]['v'][t][i]
+        ho = h * HEAD_DIM
+        qh = q[ho : ho + HEAD_DIM]
+        scs = [sum(qh[i] * kv[idx]['k'][t][ho + i] for i in range(HEAD_DIM)) * sc for t in range(seq_len)]
+        ms = max(scs)
+        wts = [math.exp(s - ms) for s in scs]
+        s_wts = sum(wts)
+        wts = [e / s_wts for e in wts]
+        for t in range(seq_len):
+            for i in range(HEAD_DIM):
+                ao[ho + i] += wts[t] * kv[idx]['v'][t][ho + i]
             
     proj = stream_linear(f, EMBED_DIM, EMBED_DIM, ao)
     x = [x[i] + proj[i] for i in range(EMBED_DIM)]
     nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    h1 = stream_linear(f, 4*EMBED_DIM, EMBED_DIM, nx)
-    h2 = stream_linear(f, EMBED_DIM, 4*EMBED_DIM, [max(0.0, val) for val in h1])
+    h1 = stream_linear(f, 4 * EMBED_DIM, EMBED_DIM, nx)
+    h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, [max(0.0, val) for val in h1])
     return [x[i] + h2[i] for i in range(EMBED_DIM)]
 
 while True:

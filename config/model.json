@@ -2,8 +2,8 @@
   "architecture": {
     "vocab_size": 1024,
     "block_size": 64,
-    "embed_dim": 96,
-    "num_heads": 3,
+    "embed_dim": 80,
+    "num_heads": 4,
     "num_layers": 6,
     "meow_layers": 3,
     "miaou_layers": 3,
@@ -13,7 +13,7 @@
   },
   "training": {
     "device": "cuda",
-    "total_steps": 32000,
+    "total_steps": 16000,
     "warmup_steps": 1000,
     "base_lr": 0.0015,
     "min_lr": 0.0001,
