@@ -21,21 +21,8 @@ def generate(promptTxt, maxTokens=25):
     isLog = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
     
     if isLog:
-        if "[q]" in p and "[c]" in p:
-            if not p.endswith("[a]"): p = p.rstrip("?.: ") + " [a]"
-        elif "[c]" in p and "[q]" in p:
-            c_part = p.split("[q]")[0].replace("[c]", "").strip().rstrip(". ")
-            q_part = p.split("[q]")[1].split("[a]")[0].strip().rstrip("?.: ")
-            p = f"[q] {q_part} ? [c] {c_part} . [a]"
-        elif "?" in p:
-            parts = p.split("?")
-            if any(parts[0].lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how")):
-                p = f"[q] {parts[0].strip()} ? [c] {parts[1].replace('[a]','').strip().rstrip('. ')} . [a]"
-            else:
-                p = f"[q] {parts[1].replace('[a]','').strip()} ? [c] {parts[0].strip().rstrip('. ')} . [a]"
-        else:
-            if not p.startswith("[q]"): p = f"[q] {p}"
-            if not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
+        if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
+        if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
 
     toks = tokenize(p)
     if not toks: return ""

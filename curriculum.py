@@ -212,7 +212,7 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
 
     rawQ      = queryObj["q"]
     qStr      = random.choice(rawQ) if isinstance(rawQ, list) else rawQ
-    pStr      = applyVerbJitter(premiseTmpl.format(**bindings))
+    pStr      = premiseTmpl.format(**bindings)
     qRendered = qStr.format(**bindings)
     aRendered = queryObj["a"].format(**bindings)
 

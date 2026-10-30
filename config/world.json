@@ -33,23 +33,20 @@
       "weight": 3.5,
       "premise": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
-        "{actor2} went to the {location2} . {actor1} went to the {location1}",
-        "{actor1} is in the {location1} . {actor2} is in the {location2}",
-        "{actor2} is in the {location2} . {actor1} is in the {location1}"
+        "{actor2} went to the {location2} . {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "where is {actor1}", "a": "where : {actor1} is {location1} . answer : {location1} ." },
-        { "q": "where is {actor2}", "a": "where : {actor2} is {location2} . answer : {location2} ." },
-        { "q": "who went to the {location1}", "a": "who : {location1} has {actor1} . answer : {actor1} ." },
-        { "q": "who went to the {location2}", "a": "who : {location2} has {actor2} . answer : {actor2} ." }
+        { "q": "where is {actor1}", "a": "fact : {actor1} went to the {location1} . result : {location1} ." },
+        { "q": "where is {actor2}", "a": "fact : {actor2} went to the {location2} . result : {location2} ." },
+        { "q": "who went to the {location1}", "a": "fact : {actor1} went to the {location1} . result : {actor1} ." },
+        { "q": "who went to the {location2}", "a": "fact : {actor2} went to the {location2} . result : {actor2} ." }
       ]
     },
     {
       "name": "02: Two Supporting Facts",
       "weight": 2.5,
       "premise": [
-        "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}",
-        "first {actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}"
+        "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}"
       ],
       "queries": [
         { "q": "where is the {item1} now", "a": "held by : {actor1} . moved to : {location2} . now : {location2} ." },
@@ -63,8 +60,7 @@
       "name": "03: Three Supporting Facts",
       "weight": 2.5,
       "premise": [
-        "{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}",
-        "first {actor1} found the {item1} in the {location1} . then {actor1} carried the {item1} to the {location2} . {actor1} left the {item1} there and went to the {location3}"
+        "{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}"
       ],
       "queries": [
         { "q": "where is the {item1} now", "a": "carried to : {location2} . dropped in : {location2} . now : {location2} ." },
@@ -90,8 +86,7 @@
       "name": "05: Three Argument Relations",
       "weight": 2.5,
       "premise": [
-        "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}",
-        "first {actor1} gave the {item1} to {actor2} . after that {actor2} gave the {item1} to {actor3}"
+        "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}"
       ],
       "queries": [
         { "q": "who gave the {item1} to {actor2}", "a": "first pass : {actor1} . giver : {actor1} ." },
@@ -107,12 +102,12 @@
         "{actor2} went to the {location2} . {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "is {actor1} in the {location1}", "a": "verify : {actor1} at {location1} . answer : yes ." },
-        { "q": "is {actor1} in the {location2}", "a": "verify : {actor1} at {location1} . answer : no ." },
-        { "q": "is {actor1} in the {location3}", "a": "verify : {actor1} at {location1} . answer : no ." },
-        { "q": "is {actor2} in the {location2}", "a": "verify : {actor2} at {location2} . answer : yes ." },
-        { "q": "is {actor2} in the {location1}", "a": "verify : {actor2} at {location2} . answer : no ." },
-        { "q": "is {actor3} in the {location1}", "a": "verify : {actor3} at nowhere . answer : no ." }
+        { "q": "is {actor1} in the {location1}", "a": "fact : {actor1} went to the {location1} . answer : yes ." },
+        { "q": "is {actor1} in the {location2}", "a": "fact : {actor1} went to the {location1} . answer : no ." },
+        { "q": "is {actor1} in the {location3}", "a": "fact : {actor1} went to the {location1} . answer : no ." },
+        { "q": "is {actor2} in the {location2}", "a": "fact : {actor2} went to the {location2} . answer : yes ." },
+        { "q": "is {actor2} in the {location1}", "a": "fact : {actor2} went to the {location2} . answer : no ." },
+        { "q": "is {actor3} in the {location1}", "a": "fact : {actor3} went nowhere . answer : no ." }
       ]
     },
     {
@@ -123,9 +118,9 @@
         "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
       ],
       "queries": [
-        { "q": "how many items does {actor1} have", "a": "items : {actor1} has {item1} and {item2} . count : two ." },
-        { "q": "how many items does {actor2} have", "a": "items : {actor2} has {item3} . count : one ." },
-        { "q": "how many items does {actor3} have", "a": "items : {actor3} has nothing . count : none ." }
+        { "q": "how many items does {actor1} have", "a": "fact : {actor1} has the {item1} and the {item2} . count : two ." },
+        { "q": "how many items does {actor2} have", "a": "fact : {actor2} has the {item3} . count : one ." },
+        { "q": "how many items does {actor3} have", "a": "fact : {actor3} has nothing . count : none ." }
       ]
     },
     {
@@ -136,9 +131,9 @@
         "{actor2} has the {item2} and the {item3} . {actor1} has the {item1}"
       ],
       "queries": [
-        { "q": "how many items does {actor1} have", "a": "items : {actor1} has {item1} . count : one ." },
-        { "q": "how many items does {actor2} have", "a": "items : {actor2} has {item2} and {item3} . count : two ." },
-        { "q": "how many items does {actor3} have", "a": "items : {actor3} has nothing . count : none ." }
+        { "q": "how many items does {actor1} have", "a": "fact : {actor1} has the {item1} . count : one ." },
+        { "q": "how many items does {actor2} have", "a": "fact : {actor2} has the {item2} and the {item3} . count : two ." },
+        { "q": "how many items does {actor3} have", "a": "fact : {actor3} has nothing . count : none ." }
       ]
     },
     {
@@ -149,9 +144,9 @@
         "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
       ],
       "queries": [
-        { "q": "what does {actor1} have", "a": "holds : {actor1} has {item1} and {item2} . result : {item1} and {item2} ." },
-        { "q": "what does {actor2} have", "a": "holds : {actor2} has {item3} . result : {item3} ." },
-        { "q": "what does {actor3} have", "a": "holds : {actor3} has nothing . result : nothing ." }
+        { "q": "what does {actor1} have", "a": "fact : {actor1} has the {item1} and the {item2} . result : {item1} and {item2} ." },
+        { "q": "what does {actor2} have", "a": "fact : {actor2} has the {item3} . result : {item3} ." },
+        { "q": "what does {actor3} have", "a": "fact : {actor3} has nothing . result : nothing ." }
       ]
     },
     {
@@ -184,8 +179,7 @@
       "name": "11: Basic Coreference",
       "weight": 2.0,
       "premise": [
-        "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}",
-        "first {agent1_name} was in the {location1} . then {agent1_pronoun} walked to the {location2}"
+        "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}"
       ],
       "queries": [
         { "q": "where is {agent1_name} now", "a": "started : {location1} . moved to : {location2} . now : {location2} ." },
@@ -209,8 +203,7 @@
       "name": "13: Compound Coreference",
       "weight": 2.5,
       "premise": [
-        "{actor1} and {actor2} were in the {location1} . then they went to the {location2}",
-        "first {actor1} and {actor2} were in the {location1} . then they walked to the {location2}"
+        "{actor1} and {actor2} were in the {location1} . then they went to the {location2}"
       ],
       "queries": [
         { "q": "where is {actor1}", "a": "they moved : {location2} . location : {location2} ." },
@@ -222,8 +215,7 @@
       "name": "14: Time Reasoning",
       "weight": 2.5,
       "premise": [
-        "first {actor1} was in the {location1} . then {actor1} was in the {location2}",
-        "{actor1} was in the {location1} before {actor1} was in the {location2}"
+        "first {actor1} was in the {location1} . then {actor1} was in the {location2}"
       ],
       "queries": [
         { "q": "where was {actor1} before the {location2}", "a": "sequence : {location1} then {location2} . before : {location1} ." },
@@ -249,8 +241,8 @@
         "{actor2} has a {colour2} {item2} . {actor1} has a {colour1} {item1} . {actor3} has the {item1}"
       ],
       "queries": [
-        { "q": "what colour is the {item1}", "a": "item : {item1} has colour {colour1} . result : {colour1} ." },
-        { "q": "what colour is the {item2}", "a": "item : {item2} has colour {colour2} . result : {colour2} ." }
+        { "q": "what colour is the {item1}", "a": "fact : {actor1} has a {colour1} {item1} . result : {colour1} ." },
+        { "q": "what colour is the {item2}", "a": "fact : {actor2} has a {colour2} {item2} . result : {colour2} ." }
       ]
     },
     {
@@ -312,12 +304,12 @@
         "{actor2} has the {item2} . {actor1} has the {item1}"
       ],
       "queries": [
-        { "q": "does {actor1} have the {item1}", "a": "holds : {actor1} has {item1} . answer : yes ." },
-        { "q": "does {actor1} have the {item2}", "a": "holds : {actor1} has {item1} . answer : no ." },
-        { "q": "does {actor1} have the {item3}", "a": "holds : {actor1} has {item1} . answer : no ." },
-        { "q": "does {actor2} have the {item2}", "a": "holds : {actor2} has {item2} . answer : yes ." },
-        { "q": "does {actor2} have the {item1}", "a": "holds : {actor2} has {item2} . answer : no ." },
-        { "q": "does {actor3} have the {item1}", "a": "holds : {actor3} has nothing . answer : no ." }
+        { "q": "does {actor1} have the {item1}", "a": "fact : {actor1} has the {item1} . answer : yes ." },
+        { "q": "does {actor1} have the {item2}", "a": "fact : {actor1} has the {item1} . answer : no ." },
+        { "q": "does {actor1} have the {item3}", "a": "fact : {actor1} has the {item1} . answer : no ." },
+        { "q": "does {actor2} have the {item2}", "a": "fact : {actor2} has the {item2} . answer : yes ." },
+        { "q": "does {actor2} have the {item1}", "a": "fact : {actor2} has the {item2} . answer : no ." },
+        { "q": "does {actor3} have the {item1}", "a": "fact : {actor3} has nothing . answer : no ." }
       ]
     },
     {
