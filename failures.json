@@ -1,302 +1,302 @@
 [
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the yard . luna went to the hallway . [q] where is luna ? [a]",
-    "target": "fact : luna went to the hallway . result : hallway .",
-    "got": "fact : luna went to the yard . result : yard . <eos>"
+    "question": "[q] where is charlie ? [c] charlie went to the balcony . luna went to the garden . [a]",
+    "target": "fact : charlie in the balcony . result : balcony .",
+    "got": "fact : charlie in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the yard . luna went to the hallway . [q] who went to the hallway ? [a]",
-    "target": "location : hallway . person : luna . result : luna .",
-    "got": "location : hallway . person : sam . result : sam . <eos>"
+    "question": "[q] who went to the garden ? [c] charlie went to the balcony . luna went to the garden . [a]",
+    "target": "fact : luna in the garden . result : luna .",
+    "got": "fact : charlie in the garden . result : charlie . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] luna went to the hallway . sam went to the yard . [q] where is sam ? [a]",
-    "target": "fact : sam went to the yard . result : yard .",
-    "got": "fact : sam went to the hallway . result : hallway . <eos>"
+    "question": "[q] where is charlie ? [c] luna went to the garden . charlie went to the balcony . [a]",
+    "target": "fact : charlie in the balcony . result : balcony .",
+    "got": "fact : charlie in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] luna went to the hallway . sam went to the yard . [q] who went to the hallway ? [a]",
-    "target": "location : hallway . person : luna . result : luna .",
-    "got": "location : hallway . person : sam . result : sam . <eos>"
+    "question": "[q] who went to the balcony ? [c] luna went to the garden . charlie went to the balcony . [a]",
+    "target": "fact : charlie in the balcony . result : charlie .",
+    "got": "fact : luna in the balcony . result : luna . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the yard while luna went to the hallway . [q] where is luna ? [a]",
-    "target": "fact : luna went to the hallway . result : hallway .",
-    "got": "fact : luna went to the yard . result : yard . <eos>"
+    "question": "[q] where is charlie ? [c] charlie went to the balcony while luna went to the garden . [a]",
+    "target": "fact : charlie in the balcony . result : balcony .",
+    "got": "fact : charlie in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the yard while luna went to the hallway . [q] who went to the hallway ? [a]",
-    "target": "location : hallway . person : luna . result : luna .",
-    "got": "location : hallway . person : sam . result : sam . <eos>"
+    "question": "[q] who went to the garden ? [c] charlie went to the balcony while luna went to the garden . [a]",
+    "target": "fact : luna in the garden . result : luna .",
+    "got": "fact : charlie in the garden . result : charlie . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] luna went to the hallway while sam went to the yard . [q] where is sam ? [a]",
-    "target": "fact : sam went to the yard . result : yard .",
-    "got": "fact : sam went to the hallway . result : hallway . <eos>"
+    "question": "[q] where is charlie ? [c] luna went to the garden while charlie went to the balcony . [a]",
+    "target": "fact : charlie in the balcony . result : balcony .",
+    "got": "fact : charlie in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] luna went to the hallway while sam went to the yard . [q] who went to the yard ? [a]",
-    "target": "location : yard . person : sam . result : sam .",
-    "got": "location : yard . person : luna . result : luna . <eos>"
+    "question": "[q] who went to the balcony ? [c] luna went to the garden while charlie went to the balcony . [a]",
+    "target": "fact : charlie in the balcony . result : charlie .",
+    "got": "fact : luna in the balcony . result : luna . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the bedroom . zoe went to the park . [q] where is zoe ? [a]",
-    "target": "fact : zoe went to the park . result : park .",
-    "got": "fact : zoe went to the bedroom . result : bedroom . <eos>"
+    "question": "[q] who went to the forest ? [c] mia went to the library . chloe went to the forest . [a]",
+    "target": "fact : chloe in the forest . result : chloe .",
+    "got": "fact : mia in the forest . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the bedroom . zoe went to the park . [q] who went to the park ? [a]",
-    "target": "location : park . person : zoe . result : zoe .",
-    "got": "location : park . person : oliver . result : oliver . <eos>"
+    "question": "[q] who went to the forest ? [c] chloe went to the forest . mia went to the library . [a]",
+    "target": "fact : chloe in the forest . result : chloe .",
+    "got": "fact : mia in the forest . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] zoe went to the park . oliver went to the bedroom . [q] where is zoe ? [a]",
-    "target": "fact : zoe went to the park . result : park .",
-    "got": "fact : zoe went to the bedroom . result : bedroom . <eos>"
+    "question": "[q] who went to the forest ? [c] mia went to the library while chloe went to the forest . [a]",
+    "target": "fact : chloe in the forest . result : chloe .",
+    "got": "fact : mia in the forest . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] zoe went to the park . oliver went to the bedroom . [q] who went to the bedroom ? [a]",
-    "target": "location : bedroom . person : oliver . result : oliver .",
-    "got": "location : bedroom . person : zoe . result : zoe . <eos>"
+    "question": "[q] who went to the forest ? [c] chloe went to the forest while mia went to the library . [a]",
+    "target": "fact : chloe in the forest . result : chloe .",
+    "got": "fact : mia in the forest . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the bedroom while zoe went to the park . [q] where is zoe ? [a]",
-    "target": "fact : zoe went to the park . result : park .",
-    "got": "fact : zoe went to the bedroom . result : bedroom . <eos>"
+    "question": "[q] who went to the bedroom ? [c] sophie went to the balcony . buster went to the bedroom . [a]",
+    "target": "fact : buster in the bedroom . result : buster .",
+    "got": "fact : sophie in the bedroom . result : sophie . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the bedroom while zoe went to the park . [q] who went to the park ? [a]",
-    "target": "location : park . person : zoe . result : zoe .",
-    "got": "location : park . person : oliver . result : oliver . <eos>"
+    "question": "[q] where is sophie ? [c] buster went to the bedroom . sophie went to the balcony . [a]",
+    "target": "fact : sophie in the balcony . result : balcony .",
+    "got": "fact : sophie in the bedroom . result : bedroom . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] zoe went to the park while oliver went to the bedroom . [q] where is zoe ? [a]",
-    "target": "fact : zoe went to the park . result : park .",
-    "got": "fact : zoe went to the bedroom . result : bedroom . <eos>"
+    "question": "[q] who went to the balcony ? [c] buster went to the bedroom . sophie went to the balcony . [a]",
+    "target": "fact : sophie in the balcony . result : sophie .",
+    "got": "fact : buster in the balcony . result : buster . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] zoe went to the park while oliver went to the bedroom . [q] who went to the bedroom ? [a]",
-    "target": "location : bedroom . person : oliver . result : oliver .",
-    "got": "location : bedroom . person : zoe . result : zoe . <eos>"
+    "question": "[q] where is buster ? [c] sophie went to the balcony while buster went to the bedroom . [a]",
+    "target": "fact : buster in the bedroom . result : bedroom .",
+    "got": "fact : buster in the balcony . result : balcony . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] lily went to the yard . felix went to the basement . [q] where is felix ? [a]",
-    "target": "fact : felix went to the basement . result : basement .",
-    "got": "fact : felix went to the yard . result : yard . <eos>"
+    "question": "[q] who went to the bedroom ? [c] sophie went to the balcony while buster went to the bedroom . [a]",
+    "target": "fact : buster in the bedroom . result : buster .",
+    "got": "fact : sophie in the bedroom . result : sophie . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] lily went to the yard . felix went to the basement . [q] who went to the basement ? [a]",
-    "target": "location : basement . person : felix . result : felix .",
-    "got": "location : basement . person : lily . result : lily . <eos>"
+    "question": "[q] where is sophie ? [c] buster went to the bedroom while sophie went to the balcony . [a]",
+    "target": "fact : sophie in the balcony . result : balcony .",
+    "got": "fact : sophie in the bedroom . result : bedroom . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] felix went to the basement . lily went to the yard . [q] where is lily ? [a]",
-    "target": "fact : lily went to the yard . result : yard .",
-    "got": "fact : lily went to the basement . result : basement . <eos>"
+    "question": "[q] who went to the balcony ? [c] buster went to the bedroom while sophie went to the balcony . [a]",
+    "target": "fact : sophie in the balcony . result : sophie .",
+    "got": "fact : buster in the balcony . result : buster . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] felix went to the basement . lily went to the yard . [q] who went to the yard ? [a]",
-    "target": "location : yard . person : lily . result : lily .",
-    "got": "location : yard . person : felix . result : felix . <eos>"
+    "question": "[q] where is leo ? [c] simba went to the shed . leo went to the balcony . [a]",
+    "target": "fact : leo in the balcony . result : balcony .",
+    "got": "fact : leo in the shed . result : shed . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] felix went to the basement . lily went to the yard . [q] who went to the basement ? [a]",
-    "target": "location : basement . person : felix . result : felix .",
-    "got": "location : basement . person : lily . result : lily . <eos>"
+    "question": "[q] who went to the balcony ? [c] simba went to the shed . leo went to the balcony . [a]",
+    "target": "fact : leo in the balcony . result : leo .",
+    "got": "fact : simba in the balcony . result : simba . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] lily went to the yard while felix went to the basement . [q] where is felix ? [a]",
-    "target": "fact : felix went to the basement . result : basement .",
-    "got": "fact : felix went to the yard . result : yard . <eos>"
+    "question": "[q] where is simba ? [c] leo went to the balcony . simba went to the shed . [a]",
+    "target": "fact : simba in the shed . result : shed .",
+    "got": "fact : simba in the balcony . result : balcony . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] lily went to the yard while felix went to the basement . [q] who went to the basement ? [a]",
-    "target": "location : basement . person : felix . result : felix .",
-    "got": "location : basement . person : lily . result : lily . <eos>"
+    "question": "[q] who went to the shed ? [c] leo went to the balcony . simba went to the shed . [a]",
+    "target": "fact : simba in the shed . result : simba .",
+    "got": "fact : leo in the shed . result : leo . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] felix went to the basement while lily went to the yard . [q] where is lily ? [a]",
-    "target": "fact : lily went to the yard . result : yard .",
-    "got": "fact : lily went to the basement . result : basement . <eos>"
+    "question": "[q] where is leo ? [c] simba went to the shed while leo went to the balcony . [a]",
+    "target": "fact : leo in the balcony . result : balcony .",
+    "got": "fact : leo in the shed . result : shed . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] felix went to the basement while lily went to the yard . [q] who went to the basement ? [a]",
-    "target": "location : basement . person : felix . result : felix .",
-    "got": "location : basement . person : lily . result : lily . <eos>"
+    "question": "[q] who went to the balcony ? [c] simba went to the shed while leo went to the balcony . [a]",
+    "target": "fact : leo in the balcony . result : leo .",
+    "got": "fact : simba in the balcony . result : simba . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the porch . charlie went to the bedroom . [q] where is charlie ? [a]",
-    "target": "fact : charlie went to the bedroom . result : bedroom .",
-    "got": "fact : charlie went to the porch . result : porch . <eos>"
+    "question": "[q] where is simba ? [c] leo went to the balcony while simba went to the shed . [a]",
+    "target": "fact : simba in the shed . result : shed .",
+    "got": "fact : simba in the balcony . result : balcony . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the porch . charlie went to the bedroom . [q] who went to the bedroom ? [a]",
-    "target": "location : bedroom . person : charlie . result : charlie .",
-    "got": "location : bedroom . person : chloe . result : chloe . <eos>"
+    "question": "[q] who went to the shed ? [c] leo went to the balcony while simba went to the shed . [a]",
+    "target": "fact : simba in the shed . result : simba .",
+    "got": "fact : leo in the shed . result : leo . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the bedroom . chloe went to the porch . [q] where is chloe ? [a]",
-    "target": "fact : chloe went to the porch . result : porch .",
-    "got": "fact : chloe went to the bedroom . result : bedroom . <eos>"
+    "question": "[q] where is charlie ? [c] charlie went to the bedroom . oscar went to the forest . [a]",
+    "target": "fact : charlie in the bedroom . result : bedroom .",
+    "got": "fact : charlie in the forest . result : forest . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the bedroom . chloe went to the porch . [q] who went to the porch ? [a]",
-    "target": "location : porch . person : chloe . result : chloe .",
-    "got": "location : porch . person : charlie . result : charlie . <eos>"
+    "question": "[q] who went to the bedroom ? [c] charlie went to the bedroom . oscar went to the forest . [a]",
+    "target": "fact : charlie in the bedroom . result : charlie .",
+    "got": "fact : oscar in the bedroom . result : oscar . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the porch while charlie went to the bedroom . [q] where is charlie ? [a]",
-    "target": "fact : charlie went to the bedroom . result : bedroom .",
-    "got": "fact : charlie went to the porch . result : porch . <eos>"
+    "question": "[q] who went to the forest ? [c] charlie went to the bedroom . oscar went to the forest . [a]",
+    "target": "fact : oscar in the forest . result : oscar .",
+    "got": "fact : charlie in the forest . result : charlie . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the porch while charlie went to the bedroom . [q] who went to the bedroom ? [a]",
-    "target": "location : bedroom . person : charlie . result : charlie .",
-    "got": "location : bedroom . person : chloe . result : chloe . <eos>"
+    "question": "[q] where is charlie ? [c] oscar went to the forest . charlie went to the bedroom . [a]",
+    "target": "fact : charlie in the bedroom . result : bedroom .",
+    "got": "fact : charlie in the forest . result : forest . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the bedroom while chloe went to the porch . [q] where is chloe ? [a]",
-    "target": "fact : chloe went to the porch . result : porch .",
-    "got": "fact : chloe went to the bedroom . result : bedroom . <eos>"
+    "question": "[q] who went to the bedroom ? [c] oscar went to the forest . charlie went to the bedroom . [a]",
+    "target": "fact : charlie in the bedroom . result : charlie .",
+    "got": "fact : oscar in the bedroom . result : oscar . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the bedroom while chloe went to the porch . [q] who went to the porch ? [a]",
-    "target": "location : porch . person : chloe . result : chloe .",
-    "got": "location : porch . person : charlie . result : charlie . <eos>"
+    "question": "[q] where is charlie ? [c] charlie went to the bedroom while oscar went to the forest . [a]",
+    "target": "fact : charlie in the bedroom . result : bedroom .",
+    "got": "fact : charlie in the forest . result : forest . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] toby went to the porch . leo went to the yard . [q] where is leo ? [a]",
-    "target": "fact : leo went to the yard . result : yard .",
-    "got": "fact : leo went to the porch . result : porch . <eos>"
+    "question": "[q] who went to the bedroom ? [c] charlie went to the bedroom while oscar went to the forest . [a]",
+    "target": "fact : charlie in the bedroom . result : charlie .",
+    "got": "fact : oscar in the bedroom . result : oscar . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] toby went to the porch . leo went to the yard . [q] who went to the yard ? [a]",
-    "target": "location : yard . person : leo . result : leo .",
-    "got": "location : yard . person : toby . result : toby . <eos>"
+    "question": "[q] who went to the forest ? [c] charlie went to the bedroom while oscar went to the forest . [a]",
+    "target": "fact : oscar in the forest . result : oscar .",
+    "got": "fact : charlie in the forest . result : charlie . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the yard . toby went to the porch . [q] where is toby ? [a]",
-    "target": "fact : toby went to the porch . result : porch .",
-    "got": "fact : toby went to the yard . result : yard . <eos>"
+    "question": "[q] where is charlie ? [c] oscar went to the forest while charlie went to the bedroom . [a]",
+    "target": "fact : charlie in the bedroom . result : bedroom .",
+    "got": "fact : charlie in the forest . result : forest . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the yard . toby went to the porch . [q] who went to the porch ? [a]",
-    "target": "location : porch . person : toby . result : toby .",
-    "got": "location : porch . person : leo . result : leo . <eos>"
+    "question": "[q] who went to the bedroom ? [c] oscar went to the forest while charlie went to the bedroom . [a]",
+    "target": "fact : charlie in the bedroom . result : charlie .",
+    "got": "fact : oscar in the bedroom . result : oscar . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] toby went to the porch while leo went to the yard . [q] where is leo ? [a]",
-    "target": "fact : leo went to the yard . result : yard .",
-    "got": "fact : leo went to the porch . result : porch . <eos>"
+    "question": "[q] who went to the shed ? [c] lucy went to the shed . zoe went to the garage . [a]",
+    "target": "fact : lucy in the shed . result : lucy .",
+    "got": "fact : zoe in the shed . result : zoe . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] toby went to the porch while leo went to the yard . [q] who went to the yard ? [a]",
-    "target": "location : yard . person : leo . result : leo .",
-    "got": "location : yard . person : toby . result : toby . <eos>"
+    "question": "[q] who went to the shed ? [c] zoe went to the garage . lucy went to the shed . [a]",
+    "target": "fact : lucy in the shed . result : lucy .",
+    "got": "fact : zoe in the shed . result : zoe . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the yard while toby went to the porch . [q] where is toby ? [a]",
-    "target": "fact : toby went to the porch . result : porch .",
-    "got": "fact : toby went to the yard . result : yard . <eos>"
+    "question": "[q] who went to the garage ? [c] zoe went to the garage . lucy went to the shed . [a]",
+    "target": "fact : zoe in the garage . result : zoe .",
+    "got": "fact : lucy in the garage . result : lucy . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the yard while toby went to the porch . [q] who went to the porch ? [a]",
-    "target": "location : porch . person : toby . result : toby .",
-    "got": "location : porch . person : leo . result : leo . <eos>"
+    "question": "[q] who went to the garage ? [c] lucy went to the shed while zoe went to the garage . [a]",
+    "target": "fact : zoe in the garage . result : zoe .",
+    "got": "fact : lucy in the garage . result : lucy . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] daisy went to the basement . sophie went to the balcony . [q] where is sophie ? [a]",
-    "target": "fact : sophie went to the balcony . result : balcony .",
-    "got": "fact : sophie went to the basement . result : basement . <eos>"
+    "question": "[q] who went to the shed ? [c] zoe went to the garage while lucy went to the shed . [a]",
+    "target": "fact : lucy in the shed . result : lucy .",
+    "got": "fact : zoe in the shed . result : zoe . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] daisy went to the basement . sophie went to the balcony . [q] who went to the balcony ? [a]",
-    "target": "location : balcony . person : sophie . result : sophie .",
-    "got": "location : balcony . person : daisy . result : daisy . <eos>"
+    "question": "[q] who went to the garage ? [c] zoe went to the garage while lucy went to the shed . [a]",
+    "target": "fact : zoe in the garage . result : zoe .",
+    "got": "fact : lucy in the garage . result : lucy . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sophie went to the balcony . daisy went to the basement . [q] where is daisy ? [a]",
-    "target": "fact : daisy went to the basement . result : basement .",
-    "got": "fact : daisy went to the balcony . result : balcony . <eos>"
+    "question": "[q] where is mia ? [c] mia went to the shed . ruby went to the garden . [a]",
+    "target": "fact : mia in the shed . result : shed .",
+    "got": "fact : mia in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sophie went to the balcony . daisy went to the basement . [q] who went to the basement ? [a]",
-    "target": "location : basement . person : daisy . result : daisy .",
-    "got": "location : basement . person : sophie . result : sophie . <eos>"
+    "question": "[q] who went to the garden ? [c] mia went to the shed . ruby went to the garden . [a]",
+    "target": "fact : ruby in the garden . result : ruby .",
+    "got": "fact : mia in the garden . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] daisy went to the basement while sophie went to the balcony . [q] where is sophie ? [a]",
-    "target": "fact : sophie went to the balcony . result : balcony .",
-    "got": "fact : sophie went to the basement . result : basement . <eos>"
+    "question": "[q] where is mia ? [c] ruby went to the garden . mia went to the shed . [a]",
+    "target": "fact : mia in the shed . result : shed .",
+    "got": "fact : mia in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] daisy went to the basement while sophie went to the balcony . [q] who went to the balcony ? [a]",
-    "target": "location : balcony . person : sophie . result : sophie .",
-    "got": "location : balcony . person : daisy . result : daisy . <eos>"
+    "question": "[q] who went to the garden ? [c] ruby went to the garden . mia went to the shed . [a]",
+    "target": "fact : ruby in the garden . result : ruby .",
+    "got": "fact : mia in the garden . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sophie went to the balcony while daisy went to the basement . [q] where is daisy ? [a]",
-    "target": "fact : daisy went to the basement . result : basement .",
-    "got": "fact : daisy went to the balcony . result : balcony . <eos>"
+    "question": "[q] where is mia ? [c] mia went to the shed while ruby went to the garden . [a]",
+    "target": "fact : mia in the shed . result : shed .",
+    "got": "fact : mia in the garden . result : garden . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] sophie went to the balcony while daisy went to the basement . [q] who went to the basement ? [a]",
-    "target": "location : basement . person : daisy . result : daisy .",
-    "got": "location : basement . person : sophie . result : sophie . <eos>"
+    "question": "[q] who went to the garden ? [c] mia went to the shed while ruby went to the garden . [a]",
+    "target": "fact : ruby in the garden . result : ruby .",
+    "got": "fact : mia in the garden . result : mia . <eos>"
   },
   {
     "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the garden . lily went to the forest . [q] where is leo ? [a]",
-    "target": "fact : leo went to the garden . result : garden .",
-    "got": "fact : leo went to the forest . result : forest . <eos>"
+    "question": "[q] where is mia ? [c] ruby went to the garden while mia went to the shed . [a]",
+    "target": "fact : mia in the shed . result : shed .",
+    "got": "fact : mia in the garden . result : garden . <eos>"
   }
 ]

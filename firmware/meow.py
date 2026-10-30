@@ -4,7 +4,7 @@ from array import array; from machine import Pin # pyright: ignore[reportMissing
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
-EMBED_DIM = 96; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
+EMBED_DIM = 96; BLOCK_SIZE = 64; NUM_HEADS = 3; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
 ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B
 SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
 
@@ -68,7 +68,7 @@ sin_tab = [[math.sin(p * inv_freq[i]) for i in range(HEAD_DIM // 2)] for p in ra
 
 def apply_rope(vec, pos):
     c, s = cos_tab[min(pos, BLOCK_SIZE - 1)], sin_tab[min(pos, BLOCK_SIZE - 1)]
-    for i in range(12):
+    for i in range(16):
         i2 = i * 2
         x0, x1 = vec[i2], vec[i2 + 1]
         vec[i2] = x0 * c[i] - x1 * s[i]

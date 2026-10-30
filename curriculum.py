@@ -9,7 +9,7 @@ def formatQaSequence(premise, question, answer):
     p = normalizeText(premise.strip().rstrip(". "))
     q = normalizeText(question.strip().rstrip("?.: "))
     a = normalizeText(answer.strip().rstrip(". "))
-    return f"[q] {q} ? [c] {p} . [a] {a} . <eos>"
+    return f"[c] {p} . [q] {q} ? [a] {a} . <eos>"
 
 def splitQa(sequenceStr):
     parts = sequenceStr.split(" [a] ")
