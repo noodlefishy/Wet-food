@@ -28,7 +28,7 @@
     ]
   },
   "categories": [
-   {
+    {
       "name": "01: Single Supporting Fact",
       "weight": 3.5,
       "premise": [
@@ -38,10 +38,10 @@
         "{actor2} went to the {location2} while {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "where is {actor1}", "a": "fact : {actor1} went to the {location1} . result : {location1} ." },
-        { "q": "where is {actor2}", "a": "fact : {actor2} went to the {location2} . result : {location2} ." },
-        { "q": "who went to the {location1}", "a": "location : {location1} . person : {actor1} . result : {actor1} ." },
-        { "q": "who went to the {location2}", "a": "location : {location2} . person : {actor2} . result : {actor2} ." }
+        { "q": "where is {actor1}", "a": "fact : {actor1} in the {location1} . result : {location1} ." },
+        { "q": "where is {actor2}", "a": "fact : {actor2} in the {location2} . result : {location2} ." },
+        { "q": "who went to the {location1}", "a": "fact : {actor1} in the {location1} . result : {actor1} ." },
+        { "q": "who went to the {location2}", "a": "fact : {actor2} in the {location2} . result : {actor2} ." }
       ]
     },
     {
@@ -109,12 +109,12 @@
         "{actor2} went to the {location2} while {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "is {actor1} in the {location1}", "a": "fact : {actor1} in {location1} . answer : yes ." },
-        { "q": "is {actor1} in the {location2}", "a": "fact : {actor1} in {location1} . answer : no ." },
-        { "q": "is {actor1} in the {location3}", "a": "fact : {actor1} in {location1} . answer : no ." },
-        { "q": "is {actor2} in the {location2}", "a": "fact : {actor2} in {location2} . answer : yes ." },
-        { "q": "is {actor2} in the {location1}", "a": "fact : {actor2} in {location2} . answer : no ." },
-        { "q": "is {actor3} in the {location1}", "a": "fact : {actor3} nowhere . answer : no ." }
+        { "q": "is {actor1} in the {location1}", "a": "fact : {actor1} in the {location1} . answer : yes ." },
+        { "q": "is {actor1} in the {location2}", "a": "fact : {actor1} in the {location1} . answer : no ." },
+        { "q": "is {actor1} in the {location3}", "a": "fact : {actor1} in the {location1} . answer : no ." },
+        { "q": "is {actor2} in the {location2}", "a": "fact : {actor2} in the {location2} . answer : yes ." },
+        { "q": "is {actor2} in the {location1}", "a": "fact : {actor2} in the {location2} . answer : no ." },
+        { "q": "is {actor3} in the {location1}", "a": "fact : {actor3} is nowhere . answer : no ." }
       ]
     },
     {
@@ -251,11 +251,10 @@
         "{actor2} has a {colour2} {item2} . {actor1} has a {colour1} {item1} . {actor3} has the {item1}"
       ],
       "queries": [
-        { "q": "what colour is the {item1}", "a": "item : {item1} . owner : {actor1} . colour : {colour1} . result : {colour1} ." },
-        { "q": "what colour is the {item2}", "a": "item : {item2} . owner : {actor2} . colour : {colour2} . result : {colour2} ." }
+        { "q": "what colour is the {item1}", "a": "fact : {actor1} has a {colour1} {item1} . result : {colour1} ." },
+        { "q": "what colour is the {item2}", "a": "fact : {actor2} has a {colour2} {item2} . result : {colour2} ." }
       ]
     },
-
     {
       "name": "17: Positional Reasoning",
       "weight": 2.5,

@@ -145,12 +145,11 @@ if __name__ == "__main__":
 
     def extract_answer(text):
         if not text or not text.strip(): return ""
-        clean = text.replace("<eos>", "").replace("<pad>", "").strip()
-        clean = clean.rstrip(". ").strip()
+        clean = text.replace("<eos>", "").replace("<pad>", "").strip().rstrip(". ")
         if ":" in clean:
             val = clean.split(":")[-1].strip()
             return " ".join(val.rstrip(". ").split())
-        return " ".join(clean.split())
+        return " ".join(clean.split()).rstrip(". ")
 
     with torch.no_grad():
         for i in range(0, total, BATCH):

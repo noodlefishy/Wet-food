@@ -272,8 +272,21 @@ while True:
 
         is_logic = any(t in p_clean for t in ("[c]", "[q]", "[a]")) or any(p_clean.strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
         if is_logic:
-            if "[c]" not in p_clean and not p_clean.startswith("question"): p_clean = f"[c] {p_clean}"
-            if "[q]" in p_clean and not p_clean.endswith("[a]"): p_clean = p_clean.rstrip("?.: ") + " ? [a]"
+            if "[q]" in p_clean and "[c]" in p_clean:
+                if not p_clean.endswith("[a]"): p_clean = p_clean.rstrip("?.: ") + " [a]"
+            elif "[c]" in p_clean and "[q]" in p_clean:
+                c_part = p_clean.split("[q]")[0].replace("[c]", "").strip().rstrip(". ")
+                q_part = p_clean.split("[q]")[1].split("[a]")[0].strip().rstrip("?.: ")
+                p_clean = f"[q] {q_part} ? [c] {c_part} . [a]"
+            elif "?" in p_clean:
+                parts = p_clean.split("?")
+                if any(parts[0].strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how")):
+                    p_clean = f"[q] {parts[0].strip()} ? [c] {parts[1].replace('[a]','').strip().rstrip('. ')} . [a]"
+                else:
+                    p_clean = f"[q] {parts[1].replace('[a]','').strip()} ? [c] {parts[0].strip().rstrip('. ')} . [a]"
+            else:
+                if not p_clean.startswith("[q]"): p_clean = f"[q] {p_clean}"
+                if not p_clean.endswith("[a]"): p_clean = p_clean.rstrip("?.: ") + " ? [a]"
             
         tks = [WORD_TO_ID.get(w, 0) for w in p_clean.split() if w]
         if not tks:

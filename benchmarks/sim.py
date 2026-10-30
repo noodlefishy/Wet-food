@@ -16,12 +16,26 @@ def tokenize(s):
 
 model.eval()
 
-def generate(promptTxt, maxTokens=20):
-    isLog = any(t in promptTxt for t in ("[c]", "[q]", "[a]")) or any(promptTxt.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
+def generate(promptTxt, maxTokens=25):
     p = promptTxt.strip()
+    isLog = any(t in p for t in ("[c]", "[q]", "[a]")) or any(p.lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
+    
     if isLog:
-        if "[c]" not in p and not p.startswith("question"): p = f"[c] {p}"
-        if "[q]" in p and not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
+        if "[q]" in p and "[c]" in p:
+            if not p.endswith("[a]"): p = p.rstrip("?.: ") + " [a]"
+        elif "[c]" in p and "[q]" in p:
+            c_part = p.split("[q]")[0].replace("[c]", "").strip().rstrip(". ")
+            q_part = p.split("[q]")[1].split("[a]")[0].strip().rstrip("?.: ")
+            p = f"[q] {q_part} ? [c] {c_part} . [a]"
+        elif "?" in p:
+            parts = p.split("?")
+            if any(parts[0].lower().strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how")):
+                p = f"[q] {parts[0].strip()} ? [c] {parts[1].replace('[a]','').strip().rstrip('. ')} . [a]"
+            else:
+                p = f"[q] {parts[1].replace('[a]','').strip()} ? [c] {parts[0].strip().rstrip('. ')} . [a]"
+        else:
+            if not p.startswith("[q]"): p = f"[q] {p}"
+            if not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
 
     toks = tokenize(p)
     if not toks: return ""
@@ -47,7 +61,6 @@ def generate(promptTxt, maxTokens=20):
             if isLog:
                 predId = lg.argmax().item()
             else:
-                # Safe repetition penalty + temperature for open stories
                 for pastId in set(toks + [WORD_TO_ID.get(w, 0) for w in out_words[-8:]]):
                     lg[pastId] -= 1.8
                 probs = torch.softmax(lg / 0.7, dim=-1)
@@ -56,16 +69,14 @@ def generate(promptTxt, maxTokens=20):
             predWord = VOCAB[predId] # type: ignore
             if predWord in ("<eos>", "<pad>"): break
             out_words.append(predWord)
-
             
-            # Feed prediction back into sequence
             x[0, pos + 1] = predId
 
     return " ".join(out_words)
 
 if __name__ == "__main__":
     print("=" * 65)
-    print("      WET FOOD LOCAL SIMULATOR (32-BIT HARDWARE VERIFIED)      ")
+    print("      WET FOOD LOCAL SIMULATOR (QUESTION-FIRST ENABLED)      ")
     print("=" * 65)
     print("Type a prompt or 'exit' to quit.\n")
     while True:
