@@ -1,5 +1,4 @@
 import json, random, re
-from chunks import preprocess_chunks
 
 def normalizeText(text):
     t = re.sub(r'\s*([?.!:,])\s*', r' \1 ', text.strip())
@@ -21,28 +20,6 @@ def pluralize(word, count=2):
     if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou": return word[:-1] + "ies"
     return word + "s"
 
-VERB_JITTER = {
-    "went to the": ["went to the", "walked to the", "arrived at the"],
-    "is in the":   ["is in the", "was in the"],
-    "found the":   ["found the", "got the", "picked up the"],
-    "gave the":    ["gave the", "handed the"],
-    "has the":     ["has the", "had the"]
-}
-
-DISTRACTOR_TEMPLATES = [
-    "{actor} saw a little bird",
-    "{actor} sat in the sun",
-    "{actor} wanted to play",
-    "{actor} was very happy",
-    "{actor} looked around"
-]
-
-def applyVerbJitter(text):
-    for base, variants in VERB_JITTER.items():
-        if base in text and random.random() < 0.40:
-            text = text.replace(base, random.choice(variants), 1)
-    return text
-
 # ── Propositional Logic ────────────────────────────────────────────────────────
 PROP_RULES = [
     {"cond": "the door is open",   "concl": "the dog is outside",   "target": "is the dog outside"},
@@ -62,10 +39,10 @@ def generatePropositionalSample():
     modePonens = random.random() < 0.5
     if modePonens:
         premise = f"if {rule['cond']} then {rule['concl']} . {rule['cond']}"
-        answer  = "rule holds : yes"
+        answer  = "yes"
     else:
         premise = f"if {rule['cond']} then {rule['concl']} . {rule['concl']} is not true"
-        answer  = "not true : no"
+        answer  = "no"
     return formatQaSequence(premise, rule["target"], answer)
 
 # ── Comparative Chains ─────────────────────────────────────────────────────────
@@ -83,10 +60,10 @@ def generateComparativeSample():
     premise = f"{e1} is {comp} than {e2} . {e2} is {comp} than {e3}"
     if askTop:
         question = f"who is the {sup}"
-        answer   = f"{sup} : {e1}"
+        answer   = e1
     else:
         question = f"who is the {opp_sup}"
-        answer   = f"{opp_sup} : {e3}"
+        answer   = e3
     return formatQaSequence(premise, question, answer)
 
 # ── General Conversation ───────────────────────────────────────────────────────
@@ -117,13 +94,12 @@ def generateConversationSample():
     intent = random.choice(list(_CONV.keys()))
     utterance = random.choice(_CONV[intent]["u"])
     reply     = random.choice(_CONV[intent]["r"])
-    # Appended . result : {reply} so the fastEvaluator can accurately pull it
-    return formatQaSequence(f"user : {utterance}", "how do you respond", f"reply : {reply} . result : {reply}")
+    return formatQaSequence(f"user : {utterance}", "how do you respond", reply)
 
 NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 FEMALE_ACTORS = {"alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"}
 
-def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
+def generateAtomicSample(cfg, targetCategory=None):
     pools      = cfg["pools"]
     categories = cfg["categories"]
     weights    = [c.get("weight", 2.0) for c in categories]
@@ -140,32 +116,13 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
     premiseTmpl = random.choice(cat.get("premise", cat.get("premises", [""])))
     queries     = cat["queries"]
 
-    # 1. Hard-negative balance for polar queries (Updated to match CoT target format)
-    hasYes = any("answer : yes" in str(q.get("a", "")) for q in queries)
-    hasNo  = any("answer : no" in str(q.get("a", "")) for q in queries)
+    # 50/50 balance for polar questions; uniform 50/50 for entity queries
+    hasYes = any(q.get("a", "").strip().startswith("yes") for q in queries)
+    hasNo  = any(q.get("a", "").strip().startswith("no") for q in queries)
     if hasYes and hasNo:
         wantYes = random.random() < 0.50
-        filtered = [q for q in queries if ("answer : yes" in str(q.get("a", ""))) == wantYes]
+        filtered = [q for q in queries if q.get("a", "").strip().startswith("yes") == wantYes]
         queryObj = random.choice(filtered) if filtered else random.choice(queries)
-        
-    # 2. Smart Anti-Recency (Breaks lazy token-distance heuristics without starving actor3/nobody)
-    elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
-        dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
-        rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
-        
-        dist_queries = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
-        rec_queries = [q for q in queries if f"{{{rec_actor}}}" in str(q)]
-        other_queries = [q for q in queries if q not in dist_queries and q not in rec_queries]
-        
-        r = random.random()
-        if r < 0.55 and dist_queries:      # 55% Distant Penalty
-            queryObj = random.choice(dist_queries)
-        elif r < 0.85 and rec_queries:     # 30% Recent 
-            queryObj = random.choice(rec_queries)
-        elif other_queries:                # 15% Actor3 / Nobody / General logic
-            queryObj = random.choice(other_queries)
-        else:
-            queryObj = random.choice(queries)
     else:
         queryObj = random.choice(queries)
 
@@ -215,14 +172,5 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
     pStr      = premiseTmpl.format(**bindings)
     qRendered = qStr.format(**bindings)
     aRendered = queryObj["a"].format(**bindings)
-
-    if injectDistractor and random.random() < 0.35:
-        unused = [a for a in actors if a not in qRendered and a not in aRendered]
-        if unused:
-            distPhrase = random.choice(DISTRACTOR_TEMPLATES).format(actor=random.choice(unused))
-            # Shuffle distractor to beginning, middle, or end so model can't just ignore the final sentence
-            parts = [s.strip() for s in pStr.split(" . ") if s.strip()]
-            parts.insert(random.randint(0, len(parts)), distPhrase)
-            pStr = " . ".join(parts)
 
     return formatQaSequence(pStr, qRendered, aRendered)

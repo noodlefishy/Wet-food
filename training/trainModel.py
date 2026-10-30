@@ -4,7 +4,7 @@ from collections import Counter
 
 torch.set_num_threads(4)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from curriculum import generateAtomicSample, splitQa
+from curriculum import generateAtomicSample
 
 with open("config/model.json", "r") as f: modCfg = json.load(f)
 cfgPath = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
@@ -26,7 +26,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs("firmware", exist_ok=True)
 
 print("=" * 65)
-print(f" TRAINING {NUM_LAYERS}-LAYER RoPE ENGINE ({MEOW_LAYERS}L MEOW + {MIAOU_LAYERS}L MIAOU)")
+print(f" TRAINING {NUM_LAYERS}-LAYER MHA RoPE ENGINE ({EMBED_DIM}D, {NUM_HEADS}H)")
 print("=" * 65)
 
 if os.path.exists(STORIES_FILE):
@@ -78,32 +78,9 @@ padId, aTokenId = WORD_TO_ID["<pad>"], WORD_TO_ID["[a]"]
 print(f"[✓] Vocab: {len(CAT_CORE_WORDS)} core/pool words + {len(VOCAB) - len(CAT_CORE_WORDS)} natural words.")
 
 def tokenizeStr(s):
-    # Standard clean tokenizer
     for c in [".", "?", "!", ",", ":"]: s = s.replace(c, f" {c} ")
     s = s.replace("'s", " 's ")
     return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
-
-print("[*] Tokenizing logic and story streams...")
-qaTensorX, qaTensorY = [], []
-for task in allQaTasks:
-    toks = tokenizeStr(task)
-    if not toks: continue
-    if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
-    
-    x = toks + [padId] * (BLOCK_SIZE - len(toks))
-    
-    # SFT Response-Only Masking: -100 on prompt, loss on answer tokens
-    y = [-100] * BLOCK_SIZE
-    ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
-    if ansStart != -1:
-        for idx in range(ansStart, len(toks) - 1):
-            y[idx] = toks[idx + 1]
-            
-    qaTensorX.append(torch.tensor(x, dtype=torch.long))
-    qaTensorY.append(torch.tensor(y, dtype=torch.long))
-
-qaXData = torch.stack(qaTensorX).to(DEVICE)
-qaYData = torch.stack(qaTensorY).to(DEVICE)
 
 storyTokens = torch.tensor(tokenizeStr(rawStories), dtype=torch.long)
 numStChunks = (len(storyTokens) - 1) // BLOCK_SIZE
@@ -138,15 +115,11 @@ class RoPE_MHA(nn.Module):
         B, T, C = x.shape
         qkv = self.qkvProj(x)
         q, k, v = qkv.chunk(3, dim=-1)
-        
         q = q.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
         k = k.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
         v = v.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
-        
-        # Apply RoPE across all 4 heads for both Q and K
         q = applyRope(q, cosCached, sinCached)
         k = applyRope(k, cosCached, sinCached)
-        
         out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         return self.outProj(out.transpose(1, 2).contiguous().view(B, T, C))
 
@@ -156,11 +129,7 @@ class Block(nn.Module):
         self.ln1 = nn.LayerNorm(EMBED_DIM)
         self.sa  = RoPE_MHA()
         self.ln2 = nn.LayerNorm(EMBED_DIM)
-        self.mlp = nn.Sequential(
-            nn.Linear(EMBED_DIM, 4 * EMBED_DIM), 
-            nn.ReLU(), 
-            nn.Linear(4 * EMBED_DIM, EMBED_DIM)
-        )
+        self.mlp = nn.Sequential(nn.Linear(EMBED_DIM, 4 * EMBED_DIM), nn.ReLU(), nn.Linear(4 * EMBED_DIM, EMBED_DIM))
 
     def forward(self, x):
         return x + self.mlp(self.ln2(x + self.sa(self.ln1(x))))
@@ -180,9 +149,7 @@ class BabyStories(nn.Module):
 
 rawModel = BabyStories().to(DEVICE)
 
-# Check for benchmark / no-train flag
 BENCHMARK_MODE = any(arg in sys.argv for arg in ["--benchmark", "--no-train", "--eval-only"]) or os.environ.get("BENCHMARK_ONLY") == "1"
-
 p1Path = os.path.join(MODELS_DIR, "pico1 weights.model")
 p2Path = os.path.join(MODELS_DIR, "pico2 weights.model")
 
@@ -190,10 +157,8 @@ if BENCHMARK_MODE:
     print("\n" + "=" * 65)
     print(" [*] BENCHMARK MODE ACTIVE: Skipping training loop.")
     if os.path.exists(p1Path) and os.path.exists(p2Path):
-        print(f" [✓] Found existing weights in {MODELS_DIR}. Preserving them for evaluation.")
+        print(f" [✓] Found existing weights in {MODELS_DIR}.")
         sys.exit(0)
-    else:
-        print(f" [!] Warning: Weights not found in {MODELS_DIR}. Will initialize and quantize base weights.")
     print("=" * 65 + "\n")
 
 WARMUP      = modCfg["training"].get("warmup_steps", 1000)
@@ -201,7 +166,7 @@ TOTAL_STEPS = 0 if BENCHMARK_MODE else modCfg["training"].get("total_steps", 320
 BASE_LR     = modCfg["training"].get("base_lr", 0.0015)
 MIN_LR      = modCfg["training"].get("min_lr", 0.0001)
 BATCH_QA    = modCfg["training"].get("batch_qa", 16)
-BATCH_ST    = modCfg["training"].get("batch_st", 10)
+BATCH_ST    = modCfg["training"].get("batch_st", 16)
 
 optimizer = torch.optim.AdamW(rawModel.parameters(), lr=BASE_LR, weight_decay=modCfg["training"]["weight_decay"])
 
@@ -218,9 +183,11 @@ def getBatch():
         x = toks + [padId] * (BLOCK_SIZE - len(toks))
         y = [-100] * BLOCK_SIZE
         
+        # Loss applies strictly to the direct answer tokens following [a]
         ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
         if ansStart != -1:
-            for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
+            for idx in range(ansStart, len(toks) - 1): 
+                y[idx] = toks[idx + 1]
                 
         qaX_list.append(x)
         qaY_list.append(y)
@@ -234,7 +201,7 @@ def getBatch():
     
     return xQa, yQa, xSt, ySt
 
-print(f"\n[*] Training configuration: {TOTAL_STEPS} steps | Batch: {BATCH_QA} QA + {BATCH_ST} Story")
+print(f"\n[*] Training configuration: {TOTAL_STEPS} steps | Batch: {BATCH_QA} QA + {BATCH_ST} Story | Equal 50/50 Loss")
 rawModel.train()
 tStart = time.time()
 
@@ -243,11 +210,12 @@ try:
         for p in optimizer.param_groups: p["lr"] = getLr(step)
         xQa, yQa, xSt, ySt = getBatch()
         logitsAll = rawModel(torch.cat([xQa, xSt], dim=0))
+        
         lossQa = F.cross_entropy(logitsAll[:BATCH_QA].view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
         lossSt = F.cross_entropy(logitsAll[BATCH_QA:].view(-1, VOCAB_SIZE), ySt.view(-1))
-        decayStart = int(TOTAL_STEPS * 0.70)
-        curWSt = 0.35 - ((step - decayStart) / (TOTAL_STEPS - decayStart)) * 0.20 if step > decayStart else 0.35
-        loss = (1.5 * lossQa) + (max(curWSt, 0.20) * lossSt)
+        
+        # Exact 50/50 balance between QA reasoning and Story language modeling
+        loss = (0.50 * lossQa) + (0.50 * lossSt)
 
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
@@ -273,9 +241,6 @@ def dumpTensor(t, f, quantize=True):
             f.write(torch.clamp(torch.round(r / s), -128, 127).to(torch.int8).numpy().tobytes())
     else:
         f.write(d.to(torch.float32).numpy().tobytes())
-
-p1Path = os.path.join(MODELS_DIR, "pico1 weights.model")
-p2Path = os.path.join(MODELS_DIR, "pico2 weights.model")
 
 with open(p1Path, "wb") as f:
     dumpTensor(rawModel.tokEmb.weight, f, quantize=True)
