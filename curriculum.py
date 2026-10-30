@@ -121,7 +121,8 @@ def generateConversationSample():
     intent = random.choice(list(_CONV.keys()))
     utterance = random.choice(_CONV[intent]["u"])
     reply     = random.choice(_CONV[intent]["r"])
-    return formatQaSequence(f"user : {utterance}", "how do you respond", f"reply : {reply}")
+    # Append 'result :' so the fastEvaluator can extract it properly
+    return formatQaSequence(f"user : {utterance}", "how do you respond", f"reply : {reply} . result : {reply}")
 
 NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 FEMALE_ACTORS = {"alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"}
