@@ -1,4 +1,4 @@
-import os, sys, json, re, torch, torch.nn.functional as F
+import os, sys, json, re, torch, torch.nn.functional as F,readline
 projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
 from benchmarks.fastEvaluator import model, VOCAB, WORD_TO_ID, BLOCK_SIZE, padId, device
