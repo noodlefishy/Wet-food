@@ -93,27 +93,23 @@ def generateComparativeSample():
 _CONV = {
     "greet": {
         "u": ["hello", "hi", "hey", "good morning", "good day"],
-        "r": ["hello friend", "hi there", "hello", "hey there", "good to see you"]
+        "r": ["hello friend"]
     },
     "howru": {
         "u": ["how are you", "how are you doing", "how is your day", "are you well"],
-        "r": ["i am doing great", "i am doing well thanks", "all good here", "i am fine thank you"]
+        "r": ["i am doing great"]
     },
     "identity": {
         "u": ["who are you", "what are you", "are you an ai", "what can you do"],
-        "r": [
-            "i am a tiny ai on two pico chips",
-            "i am an ai that can reason and tell stories",
-            "i live in two microcontroller chips"
-        ]
+        "r": ["i am an ai"]
     },
     "thanks": {
         "u": ["thank you", "thanks", "thank you very much"],
-        "r": ["you are welcome", "happy to help", "no problem", "glad to help"]
+        "r": ["you are welcome"]
     },
     "bye": {
         "u": ["goodbye", "bye", "see you later", "have a good day"],
-        "r": ["goodbye friend", "see you later", "take care", "bye"]
+        "r": ["goodbye friend"]
     }
 }
 
@@ -121,7 +117,7 @@ def generateConversationSample():
     intent = random.choice(list(_CONV.keys()))
     utterance = random.choice(_CONV[intent]["u"])
     reply     = random.choice(_CONV[intent]["r"])
-    # Append 'result :' so the fastEvaluator can extract it properly
+    # Appended . result : {reply} so the fastEvaluator can accurately pull it
     return formatQaSequence(f"user : {utterance}", "how do you respond", f"reply : {reply} . result : {reply}")
 
 NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
@@ -144,16 +140,34 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
     premiseTmpl = random.choice(cat.get("premise", cat.get("premises", [""])))
     queries     = cat["queries"]
 
-    # 1. Hard-negative balance for polar queries
-    hasYes = any(": yes" in q.get("a", "") for q in queries)
-    hasNo  = any(": no" in q.get("a", "")  for q in queries)
+    # 1. Hard-negative balance for polar queries (Updated to match CoT target format)
+    hasYes = any("answer : yes" in str(q.get("a", "")) for q in queries)
+    hasNo  = any("answer : no" in str(q.get("a", "")) for q in queries)
     if hasYes and hasNo:
-        wantYes = random.random() < 0.45
-        filtered = [q for q in queries if (": yes" in q.get("a", "")) == wantYes]
+        wantYes = random.random() < 0.50
+        filtered = [q for q in queries if ("answer : yes" in str(q.get("a", ""))) == wantYes]
         queryObj = random.choice(filtered) if filtered else random.choice(queries)
-    # 2. Anti-recency sampling: force query to target distant entity 65% of the time
-    queryObj = random.choice(queries)
-
+        
+    # 2. Smart Anti-Recency (Breaks lazy token-distance heuristics without starving actor3/nobody)
+    elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
+        dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
+        rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
+        
+        dist_queries = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
+        rec_queries = [q for q in queries if f"{{{rec_actor}}}" in str(q)]
+        other_queries = [q for q in queries if q not in dist_queries and q not in rec_queries]
+        
+        r = random.random()
+        if r < 0.55 and dist_queries:      # 55% Distant Penalty
+            queryObj = random.choice(dist_queries)
+        elif r < 0.85 and rec_queries:     # 30% Recent 
+            queryObj = random.choice(rec_queries)
+        elif other_queries:                # 15% Actor3 / Nobody / General logic
+            queryObj = random.choice(other_queries)
+        else:
+            queryObj = random.choice(queries)
+    else:
+        queryObj = random.choice(queries)
 
     actors  = random.sample(pools["actor"], min(5, len(pools["actor"])))
     locs    = random.sample(pools["location"], min(5, len(pools["location"])))
@@ -206,7 +220,7 @@ def generateAtomicSample(cfg, targetCategory=None, injectDistractor=True):
         unused = [a for a in actors if a not in qRendered and a not in aRendered]
         if unused:
             distPhrase = random.choice(DISTRACTOR_TEMPLATES).format(actor=random.choice(unused))
-            # Shuffle distractor to beginning, middle, or end to prevent "ignore last sentence" heuristics
+            # Shuffle distractor to beginning, middle, or end so model can't just ignore the final sentence
             parts = [s.strip() for s in pStr.split(" . ") if s.strip()]
             parts.insert(random.randint(0, len(parts)), distPhrase)
             pStr = " . ".join(parts)
