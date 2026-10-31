@@ -192,82 +192,49 @@ class BabyStories(nn.Module):
 
 rawModel = BabyStories().to(DEVICE)
 
-# =====================================================================
-# STAGE 1: PRE-TRAINING ON TINYSTORIES
-# =====================================================================
-optPretrain = torch.optim.AdamW(rawModel.parameters(), lr=PRETRAIN_LR, weight_decay=WEIGHT_DECAY)
+if __name__ == "__main__":
+    # =====================================================================
+    # STAGE 1: PRE-TRAINING ON TINYSTORIES
+    # =====================================================================
+    optPretrain = torch.optim.AdamW(rawModel.parameters(), lr=PRETRAIN_LR, weight_decay=WEIGHT_DECAY)
 
-def getPretrainLr(step):
-    if step < WARMUP_STEPS: return PRETRAIN_LR * (step + 1) / WARMUP_STEPS
-    prog = (step - WARMUP_STEPS) / max(1, PRETRAIN_STEPS - WARMUP_STEPS)
-    return PRETRAIN_MINLR + 0.5 * (1.0 + math.cos(math.pi * prog)) * (PRETRAIN_LR - PRETRAIN_MINLR)
+    def getPretrainLr(step):
+        if step < WARMUP_STEPS: return PRETRAIN_LR * (step + 1) / WARMUP_STEPS
+        prog = (step - WARMUP_STEPS) / max(1, PRETRAIN_STEPS - WARMUP_STEPS)
+        return PRETRAIN_MINLR + 0.5 * (1.0 + math.cos(math.pi * prog)) * (PRETRAIN_LR - PRETRAIN_MINLR)
 
-print(f" STAGE 1: PRE-TRAINING (100% TinyStories, {PRETRAIN_STEPS} Steps, Batch {PRETRAIN_BATCH})")
-print("=" * 65)
+    print(f" STAGE 1: PRE-TRAINING (100% TinyStories, {PRETRAIN_STEPS} Steps, Batch {PRETRAIN_BATCH})")
+    print("=" * 65)
 
-rawModel.train()
-t0 = time.time()
-for step in range(PRETRAIN_STEPS + 1):
-    lr = getPretrainLr(step)
-    for p in optPretrain.param_groups: p["lr"] = lr
-    
-    stIdx = torch.randint(numStChunks, (PRETRAIN_BATCH,))
-    xSt, ySt = stXData[stIdx], stYData[stIdx]
-    
-    logits = rawModel(xSt)
-    loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), ySt.view(-1))
-    
-    optPretrain.zero_grad(set_to_none=True)
-    loss.backward()
-    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
-    optPretrain.step()
-    
-    if step % 500 == 0:
-        elapsed = time.time() - t0
-        eta = (PRETRAIN_STEPS - step) * (elapsed / max(1, step)) / 60
-        print(f" [Pre-train] Step {step:5d}/{PRETRAIN_STEPS} | Story Loss: {loss.item():.4f} | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
+    rawModel.train()
+    t0 = time.time()
+    for step in range(PRETRAIN_STEPS + 1):
+        lr = getPretrainLr(step)
+        for p in optPretrain.param_groups: p["lr"] = lr
+        
+        stIdx = torch.randint(numStChunks, (PRETRAIN_BATCH,))
+        xSt, ySt = stXData[stIdx], stYData[stIdx]
+        
+        logits = rawModel(xSt)
+        loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), ySt.view(-1))
+        
+        optPretrain.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
+        optPretrain.step()
+        
+        if step % 500 == 0:
+            elapsed = time.time() - t0
+            eta = (PRETRAIN_STEPS - step) * (elapsed / max(1, step)) / 60
+            print(f" [Pre-train] Step {step:5d}/{PRETRAIN_STEPS} | Story Loss: {loss.item():.4f} | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
 
-# =====================================================================
-# BUILD DETERMINISTIC VALIDATION BENCHMARK (256 HELD-OUT TASKS)
-# =====================================================================
-print("\n[*] Assembling deterministic 256-sample validation set for SFT tracking...")
-torch.manual_seed(42)
-valX_list, valY_list = [], []
-for _ in range(256):
-    task = generateAtomicSample(logCfg)
-    toks = tokenizeStr(task)
-    if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
-    x = toks + [padId] * (BLOCK_SIZE - len(toks))
-    y = [-100] * BLOCK_SIZE
-    ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
-    if ansStart != -1:
-        for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
-    valX_list.append(x)
-    valY_list.append(y)
-
-valX = torch.tensor(valX_list, dtype=torch.long, device=DEVICE)
-valY = torch.tensor(valY_list, dtype=torch.long, device=DEVICE)
-
-def evaluateValLoss(model):
-    model.eval()
-    with torch.no_grad():
-        logits = model(valX)
-        vloss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), valY.view(-1), ignore_index=-100).item()
-    model.train()
-    return vloss
-
-# =====================================================================
-# STAGE 2: LOGIC SFT WITH DETERMINISTIC BEST-MODEL TRACKING
-# =====================================================================
-optSft = torch.optim.AdamW(rawModel.parameters(), lr=SFT_LR, weight_decay=WEIGHT_DECAY)
-
-def getSftLr(step):
-    prog = step / max(1, SFT_STEPS)
-    return SFT_MINLR + 0.5 * (1.0 + math.cos(math.pi * prog)) * (SFT_LR - SFT_MINLR)
-
-def getQaBatch(batchSize):
-    qaX_list, qaY_list = [], []
-    for _ in range(batchSize):
+    # =====================================================================
+    # BUILD DETERMINISTIC VALIDATION BENCHMARK (256 HELD-OUT TASKS)
+    # =====================================================================
+    print("\n[*] Assembling deterministic 256-sample validation set for SFT tracking...")
+    torch.manual_seed(42)
+    valX_list, valY_list = [], []
+    for _ in range(256):
         task = generateAtomicSample(logCfg)
         toks = tokenizeStr(task)
         if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
@@ -276,99 +243,133 @@ def getQaBatch(batchSize):
         ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
         if ansStart != -1:
             for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
-        qaX_list.append(x)
-        qaY_list.append(y)
-    return (torch.tensor(qaX_list, dtype=torch.long, device=DEVICE),
-            torch.tensor(qaY_list, dtype=torch.long, device=DEVICE))
+        valX_list.append(x)
+        valY_list.append(y)
 
-print("\n" + "=" * 65)
-print(f" STAGE 2: LOGIC SFT (20 Canonical bAbI Tasks, {SFT_STEPS} Steps, Batch {SFT_BATCH})")
-print("=" * 65)
+    valX = torch.tensor(valX_list, dtype=torch.long, device=DEVICE)
+    valY = torch.tensor(valY_list, dtype=torch.long, device=DEVICE)
 
-best_val_loss = float("inf")
-best_state = None
-best_step = 0
+    def evaluateValLoss(model):
+        model.eval()
+        with torch.no_grad():
+            logits = model(valX)
+            vloss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), valY.view(-1), ignore_index=-100).item()
+        model.train()
+        return vloss
 
-t1 = time.time()
-for step in range(SFT_STEPS + 1):
-    lr = getSftLr(step)
-    for p in optSft.param_groups: p["lr"] = lr
-    
-    xQa, yQa = getQaBatch(SFT_BATCH)
-    logitsQa = rawModel(xQa)
-    qa_loss = F.cross_entropy(logitsQa.view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
-    
-    stIdx = torch.randint(numStChunks, (SFT_BATCH // 2,))
-    xSt, ySt = stXData[stIdx], stYData[stIdx]
-    logitsSt = rawModel(xSt)
-    story_loss = F.cross_entropy(logitsSt.view(-1, VOCAB_SIZE), ySt.view(-1))
-    
-    # Combined loss
-    loss = 2.5 * qa_loss + 0.25 * story_loss
+    # =====================================================================
+    # STAGE 2: LOGIC SFT WITH DETERMINISTIC BEST-MODEL TRACKING
+    # =====================================================================
+    optSft = torch.optim.AdamW(rawModel.parameters(), lr=SFT_LR, weight_decay=WEIGHT_DECAY)
 
-    optSft.zero_grad(set_to_none=True)
-    loss.backward()
-    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
-    optSft.step()
-    
-    # Checkpoint against the DETERMINISTIC validation set every 500 steps
-    if step % 500 == 0:
-        val_loss = evaluateValLoss(rawModel)
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            best_step = step
-            best_state = copy.deepcopy(rawModel.state_dict())
-            
-        elapsed = time.time() - t1
-        eta = (SFT_STEPS - step) * (elapsed / max(1, step)) / 60
-        print(f" [Logic SFT] Step {step:5d}/{SFT_STEPS} | Batch: {loss.item():.4f} | Val Loss: {val_loss:.4f} (Best: {best_val_loss:.4f} @ #{best_step}) | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
+    def getSftLr(step):
+        prog = step / max(1, SFT_STEPS)
+        return SFT_MINLR + 0.5 * (1.0 + math.cos(math.pi * prog)) * (SFT_LR - SFT_MINLR)
 
-# Compare Final Step vs. Best Validation Checkpoint
-final_val = evaluateValLoss(rawModel)
-print("\n" + "=" * 65)
-print(f" CHECKPOINT COMPARISON: Final Step {SFT_STEPS} Val Loss: {final_val:.4f} | Best Step {best_step} Val Loss: {best_val_loss:.4f}")
-if best_val_loss < final_val and best_state is not None:
-    print(f"[✓] Best validation model wins! Loading checkpoint from Step {best_step} for export.")
-    rawModel.load_state_dict(best_state)
-else:
-    print(f"[✓] Final model is optimal or equal. Exporting Step {SFT_STEPS}.")
-print("=" * 65)
+    def getQaBatch(batchSize):
+        qaX_list, qaY_list = [], []
+        for _ in range(batchSize):
+            task = generateAtomicSample(logCfg)
+            toks = tokenizeStr(task)
+            if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
+            x = toks + [padId] * (BLOCK_SIZE - len(toks))
+            y = [-100] * BLOCK_SIZE
+            ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
+            if ansStart != -1:
+                for idx in range(ansStart, len(toks) - 1): y[idx] = toks[idx + 1]
+            qaX_list.append(x)
+            qaY_list.append(y)
+        return (torch.tensor(qaX_list, dtype=torch.long, device=DEVICE),
+                torch.tensor(qaY_list, dtype=torch.long, device=DEVICE))
 
-# =====================================================================
-# STAGE 3: INT8 EXPORT & PACKAGING
-# =====================================================================
-print("\n[*] Quantizing winning weights (INT8 W8A32) and exporting...")
+    print("\n" + "=" * 65)
+    print(f" STAGE 2: LOGIC SFT (20 Canonical bAbI Tasks, {SFT_STEPS} Steps, Batch {SFT_BATCH})")
+    print("=" * 65)
 
-def dumpTensor(t, f, quantize=True):
-    d = t.detach().cpu()
-    if d.ndim == 2 and quantize:
-        for r in d:
-            m = r.abs().max().item()
-            s = m / 127.0 if m > 0 else 1.0
-            f.write(struct.pack('f', s))
-            f.write(torch.clamp(torch.round(r / s), -128, 127).to(torch.int8).numpy().tobytes())
+    best_val_loss = float("inf")
+    best_state = None
+    best_step = 0
+
+    t1 = time.time()
+    for step in range(SFT_STEPS + 1):
+        lr = getSftLr(step)
+        for p in optSft.param_groups: p["lr"] = lr
+        
+        xQa, yQa = getQaBatch(SFT_BATCH)
+        logitsQa = rawModel(xQa)
+        qa_loss = F.cross_entropy(logitsQa.view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
+        
+        stIdx = torch.randint(numStChunks, (SFT_BATCH // 2,))
+        xSt, ySt = stXData[stIdx], stYData[stIdx]
+        logitsSt = rawModel(xSt)
+        story_loss = F.cross_entropy(logitsSt.view(-1, VOCAB_SIZE), ySt.view(-1))
+        
+        # Combined loss
+        loss = 2.5 * qa_loss + 0.25 * story_loss
+
+        optSft.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
+        optSft.step()
+        
+        # Checkpoint against the DETERMINISTIC validation set every 500 steps
+        if step % 500 == 0:
+            val_loss = evaluateValLoss(rawModel)
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_step = step
+                best_state = copy.deepcopy(rawModel.state_dict())
+                
+            elapsed = time.time() - t1
+            eta = (SFT_STEPS - step) * (elapsed / max(1, step)) / 60
+            print(f" [Logic SFT] Step {step:5d}/{SFT_STEPS} | Batch: {loss.item():.4f} | Val Loss: {val_loss:.4f} (Best: {best_val_loss:.4f} @ #{best_step}) | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
+
+    # Compare Final Step vs. Best Validation Checkpoint
+    final_val = evaluateValLoss(rawModel)
+    print("\n" + "=" * 65)
+    print(f" CHECKPOINT COMPARISON: Final Step {SFT_STEPS} Val Loss: {final_val:.4f} | Best Step {best_step} Val Loss: {best_val_loss:.4f}")
+    if best_val_loss < final_val and best_state is not None:
+        print(f"[✓] Best validation model wins! Loading checkpoint from Step {best_step} for export.")
+        rawModel.load_state_dict(best_state)
     else:
-        f.write(d.to(torch.float32).numpy().tobytes())
+        print(f"[✓] Final model is optimal or equal. Exporting Step {SFT_STEPS}.")
+    print("=" * 65)
 
-p1Path = os.path.join(MODELS_DIR, "pico1 weights.model")
-p2Path = os.path.join(MODELS_DIR, "pico2 weights.model")
+    # =====================================================================
+    # STAGE 3: INT8 EXPORT & PACKAGING
+    # =====================================================================
+    print("\n[*] Quantizing winning weights (INT8 W8A32) and exporting...")
 
-with open(p1Path, "wb") as f:
-    dumpTensor(rawModel.tokEmb.weight, f, quantize=True)
-    for i in range(MEOW_LAYERS):
-        for p in rawModel.layers[i].parameters(): dumpTensor(p, f, quantize=True)
+    def dumpTensor(t, f, quantize=True):
+        d = t.detach().cpu()
+        if d.ndim == 2 and quantize:
+            for r in d:
+                m = r.abs().max().item()
+                s = m / 127.0 if m > 0 else 1.0
+                f.write(struct.pack('f', s))
+                f.write(torch.clamp(torch.round(r / s), -128, 127).to(torch.int8).numpy().tobytes())
+        else:
+            f.write(d.to(torch.float32).numpy().tobytes())
 
-with open(p2Path, "wb") as f:
-    for i in range(MEOW_LAYERS, NUM_LAYERS):
-        for p in rawModel.layers[i].parameters(): dumpTensor(p, f, quantize=True)
-    for p in rawModel.lnF.parameters(): dumpTensor(p, f, quantize=True)
-    dumpTensor(rawModel.lmHead.weight, f, quantize=True)
-    dumpTensor(rawModel.lmHead.bias, f, quantize=True)
+    p1Path = os.path.join(MODELS_DIR, "pico1 weights.model")
+    p2Path = os.path.join(MODELS_DIR, "pico2 weights.model")
 
-vocabCode = f"VOCAB = {repr(VOCAB)}\n"
-with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: f.write(vocabCode)
-with open("firmware/vocab.py", "w") as f: f.write(vocabCode)
+    with open(p1Path, "wb") as f:
+        dumpTensor(rawModel.tokEmb.weight, f, quantize=True)
+        for i in range(MEOW_LAYERS):
+            for p in rawModel.layers[i].parameters(): dumpTensor(p, f, quantize=True)
 
-print(f"[✓] Meow Weights (pico1, {MEOW_LAYERS}L): {os.path.getsize(p1Path)/1024:.1f} KB -> Saved to {p1Path}")
-print(f"[✓] Miaou Weights (pico2, {MIAOU_LAYERS}L): {os.path.getsize(p2Path)/1024:.1f} KB -> Saved to {p2Path}")
-print(f"[✓] Vocab updated: {len(VOCAB)} words.")
+    with open(p2Path, "wb") as f:
+        for i in range(MEOW_LAYERS, NUM_LAYERS):
+            for p in rawModel.layers[i].parameters(): dumpTensor(p, f, quantize=True)
+        for p in rawModel.lnF.parameters(): dumpTensor(p, f, quantize=True)
+        dumpTensor(rawModel.lmHead.weight, f, quantize=True)
+        dumpTensor(rawModel.lmHead.bias, f, quantize=True)
+
+    vocabCode = f"VOCAB = {repr(VOCAB)}\n"
+    with open(os.path.join(MODELS_DIR, "vocab.py"), "w") as f: f.write(vocabCode)
+    with open("firmware/vocab.py", "w") as f: f.write(vocabCode)
+
+    print(f"[✓] Meow Weights (pico1, {MEOW_LAYERS}L): {os.path.getsize(p1Path)/1024:.1f} KB -> Saved to {p1Path}")
+    print(f"[✓] Miaou Weights (pico2, {MIAOU_LAYERS}L): {os.path.getsize(p2Path)/1024:.1f} KB -> Saved to {p2Path}")
+    print(f"[✓] Vocab updated: {len(VOCAB)} words.")

@@ -22,11 +22,11 @@
     }
 
     .container { display: flex; gap: 14px; }
-    .main-col { flex: 2.3; display: flex; flex-direction: column; gap: 10px; }
+    .main-col { flex: 2.3; display: flex; flex-direction: column; gap: 8px; }
     .side-col { flex: 1.25; display: flex; flex-direction: column; gap: 8px; }
 
     #log {
-      height: 480px;
+      height: 320px;
       background: #000;
       border: 1px solid #ff66cc;
       padding: 12px;
@@ -68,7 +68,156 @@
     .btn-stop { background: #ff0055; color: #fff; }
     #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; }
 
-    /* TOKEN STYLING & GHOST SLOTS */
+    /* CYBER DRAWER (REPOSITORY & QUESTION MAKER) */
+    .drawer-card {
+      background: #050505;
+      border: 1px solid #222;
+      border-radius: 2px;
+      padding: 8px 10px;
+    }
+    .drawer-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #1a1a1a;
+      padding-bottom: 5px;
+    }
+    .tab-group { display: flex; gap: 6px; }
+    .tab-btn {
+      background: transparent;
+      color: #777;
+      border: none;
+      font-weight: bold;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 2px 4px;
+    }
+    .tab-btn.active {
+      color: #ff66cc;
+      border-bottom: 2px solid #ff66cc;
+    }
+    .filter-group { display: flex; gap: 4px; }
+    .filter-btn {
+      background: #111;
+      color: #666;
+      border: 1px solid #222;
+      border-radius: 2px;
+      padding: 1px 5px;
+      font-size: 9px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      color: #00e5ff;
+      border-color: #00e5ff;
+    }
+
+    .drawer-panel { max-height: 155px; overflow-y: auto; }
+    .repo-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .repo-chip {
+      background: #000;
+      color: #39ff14;
+      border: 1px solid #1b4d1b;
+      border-radius: 2px;
+      padding: 3px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .repo-chip:hover {
+      background: rgba(0, 229, 255, 0.12);
+      border-color: #00e5ff;
+      color: #fff;
+      box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+    }
+    .chip-del {
+      color: #ff0055;
+      font-weight: bold;
+      cursor: pointer;
+      padding-left: 2px;
+    }
+    .chip-del:hover { color: #fff; }
+
+    /* DYNAMIC QUESTION MAKER FORM */
+    .maker-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 11px;
+    }
+    .maker-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .maker-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .maker-field label {
+      color: #888;
+      font-size: 10px;
+    }
+    select {
+      background: #000;
+      color: #39ff14;
+      border: 1px solid #333;
+      padding: 2px 5px;
+      font-family: inherit;
+      font-size: 11px;
+      border-radius: 2px;
+      max-width: 100%;
+    }
+    select:focus { outline: none; border-color: #ff66cc; }
+    .maker-format-box {
+      color: #ff00aa;
+      font-size: 10px;
+      font-weight: bold;
+      background: #0a0a0a;
+      padding: 2px 6px;
+      border-left: 2px solid #ff00aa;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+    .maker-preview {
+      background: #000;
+      border: 1px dashed #333;
+      padding: 4px 8px;
+      color: #00e5ff;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+    .maker-action-btn {
+      background: #111;
+      border: 1px solid #ff66cc;
+      color: #ff66cc;
+      padding: 3px 8px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .maker-action-btn:hover {
+      background: #ff66cc;
+      color: #000;
+    }
+
+    /* TYPEWRITER TOKENS & GHOST SLOTS */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
@@ -93,7 +242,7 @@
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #39ff14; }
     }
 
-    /* ALL AI GENERATED RESPONSES: VIBRANT GLOWING CYAN */
+    /* ALL GENERATED RESPONSES IN CYAN */
     .tok-ai,
     span.tok-ai,
     span.term-tok.tok-ai {
@@ -117,7 +266,7 @@
       }
     }
 
-    /* ACCENT [a] DIVIDER - ONLY ACTIVE WHEN REVEALED */
+    /* ACCENT [a] DIVIDER */
     .tok-tag-a {
       color: #ff66cc !important;
       font-weight: bold !important;
@@ -130,7 +279,6 @@
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #ff66cc; }
     }
 
-    /* HOVER & ATTENTION HIGHLIGHT */
     .term-tok:hover, .tok-inspect {
       background-color: rgba(255, 0, 127, 0.35) !important;
       color: #fff !important;
@@ -326,6 +474,56 @@
         <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
       </div>
+
+      <!-- DRAWER: REPOSITORY & QUESTION MAKER -->
+      <div class="drawer-card">
+        <div class="drawer-nav">
+          <div class="tab-group">
+            <button class="tab-btn active" id="tab-repo" onclick="switchTab('repo')">[ REPOSITORY (TASKS 01-20) ]</button>
+            <button class="tab-btn" id="tab-maker" onclick="switchTab('maker')">[ DYNAMIC QUESTION MAKER ]</button>
+          </div>
+          <div class="filter-group" id="repo-filters">
+            <button class="filter-btn active" onclick="filterRepo('all', this)">[ALL]</button>
+            <button class="filter-btn" onclick="filterRepo('01-05', this)">[01-05]</button>
+            <button class="filter-btn" onclick="filterRepo('06-10', this)">[06-10]</button>
+            <button class="filter-btn" onclick="filterRepo('11-15', this)">[11-15]</button>
+            <button class="filter-btn" onclick="filterRepo('16-20', this)">[16-20]</button>
+            <button class="filter-btn" onclick="filterRepo('custom', this)">[CUSTOM]</button>
+          </div>
+        </div>
+
+        <!-- REPOSITORY PANEL -->
+        <div class="drawer-panel" id="panel-repo">
+          <div class="repo-grid" id="repo-grid"></div>
+        </div>
+
+        <!-- DYNAMIC QUESTION MAKER PANEL -->
+        <div class="drawer-panel" id="panel-maker" style="display:none;">
+          <div class="maker-layout">
+            <div class="maker-row">
+              <span style="color:#ff66cc; font-weight:bold;">Task:</span>
+              <select id="mk-category" onchange="onMakerCategoryChange()" style="flex:1.2;"></select>
+              <span style="color:#888;">Premise:</span>
+              <select id="mk-premise" onchange="onMakerPremiseOrQueryChange()" style="flex:1.4;"></select>
+              <span style="color:#888;">Query:</span>
+              <select id="mk-query" onchange="onMakerPremiseOrQueryChange()" style="flex:1;"></select>
+            </div>
+            
+            <div class="maker-format-box" id="mk-format-str">Format: ---</div>
+            
+            <div class="maker-row" id="mk-dynamic-fields">
+              <!-- Dynamically populated only with placeholders matching template -->
+            </div>
+
+            <div class="maker-preview" id="mk-preview">Preview: ---</div>
+
+            <div class="maker-row" style="justify-content: flex-end; gap: 8px;">
+              <button class="maker-action-btn" onclick="saveMakerToRepo()">[ + SAVE TO REPO ]</button>
+              <button class="maker-action-btn" style="border-color:#39ff14; color:#39ff14;" onclick="executeMakerPrompt()">[ &gt; LOAD &amp; RUN ]</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="side-col">
@@ -381,6 +579,530 @@
     let currentRunId = '';
     let qcaToUserMap = [];
     let userPromptHasA = false;
+
+    // DIRECT WORLD STATE ENTITY POOLS & CATEGORIES (CANONICAL TASKS 01 - 20)
+    const WORLD_CFG = {
+      "pools": {
+        "actor": [
+          "alice", "bob", "felix", "luna", "charlie", "daisy", "leo", "milo",
+          "oliver", "bella", "max", "lucy", "simba", "chloe", "rocky", "lily",
+          "jack", "sophie", "toby", "mia", "sam", "ruby", "oscar", "zoe", "buster"
+        ],
+        "location": [
+          "garden", "kitchen", "park", "room", "bedroom", "attic", "basement",
+          "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony"
+        ],
+        "item": [
+          "ball", "box", "book", "cup", "key", "toy", "stick", "blanket",
+          "apple", "hat", "bottle", "bowl", "plate", "pencil", "coin"
+        ],
+        "colour": [
+          "red", "blue", "yellow", "green", "white", "black", "orange", "pink"
+        ],
+        "container": [
+          "box", "bag", "basket", "drawer"
+        ]
+      },
+      "categories": [
+        {
+          "name": "01: Single Supporting Fact",
+          "premise": [
+            "{actor1} went to the {location1} . {actor2} went to the {location2}",
+            "{actor2} went to the {location2} . {actor1} went to the {location1}"
+          ],
+          "queries": [
+            { "q": "where is {actor1}", "a": "{location1} ." },
+            { "q": "where is {actor2}", "a": "{location2} ." },
+            { "q": "who went to the {location1}", "a": "{actor1} ." },
+            { "q": "who went to the {location2}", "a": "{actor2} ." }
+          ]
+        },
+        {
+          "name": "02: Two Supporting Facts",
+          "premise": [
+            "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}"
+          ],
+          "queries": [
+            { "q": "where is the {item1} now", "a": "{location2} ." },
+            { "q": "where was the {item1} first", "a": "{location1} ." },
+            { "q": "where is {actor1} now", "a": "{location2} ." },
+            { "q": "who has the {item1}", "a": "{actor1} ." },
+            { "q": "who is in the {location1}", "a": "nobody ." }
+          ]
+        },
+        {
+          "name": "03: Three Supporting Facts",
+          "premise": [
+            "{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}"
+          ],
+          "queries": [
+            { "q": "where is the {item1} now", "a": "{location2} ." },
+            { "q": "where is {actor1} now", "a": "{location3} ." },
+            { "q": "who has the {item1} now", "a": "nobody ." }
+          ]
+        },
+        {
+          "name": "04: Two Argument Relations",
+          "premise": [
+            "the {location1} is north of the {location2} . the {location2} is north of the {location3}",
+            "the {location2} is north of the {location3} . the {location1} is north of the {location2}"
+          ],
+          "queries": [
+            { "q": "what is north of the {location2}", "a": "{location1} ." },
+            { "q": "what is south of the {location2}", "a": "{location3} ." },
+            { "q": "what is north of the {location3}", "a": "{location1} ." },
+            { "q": "what is south of the {location1}", "a": "{location3} ." }
+          ]
+        },
+        {
+          "name": "05: Three Argument Relations",
+          "premise": [
+            "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}"
+          ],
+          "queries": [
+            { "q": "who gave the {item1} to {actor2}", "a": "{actor1} ." },
+            { "q": "who has the {item1} now", "a": "{actor3} ." },
+            { "q": "who had the {item1} first", "a": "{actor1} ." }
+          ]
+        },
+        {
+          "name": "06: Yes/No Truth Verification",
+          "premise": [
+            "{actor1} went to the {location1} . {actor2} went to the {location2}",
+            "{actor2} went to the {location2} . {actor1} went to the {location1}"
+          ],
+          "queries": [
+            { "q": "is {actor1} in the {location1}", "a": "yes ." },
+            { "q": "is {actor2} in the {location2}", "a": "yes ." },
+            { "q": "is {actor1} in the {location2}", "a": "no ." },
+            { "q": "is {actor2} in the {location1}", "a": "no ." }
+          ]
+        },
+        {
+          "name": "07: Counting",
+          "premise": [
+            "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+            "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
+          ],
+          "queries": [
+            { "q": "how many items does {actor1} have", "a": "two ." },
+            { "q": "how many items does {actor2} have", "a": "one ." }
+          ]
+        },
+        {
+          "name": "08: Lists and Sets",
+          "premise": [
+            "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
+            "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
+          ],
+          "queries": [
+            { "q": "what does {actor1} have", "a": "{item1} and {item2} ." },
+            { "q": "what does {actor2} have", "a": "{item3} ." }
+          ]
+        },
+        {
+          "name": "09: Simple Negation",
+          "premise": [
+            "{actor1} is not in the {location1} . {actor1} is in the {location2}",
+            "{actor1} is in the {location2} . {actor1} is not in the {location1}"
+          ],
+          "queries": [
+            { "q": "where is {actor1}", "a": "{location2} ." },
+            { "q": "is {actor1} in the {location1}", "a": "no ." },
+            { "q": "is {actor1} in the {location2}", "a": "yes ." }
+          ]
+        },
+        {
+          "name": "10: Indefinite Knowledge",
+          "premise": [
+            "{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}",
+            "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"
+          ],
+          "queries": [
+            { "q": "where is {actor1}", "a": "{location2} ." },
+            { "q": "is {actor1} in the {location1}", "a": "no ." },
+            { "q": "is {actor1} in the {location2}", "a": "yes ." }
+          ]
+        },
+        {
+          "name": "11: Basic Coreference",
+          "premise": [
+            "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}"
+          ],
+          "queries": [
+            { "q": "where is {agent1_name} now", "a": "{location2} ." },
+            { "q": "where was {agent1_name} first", "a": "{location1} ." }
+          ]
+        },
+        {
+          "name": "12: Conjunction",
+          "premise": [
+            "{actor1} and {actor2} went to the {location1} . {actor3} went to the {location2}",
+            "{actor3} went to the {location2} . {actor1} and {actor2} went to the {location1}"
+          ],
+          "queries": [
+            { "q": "where is {actor1}", "a": "{location1} ." },
+            { "q": "where is {actor2}", "a": "{location1} ." },
+            { "q": "where is {actor3}", "a": "{location2} ." },
+            { "q": "who is in the {location1}", "a": "{actor1} and {actor2} ." },
+            { "q": "who is in the {location2}", "a": "{actor3} ." }
+          ]
+        },
+        {
+          "name": "13: Compound Coreference",
+          "premise": [
+            "{actor1} and {actor2} were in the {location1} . then they went to the {location2}"
+          ],
+          "queries": [
+            { "q": "where is {actor1}", "a": "{location2} ." },
+            { "q": "where is {actor2}", "a": "{location2} ." },
+            { "q": "who is in the {location1}", "a": "nobody ." },
+            { "q": "who is in the {location2}", "a": "{actor1} and {actor2} ." }
+          ]
+        },
+        {
+          "name": "14: Time Reasoning",
+          "premise": [
+            "first {actor1} was in the {location1} . then {actor1} was in the {location2}"
+          ],
+          "queries": [
+            { "q": "where was {actor1} before the {location2}", "a": "{location1} ." },
+            { "q": "where was {actor1} after the {location1}", "a": "{location2} ." }
+          ]
+        },
+        {
+          "name": "15: Basic Deduction",
+          "premise": [
+            "cats like the {item1} . {actor1} is a cat",
+            "{actor1} is a cat . cats like the {item1}"
+          ],
+          "queries": [
+            { "q": "what does {actor1} like", "a": "{item1} ." }
+          ]
+        },
+        {
+          "name": "16: Basic Induction",
+          "premise": [
+            "the {item1} is {colour1} . the {item2} is {colour2} . {actor1} has the {item1}",
+            "the {item2} is {colour2} . the {item1} is {colour1} . {actor1} has the {item1}"
+          ],
+          "queries": [
+            { "q": "what colour is the {item1}", "a": "{colour1} ." },
+            { "q": "what colour is the {item2}", "a": "{colour2} ." }
+          ]
+        },
+        {
+          "name": "17: Positional Reasoning",
+          "premise": [
+            "the {item1} is to the left of the {item2} . the {item2} is to the left of the {item3}",
+            "the {item2} is to the left of the {item3} . the {item1} is to the left of the {item2}"
+          ],
+          "queries": [
+            { "q": "what is to the left of the {item2}", "a": "{item1} ." },
+            { "q": "is the {item1} to the left of the {item3}", "a": "yes ." },
+            { "q": "is the {item3} to the left of the {item1}", "a": "no ." }
+          ]
+        },
+        {
+          "name": "18: Size Reasoning",
+          "premise": [
+            "the {item1} is bigger than the {item2} . the {item2} is bigger than the {item3}",
+            "the {item2} is bigger than the {item3} . the {item1} is bigger than the {item2}"
+          ],
+          "queries": [
+            { "q": "what is bigger than the {item2}", "a": "{item1} ." },
+            { "q": "is the {item1} bigger than the {item3}", "a": "yes ." },
+            { "q": "is the {item3} bigger than the {item1}", "a": "no ." }
+          ]
+        },
+        {
+          "name": "19: Micro Navigation",
+          "premise": [
+            "the {location1} leads to the {location2} . the {location2} leads to the {location3}",
+            "the {location2} leads to the {location3} . the {location1} leads to the {location2}"
+          ],
+          "queries": [
+            { "q": "where can you go from the {location1}", "a": "{location2} ." },
+            { "q": "can you go from the {location1} to the {location3}", "a": "yes ." }
+          ]
+        },
+        {
+          "name": "20: Agent Motivations",
+          "premise": [
+            "{actor1} is hungry . {actor1} went to the kitchen . {actor2} is tired . {actor2} went to the room",
+            "{actor2} is tired . {actor2} went to the room . {actor1} is hungry . {actor1} went to the kitchen"
+          ],
+          "queries": [
+            { "q": "why did {actor1} go to the kitchen", "a": "hungry ." },
+            { "q": "who is hungry", "a": "{actor1} ." }
+          ]
+        }
+      ]
+    };
+
+    const FEMALE_ACTORS = new Set(["alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"]);
+
+    // REPOSITORY FUNCTIONS
+    const PRESET_TASK_RUNS = [
+      { id: "01", group: "01-05", label: "T01: Movement", prompt: "[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]" },
+      { id: "02", group: "01-05", label: "T02: Item Carry", prompt: "[c] alice found the ball in the garden . then alice went to the kitchen . [q] where is the ball now ? [a]" },
+      { id: "03", group: "01-05", label: "T03: Item Drop", prompt: "[c] alice found the ball in the garden . alice went to the kitchen . alice left the ball in the kitchen . then alice went to the park . [q] where is the ball now ? [a]" },
+      { id: "04", group: "01-05", label: "T04: Compass Rel", prompt: "[c] the garden is north of the kitchen . the kitchen is north of the bedroom . [q] what is south of the kitchen ? [a]" },
+      { id: "05", group: "01-05", label: "T05: Pass Chain", prompt: "[c] alice gave the ball to bob . then bob gave the ball to luna . [q] who has the ball now ? [a]" },
+      { id: "06", group: "06-10", label: "T06: Verification", prompt: "[c] alice went to the kitchen . bob went to the garden . [q] is alice in the kitchen ? [a]" },
+      { id: "07", group: "06-10", label: "T07: Item Counting", prompt: "[c] alice has the ball and the book . bob has the cup . [q] how many items does alice have ? [a]" },
+      { id: "08", group: "06-10", label: "T08: Inventory Sets", prompt: "[c] alice has the ball and the book . bob has the cup . [q] what does alice have ? [a]" },
+      { id: "09", group: "06-10", label: "T09: Simple Negation", prompt: "[c] alice is not in the garden . alice is in the kitchen . [q] where is alice ? [a]" },
+      { id: "10", group: "06-10", label: "T10: Disjunction", prompt: "[c] felix is in the garden or the kitchen . felix is not in the garden . [q] where is felix ? [a]" },
+      { id: "11", group: "11-15", label: "T11: Coreference", prompt: "[c] alice was in the kitchen . then she went to the garden . [q] where is alice now ? [a]" },
+      { id: "12", group: "11-15", label: "T12: Conjunction", prompt: "[c] alice and bob went to the kitchen . luna went to the garden . [q] who is in the kitchen ? [a]" },
+      { id: "13", group: "11-15", label: "T13: Compound Coref", prompt: "[c] alice and bob were in the kitchen . then they went to the garden . [q] who is in the kitchen ? [a]" },
+      { id: "14", group: "11-15", label: "T14: Time Reasoning", prompt: "[c] first alice was in the park . then alice was in the bedroom . [q] where was alice before the bedroom ? [a]" },
+      { id: "15", group: "11-15", label: "T15: Syllogism", prompt: "[c] cats like the toy . felix is a cat . [q] what does felix like ? [a]" },
+      { id: "16", group: "16-20", label: "T16: Induction (Color)", prompt: "[c] the ball is blue . the cup is red . alice has the ball . [q] what colour is the ball ? [a]" },
+      { id: "17", group: "16-20", label: "T17: Positional Left", prompt: "[c] the ball is to the left of the box . the box is to the left of the cup . [q] what is to the left of the box ? [a]" },
+      { id: "18", group: "16-20", label: "T18: Size Transitivity", prompt: "[c] the box is bigger than the ball . the ball is bigger than the cup . [q] is the box bigger than the cup ? [a]" },
+      { id: "19", group: "16-20", label: "T19: Navigation Path", prompt: "[c] the kitchen leads to the garden . the garden leads to the park . [q] where can you go from the kitchen ? [a]" },
+      { id: "20", group: "16-20", label: "T20: Agent Motivation", prompt: "[c] alice is hungry . alice went to the kitchen . bob is tired . bob went to the bedroom . [q] why did alice go to the kitchen ? [a]" }
+    ];
+
+    function getCustomQuestions() {
+      try { return JSON.parse(localStorage.getItem('pico_custom_questions') || '[]'); }
+      catch(e) { return []; }
+    }
+
+    function saveCustomQuestions(list) {
+      localStorage.setItem('pico_custom_questions', JSON.stringify(list));
+    }
+
+    function renderRepo(group = 'all') {
+      const container = document.getElementById('repo-grid');
+      container.innerHTML = '';
+      const customList = getCustomQuestions();
+
+      if (group === 'custom') {
+        if (customList.length === 0) {
+          container.innerHTML = '<span style="color:#555;">[No custom questions yet. Use QUESTION MAKER to create one.]</span>';
+          return;
+        }
+        customList.forEach((item, idx) => {
+          const btn = document.createElement('div');
+          btn.className = 'repo-chip';
+          btn.title = item.prompt;
+          btn.innerHTML = `<span onclick="runPrompt('${item.prompt.replace(/'/g, "\\'")}')">[CUST] ${item.label}</span><span class="chip-del" onclick="deleteCustom(${idx})">[x]</span>`;
+          container.appendChild(btn);
+        });
+        return;
+      }
+
+      PRESET_TASK_RUNS.forEach(item => {
+        if (group !== 'all' && item.group !== group) return;
+        const btn = document.createElement('div');
+        btn.className = 'repo-chip';
+        btn.title = item.prompt;
+        btn.innerText = item.label;
+        btn.onclick = () => runPrompt(item.prompt);
+        container.appendChild(btn);
+      });
+
+      if (group === 'all') {
+        customList.forEach((item, idx) => {
+          const btn = document.createElement('div');
+          btn.className = 'repo-chip';
+          btn.title = item.prompt;
+          btn.innerHTML = `<span onclick="runPrompt('${item.prompt.replace(/'/g, "\\'")}')">[CUST] ${item.label}</span><span class="chip-del" onclick="deleteCustom(${idx})">[x]</span>`;
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    function runPrompt(p) {
+      document.getElementById('prompt').value = p;
+      gen();
+    }
+
+    function deleteCustom(idx) {
+      const list = getCustomQuestions();
+      list.splice(idx, 1);
+      saveCustomQuestions(list);
+      renderRepo('custom');
+    }
+
+    function filterRepo(grp, btn) {
+      document.querySelectorAll('#repo-filters .filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderRepo(grp);
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tab-repo').classList.toggle('active', tab === 'repo');
+      document.getElementById('tab-maker').classList.toggle('active', tab === 'maker');
+      document.getElementById('panel-repo').style.display = (tab === 'repo') ? 'block' : 'none';
+      document.getElementById('panel-maker').style.display = (tab === 'maker') ? 'block' : 'none';
+      document.getElementById('repo-filters').style.display = (tab === 'repo') ? 'flex' : 'none';
+    }
+
+    // DYNAMIC QUESTION MAKER CONTROLLER (DRIVEN DIRECTLY BY WORLD_CFG)
+    function initMaker() {
+      const catSelect = document.getElementById('mk-category');
+      catSelect.innerHTML = '';
+      WORLD_CFG.categories.forEach((cat, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = `Task ${cat.name}`;
+        catSelect.appendChild(opt);
+      });
+      onMakerCategoryChange();
+    }
+
+    function onMakerCategoryChange() {
+      const catIdx = parseInt(document.getElementById('mk-category').value, 10);
+      const cat = WORLD_CFG.categories[catIdx];
+
+      // Populate Premise variant select
+      const premSelect = document.getElementById('mk-premise');
+      premSelect.innerHTML = '';
+      cat.premise.forEach((p, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = `Premise ${idx+1}: ${p.slice(0, 36)}...`;
+        premSelect.appendChild(opt);
+      });
+
+      // Populate Query variant select
+      const qSelect = document.getElementById('mk-query');
+      qSelect.innerHTML = '';
+      cat.queries.forEach((qObj, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = `Q${idx+1}: ${qObj.q}`;
+        qSelect.appendChild(opt);
+      });
+
+      onMakerPremiseOrQueryChange();
+    }
+
+    function extractPlaceholders(str) {
+      const matches = str.match(/\{([a-zA-Z0-9_]+)\}/g) || [];
+      return matches.map(m => m.slice(1, -1));
+    }
+
+    function onMakerPremiseOrQueryChange() {
+      const catIdx = parseInt(document.getElementById('mk-category').value, 10);
+      const premIdx = parseInt(document.getElementById('mk-premise').value, 10);
+      const qIdx = parseInt(document.getElementById('mk-query').value, 10);
+      const cat = WORLD_CFG.categories[catIdx];
+      const pTmpl = cat.premise[premIdx] || cat.premise[0];
+      const qTmpl = cat.queries[qIdx].q || cat.queries[0].q;
+
+      // Display exact format banner
+      document.getElementById('mk-format-str').innerText = `Format: "${pTmpl}" | [Q: "${qTmpl}"]`;
+
+      // Extract unique placeholders required across both premise and query
+      const required = Array.from(new Set([...extractPlaceholders(pTmpl), ...extractPlaceholders(qTmpl)]));
+      
+      const fieldsContainer = document.getElementById('mk-dynamic-fields');
+      fieldsContainer.innerHTML = '';
+
+      // Entity assignment with distinct offset defaults
+      let actorOff = 0, locOff = 0, itemOff = 0, colOff = 0;
+
+      required.forEach(ph => {
+        if (ph === 'agent1_pronoun') return; // Calculated automatically
+
+        let pool = [];
+        let defaultIdx = 0;
+
+        if (ph.startsWith('actor') || ph.startsWith('agent')) {
+          pool = WORLD_CFG.pools.actor;
+          defaultIdx = (actorOff++) % pool.length;
+        } else if (ph.startsWith('location')) {
+          pool = WORLD_CFG.pools.location;
+          defaultIdx = (locOff++) % pool.length;
+        } else if (ph.startsWith('item')) {
+          pool = WORLD_CFG.pools.item;
+          defaultIdx = (itemOff++) % pool.length;
+        } else if (ph.startsWith('colour')) {
+          pool = WORLD_CFG.pools.colour;
+          defaultIdx = (colOff++) % pool.length;
+        } else if (ph.startsWith('container')) {
+          pool = WORLD_CFG.pools.container;
+          defaultIdx = 0;
+        }
+
+        if (pool.length > 0) {
+          const fieldDiv = document.createElement('div');
+          fieldDiv.className = 'maker-field';
+          fieldDiv.innerHTML = `<label>${ph}:</label>`;
+          const sel = document.createElement('select');
+          sel.id = `mk-ph-${ph}`;
+          sel.onchange = updateMakerPreview;
+          pool.forEach((val, i) => {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.innerText = val;
+            if (i === defaultIdx) opt.selected = true;
+            sel.appendChild(opt);
+          });
+          fieldDiv.appendChild(sel);
+          fieldsContainer.appendChild(fieldDiv);
+        }
+      });
+
+      updateMakerPreview();
+    }
+
+    function buildMakerPromptString() {
+      const catIdx = parseInt(document.getElementById('mk-category').value, 10);
+      const premIdx = parseInt(document.getElementById('mk-premise').value, 10);
+      const qIdx = parseInt(document.getElementById('mk-query').value, 10);
+      const cat = WORLD_CFG.categories[catIdx];
+      const pTmpl = cat.premise[premIdx] || cat.premise[0];
+      const qTmpl = cat.queries[qIdx].q || cat.queries[0].q;
+
+      const bindings = {};
+      const required = Array.from(new Set([...extractPlaceholders(pTmpl), ...extractPlaceholders(qTmpl)]));
+
+      required.forEach(ph => {
+        const el = document.getElementById(`mk-ph-${ph}`);
+        if (el) bindings[ph] = el.value;
+      });
+
+      // Special rule for coreference pronouns
+      if (bindings['agent1_name']) {
+        bindings['agent1_pronoun'] = FEMALE_ACTORS.has(bindings['agent1_name']) ? 'she' : 'he';
+      }
+
+      const pRendered = pTmpl.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => bindings[k] || k);
+      const qRendered = qTmpl.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => bindings[k] || k);
+
+      return `[c] ${pRendered} . [q] ${qRendered} ? [a]`;
+    }
+
+    function updateMakerPreview() {
+      document.getElementById('mk-preview').innerText = buildMakerPromptString();
+    }
+
+    function executeMakerPrompt() {
+      const p = buildMakerPromptString();
+      document.getElementById('prompt').value = p;
+      gen();
+    }
+
+    function saveMakerToRepo() {
+      const p = buildMakerPromptString();
+      const catIdx = parseInt(document.getElementById('mk-category').value, 10);
+      const cat = WORLD_CFG.categories[catIdx];
+      const label = `Custom: ${cat.name.slice(0, 14)}`;
+      const list = getCustomQuestions();
+      list.push({ label: label, prompt: p });
+      saveCustomQuestions(list);
+      switchTab('repo');
+      document.querySelectorAll('#repo-filters .filter-btn').forEach(b => b.classList.remove('active'));
+      const custBtn = Array.from(document.querySelectorAll('#repo-filters .filter-btn')).find(b => b.innerText.includes('CUSTOM'));
+      if (custBtn) custBtn.classList.add('active');
+      renderRepo('custom');
+    }
 
     const Stopwatch = {
       startTime: 0, elapsed: 0, interval: null, running: false,
@@ -493,7 +1215,7 @@
       setStat("Stopped", "#ff66cc");
     }
 
-    // Scoped inspection: highlights strictly within the current run
+    // Centered hover inspection: highlights strictly within the current run
     function inspectToken(history, idx, runId, ev) {
       const item = history[idx];
       if (!item) return;
@@ -519,7 +1241,6 @@
         ).join('');
         document.getElementById('pop-footer').innerText = `Layer 2 Self-Attention (${item.attn.length} tokens)`;
         
-        // Centered directly above cursor with edge safety padding
         const targetX = Math.max(90, Math.min(window.innerWidth - 90, ev.clientX));
         const targetY = Math.max(40, ev.clientY - 12);
         pop.style.left = targetX + 'px';
@@ -542,7 +1263,6 @@
       const cPosU = uLower.indexOf('[c]');
       const qPosU = uLower.indexOf('[q]');
       
-      // If user typed CQA: [c] ... [q] ... [a]
       if (cPosU !== -1 && qPosU !== -1 && cPosU < qPosU) {
         const qLen = uLower.length - qPosU - (uLower.includes('[a]') ? 1 : 0);
         const map = [];
@@ -624,7 +1344,6 @@
               qcaToUserMap = computeQcaToUserMap(data.user_tokens, data.qca_tokens);
               userPromptHasA = data.user_tokens.some(w => w.toLowerCase() === '[a]');
 
-              // Create ghost placeholder slots (100% transparent, NO pink [a] yet!)
               const promptLine = document.getElementById(promptLineId);
               if (promptLine && data.user_tokens) {
                 data.user_tokens.forEach((word, idx) => {
@@ -648,13 +1367,11 @@
               const chip = document.getElementById(`${currentRunId}-chip-${qcaIdx}`);
               if (chip) chip.className = 'chip chip-done';
 
-              // 2. Typewriter: Reveal the corresponding prompt slot as it is ingested
+              // 2. Typewriter: Reveal the prompt slot
               const userSlotIdx = (qcaToUserMap && qcaIdx < qcaToUserMap.length) ? qcaToUserMap[qcaIdx] : qcaIdx;
               const slotSpan = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`);
               if (slotSpan) {
                 slotSpan.classList.remove('tok-ghost');
-                
-                // ONLY when [a] is actually reached, apply pink styling!
                 if (slotSpan.innerText.trim().toLowerCase() === '[a]') {
                   slotSpan.className = 'term-tok tok-tag-a';
                 } else {
@@ -676,7 +1393,7 @@
 
               const genStream = document.getElementById(genStreamId);
 
-              // If user didn't write [a], stream [a] right as the answer begins
+              // Auto-render [a] in pink if omitted
               if (!userPromptHasA && !document.getElementById(`${currentRunId}-tag-a`)) {
                 const aSpan = document.createElement('span');
                 aSpan.className = 'term-tok tok-tag-a';
@@ -725,7 +1442,11 @@
       }
     }
 
-    window.onload = () => { initGrid(); };
+    window.onload = () => { 
+      initGrid(); 
+      renderRepo('all');
+      initMaker();
+    };
   </script>
 </body>
 </html>
