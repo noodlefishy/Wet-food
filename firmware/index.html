@@ -13,26 +13,6 @@
       font-size: 12px;
     }
 
-    .tok-ai {
-      color: #00e5ff !important;
-      text-shadow: 0 0 6px rgba(0, 229, 255, 0.45);
-    }
-    .tok-ai.tok-revealed {
-      animation: tokPopCyan 0.22s ease-out;
-    }
-    @keyframes tokPopCyan {
-      0% { 
-        opacity: 0; 
-        transform: translateY(-2px) scale(1.18); 
-        color: #ffffff; 
-        text-shadow: 0 0 10px #00e5ff; 
-      }
-      100% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1.0); 
-        color: #00e5ff; 
-      }
-    }
     .main-title {
       color: #ff66cc;
       font-size: 13px;
@@ -88,7 +68,7 @@
     .btn-stop { background: #ff0055; color: #fff; }
     #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; }
 
-    /* TYPEWRITER TOKENS & SLOTS */
+    /* TOKEN STYLING & GHOST SLOTS */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
@@ -100,7 +80,7 @@
       color: transparent !important;
       border-bottom: 1px dotted #333;
       user-select: none;
-      margin-right: 2px;
+      margin-right: 3px;
       transition: all 0.25s ease;
     }
     .tok-revealed {
@@ -113,6 +93,44 @@
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #39ff14; }
     }
 
+    /* ALL AI GENERATED RESPONSES: VIBRANT GLOWING CYAN */
+    .tok-ai,
+    span.tok-ai,
+    span.term-tok.tok-ai {
+      color: #00e5ff !important;
+      font-weight: bold !important;
+      text-shadow: 0 0 8px #00e5ff, 0 0 16px rgba(0, 229, 255, 0.65) !important;
+      border-bottom: 1px solid transparent !important;
+      animation: tokPopAi 0.24s ease-out forwards !important;
+    }
+    @keyframes tokPopAi {
+      0% { 
+        opacity: 0; 
+        transform: translateY(-2px) scale(1.2); 
+        color: #ffffff; 
+        text-shadow: 0 0 16px #00e5ff; 
+      }
+      100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1.0); 
+        color: #00e5ff; 
+      }
+    }
+
+    /* ACCENT [a] DIVIDER - ONLY ACTIVE WHEN REVEALED */
+    .tok-tag-a {
+      color: #ff66cc !important;
+      font-weight: bold !important;
+      text-shadow: 0 0 8px rgba(255, 102, 204, 0.7) !important;
+      border-bottom: 1px solid transparent !important;
+      animation: tokPopPink 0.22s ease-out forwards !important;
+    }
+    @keyframes tokPopPink {
+      0% { opacity: 0; transform: translateY(-2px) scale(1.2); color: #fff; text-shadow: 0 0 14px #ff66cc; }
+      100% { opacity: 1; transform: translateY(0) scale(1.0); color: #ff66cc; }
+    }
+
+    /* HOVER & ATTENTION HIGHLIGHT */
     .term-tok:hover, .tok-inspect {
       background-color: rgba(255, 0, 127, 0.35) !important;
       color: #fff !important;
@@ -227,6 +245,7 @@
       margin-top: 3px;
     }
 
+    /* ATTENTION POPOVER - CENTERED FLOATING ABOVE CURSOR */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -237,10 +256,10 @@
       border-radius: 3px;
       display: none;
       z-index: 10000;
-      pointer-events: none !important; /* Prevents popover from intercepting mouse */
+      pointer-events: none !important;
       box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
       min-width: 170px;
-      transform: translate(-50%, -100%); /* Centers directly above cursor */
+      transform: translate(-50%, -100%);
       transition: opacity 0.1s ease;
     }
     .attn-bars {
@@ -277,7 +296,8 @@
       display: inline-block;
       width: 7px;
       height: 13px;
-      background: #39ff14;
+      background: #00e5ff;
+      box-shadow: 0 0 8px #00e5ff;
       animation: blink 1s step-end infinite;
       vertical-align: text-bottom;
       margin-left: 2px;
@@ -360,6 +380,7 @@
     let currentRunHistory = [];
     let currentRunId = '';
     let qcaToUserMap = [];
+    let userPromptHasA = false;
 
     const Stopwatch = {
       startTime: 0, elapsed: 0, interval: null, running: false,
@@ -482,7 +503,6 @@
 
       if (item.attn && item.attn.length > 0) {
         item.attn.forEach((weight, tIdx) => {
-          // Map internal attention index to the user's displayed slot index
           const userSlotIdx = (qcaToUserMap && tIdx < qcaToUserMap.length) ? qcaToUserMap[tIdx] : tIdx;
           const pastTokEl = document.getElementById(`${runId}-tok-${userSlotIdx}`) || document.getElementById(`${runId}-tok-${tIdx}`);
           if (pastTokEl) {
@@ -499,9 +519,9 @@
         ).join('');
         document.getElementById('pop-footer').innerText = `Layer 2 Self-Attention (${item.attn.length} tokens)`;
         
+        // Centered directly above cursor with edge safety padding
         const targetX = Math.max(90, Math.min(window.innerWidth - 90, ev.clientX));
         const targetY = Math.max(40, ev.clientY - 12);
-        
         pop.style.left = targetX + 'px';
         pop.style.top = targetY + 'px';
         pop.style.display = 'block';
@@ -517,31 +537,26 @@
       if (pop) pop.style.display = 'none';
     }
 
-    // Computes bijective mapping from canonical QCA index to user's typed slot index
     function computeQcaToUserMap(userTokens, qcaTokens) {
       const uLower = userTokens.map(w => w.toLowerCase());
-      const qLower = qcaTokens.map(w => w.toLowerCase());
-      
       const cPosU = uLower.indexOf('[c]');
       const qPosU = uLower.indexOf('[q]');
       
       // If user typed CQA: [c] ... [q] ... [a]
       if (cPosU !== -1 && qPosU !== -1 && cPosU < qPosU) {
-        const qLen = uLower.length - qPosU - 1; // question tokens count
+        const qLen = uLower.length - qPosU - (uLower.includes('[a]') ? 1 : 0);
         const map = [];
         for (let i = 0; i < qcaTokens.length; i++) {
           if (i < qLen) {
-            map.push(qPosU + i); // QCA question part maps to user question part
+            map.push(qPosU + i);
           } else if (i < qcaTokens.length - 1) {
-            map.push(i - qLen);   // QCA context part maps to user context part at beginning
+            map.push(i - qLen);
           } else {
-            map.push(userTokens.length - 1); // [a]
+            map.push(userTokens.length - 1);
           }
         }
         return map;
       }
-      
-      // Standard QCA or Story: 1:1 direct mapping
       return qcaTokens.map((_, i) => i);
     }
 
@@ -558,12 +573,12 @@
       currentRunId = 'run-' + Date.now();
       currentRunHistory = [];
       qcaToUserMap = [];
+      userPromptHasA = false;
 
       const log = document.getElementById('log');
       const promptLineId = `${currentRunId}-prompt-line`;
       const genStreamId   = `${currentRunId}-gen-stream`;
       
-      // Initialize prompt line with blinking cursor
       log.innerHTML += `\n&gt; <span id="${promptLineId}"></span><span id="${genStreamId}"></span><span class="cursor" id="active-cursor"></span>`;
       log.scrollTop = log.scrollHeight;
 
@@ -607,8 +622,9 @@
               }
 
               qcaToUserMap = computeQcaToUserMap(data.user_tokens, data.qca_tokens);
+              userPromptHasA = data.user_tokens.some(w => w.toLowerCase() === '[a]');
 
-              // Create ghost placeholder slots for the user's prompt
+              // Create ghost placeholder slots (100% transparent, NO pink [a] yet!)
               const promptLine = document.getElementById(promptLineId);
               if (promptLine && data.user_tokens) {
                 data.user_tokens.forEach((word, idx) => {
@@ -632,15 +648,20 @@
               const chip = document.getElementById(`${currentRunId}-chip-${qcaIdx}`);
               if (chip) chip.className = 'chip chip-done';
 
-              // 2. Typewriter: Reveal the corresponding slot in the prompt line!
+              // 2. Typewriter: Reveal the corresponding prompt slot as it is ingested
               const userSlotIdx = (qcaToUserMap && qcaIdx < qcaToUserMap.length) ? qcaToUserMap[qcaIdx] : qcaIdx;
               const slotSpan = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`);
               if (slotSpan) {
                 slotSpan.classList.remove('tok-ghost');
-                slotSpan.classList.add('tok-revealed');
+                
+                // ONLY when [a] is actually reached, apply pink styling!
+                if (slotSpan.innerText.trim().toLowerCase() === '[a]') {
+                  slotSpan.className = 'term-tok tok-tag-a';
+                } else {
+                  slotSpan.className = 'term-tok tok-revealed';
+                }
               }
 
-              // Save attention data into history
               if (userSlotIdx < currentRunHistory.length) {
                 currentRunHistory[userSlotIdx].v = data.v;
                 currentRunHistory[userSlotIdx].ranks = data.ranks;
@@ -649,14 +670,31 @@
               log.scrollTop = log.scrollHeight;
 
             } else if (data.stage === 'gen') {
-              setStat("Generating...", "#00e5ff");
+              if (data.w === '<eos>' || data.w === '<pad>') {
+                return;
+              }
 
               const genStream = document.getElementById(genStreamId);
+
+              // If user didn't write [a], stream [a] right as the answer begins
+              if (!userPromptHasA && !document.getElementById(`${currentRunId}-tag-a`)) {
+                const aSpan = document.createElement('span');
+                aSpan.className = 'term-tok tok-tag-a';
+                aSpan.id = `${currentRunId}-tag-a`;
+                aSpan.innerText = '[a] ';
+                if (genStream) genStream.appendChild(aSpan);
+                userPromptHasA = true;
+              }
+
+              setStat("Streaming Answer...", "#00e5ff");
+
               const tokIndex = currentRunHistory.length;
               currentRunHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
 
               const tokSpan = document.createElement('span');
-              tokSpan.className = 'term-tok tok-revealed tok-ai';
+              
+              // ALL GENERATED AI TOKENS ARE PURE CYBER CYAN
+              tokSpan.className = 'term-tok tok-ai';
               tokSpan.id = `${currentRunId}-tok-${tokIndex}`;
               tokSpan.innerText = data.w + ' ';
               tokSpan.onmouseenter = (e) => inspectToken(currentRunHistory, tokIndex, currentRunId, e);

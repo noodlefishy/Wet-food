@@ -1,5 +1,5 @@
-# local.py - High-speed local Mac runner with authentic attention extraction & story sampling
-import os, sys, json, re, time, math, urllib.parse
+# local.py - High-speed local Mac runner with authentic attention extraction & TCP_NODELAY streaming
+import os, sys, json, re, time, math, socket, urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import torch, torch.nn.functional as F
 
@@ -84,9 +84,17 @@ def layer2_attention_hook(module, inp, out):
     activation_cache["real_attn_matrix"] = avg_head_attn.detach().cpu()
 
 model.layers[2].register_forward_hook(layer2_block_hook)
-model.layers[2].sa.register_forward_hook(layer2_attention_hook) # pyright: ignore[reportAttributeAccessIssue]
+model.layers[2].sa.register_forward_hook(layer2_attention_hook)
 
 class SimulatorHandler(BaseHTTPRequestHandler):
+    def setup(self):
+        super().setup()
+        # DISABLE NAGLE'S ALGORITHM: Force instant chunk streaming to browser
+        try:
+            self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        except Exception:
+            pass
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         
@@ -108,7 +116,8 @@ class SimulatorHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/x-ndjson")
             self.send_header("Transfer-Encoding", "chunked")
-            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Cache-Control", "no-cache, no-transform")
+            self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
 
             def send_chunk(obj):
@@ -175,9 +184,10 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "ranks": ranks,
                     "attn": attn_weights
                 })
-                time.sleep(0.06)
+                # Smooth typewriter pacing during prefill
+                time.sleep(0.08)
 
-            # Phase 2: Autoregressive Generation
+            # Phase 2: Autoregressive Generation (Word-by-word streaming)
             generated_history = []
             max_gen = 30 if is_logic else 60
 
@@ -195,6 +205,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 if is_logic:
                     pred_id = lg.argmax().item()
                 else:
+                    # STORY SAMPLING CONTROLS: Temperature, Repetition Penalty, Min-Length
                     for past_tok in set(curr_tokens[-16:] + generated_history[-10:]):
                         lg[past_tok] -= 1.8
                     
@@ -205,11 +216,11 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     probs = F.softmax(lg / 0.75, dim=-1)
                     top_k_probs, top_k_indices = torch.topk(probs, 25)
                     sample_idx = torch.multinomial(top_k_probs, 1).item()
-                    pred_id = top_k_indices[sample_idx].item() # pyright: ignore[reportArgumentType]
+                    pred_id = top_k_indices[sample_idx].item()
 
-                word = VOCAB[pred_id] # type: ignore
+                word = VOCAB[pred_id]
                 
-                # Suppress <eos> or <pad> tag from being displayed
+                # Suppress stop tokens
                 if word in ("<eos>", "<pad>"):
                     break
 
@@ -239,12 +250,13 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "attn": attn_weights
                 })
 
-                curr_tokens.append(pred_id) # pyright: ignore[reportArgumentType]
+                curr_tokens.append(pred_id)
                 generated_history.append(pred_id)
                 if len(curr_tokens) >= BLOCK_SIZE:
                     break
 
-                time.sleep(0.12)
+                # Paced generation delay so you can watch each word stream in real-time
+                time.sleep(0.16)
 
             self.wfile.write(b"0\r\n\r\n")
 
