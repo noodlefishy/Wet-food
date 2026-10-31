@@ -96,32 +96,23 @@
         "{actor2} went to the {location2} . {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "is {actor1} in the {location1}", "a": "{actor1} : yes ." },
-        { "q": "is {actor2} in the {location2}", "a": "{actor2} : yes ." },
-        { "q": "is {actor1} in the {location2}", "a": "{actor1} : no ." },
-        { "q": "is {actor2} in the {location1}", "a": "{actor2} : no ." }
+        { "q": "is {actor1} in the {location1}", "a": "{location1} : yes ." },
+        { "q": "is {actor2} in the {location2}", "a": "{location2} : yes ." },
+        { "q": "is {actor1} in the {location2}", "a": "{location2} : no ." },
+        { "q": "is {actor2} in the {location1}", "a": "{location1} : no ." }
       ]
     },
     {
       "name": "07: Counting",
       "premise": [
         "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
-        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
-      ],
-      "queries": [
-        { "q": "how many items does {actor1} have", "a": "{actor1} : two ." },
-        { "q": "how many items does {actor2} have", "a": "{actor2} : one ." }
-      ]
-    },
-    {
-      "name": "07: Counting Inverse Symmetry",
-      "premise": [
+        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}",
         "{actor1} has the {item1} . {actor2} has the {item2} and the {item3}",
         "{actor2} has the {item2} and the {item3} . {actor1} has the {item1}"
       ],
       "queries": [
-        { "q": "how many items does {actor1} have", "a": "{actor1} : one ." },
-        { "q": "how many items does {actor2} have", "a": "{actor2} : two ." }
+        { "q": "how many items does {actor1} have", "a": "{actor1} : two ." },
+        { "q": "how many items does {actor2} have", "a": "{actor2} : one ." }
       ]
     },
     {
@@ -271,59 +262,6 @@
         { "q": "why did {actor1} go to the kitchen", "a": "reason : hungry ." },
         { "q": "who is hungry", "a": "hungry : {actor1} ." }
       ]
-    },
-    {
-      "name": "22: Polar Possession",
-      "premise": [
-        "{actor1} has the {item1} . {actor2} has the {item2}",
-        "{actor2} has the {item2} . {actor1} has the {item1}"
-      ],
-      "queries": [
-        { "q": "does {actor1} have the {item1}", "a": "{item1} : yes ." },
-        { "q": "does {actor2} have the {item2}", "a": "{item2} : yes ." },
-        { "q": "does {actor1} have the {item2}", "a": "{item2} : no ." },
-        { "q": "does {actor2} have the {item1}", "a": "{item1} : no ." }
-      ]
-    },
-    {
-      "name": "23: Basic Arithmetic",
-      "type": "arithmetic",
-      "premise": [
-        "{actor1} had {n1_word} {item1_n1} . {actor2} gave {actor1} {n2_word} {item1_n2}",
-        "{actor1} had {n1_word} {item1_n1} . {actor1} found {n2_word} {item1_n2}"
-      ],
-      "queries": [
-        { "q": "how many {item1_ans} does {actor1} have", "a": "total : {ans_word} ." }
-      ]
-    },
-    {
-      "name": "24: Direct Arithmetic",
-      "type": "direct_arithmetic",
-      "premise": [
-        "{n1_word} plus {n2_word}",
-        "{n1_word} minus {n2_word}"
-      ],
-      "queries": [
-        { "q": "calculate", "a": "result : {ans_word} ." }
-      ]
-    },
-    {
-      "name": "25: Propositional Logic",
-      "type": "propositional_logic",
-      "premise": ["_generated_"],
-      "queries": [{ "q": "_generated_", "a": "_generated_" }]
-    },
-    {
-      "name": "26: Comparative Chains",
-      "type": "comparative_chains",
-      "premise": ["_generated_"],
-      "queries": [{ "q": "_generated_", "a": "_generated_" }]
-    },
-    {
-      "name": "27: General Conversation",
-      "type": "conversation",
-      "premise": ["_generated_"],
-      "queries": [{ "q": "_generated_", "a": "_generated_" }]
     }
   ]
 }
