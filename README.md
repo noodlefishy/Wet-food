@@ -10,7 +10,8 @@
  Core 1: HTTP & Telemetry                 Core 0: LM Head (1024 Logits)
 ```
 
-![video](firmware/Secret%20Demo.mov)
+![image](firmware/Secret%20other%20Demo.png)
+[check out the video !! (cat not included)](firmware/Secret%20Demo.mov)
 
 Have you ever wanted to run some amazing (0.87M) autoregressive transformer models across two tiny microcontrollers that beam split layers over wifi? Im so glad you asked!
 
