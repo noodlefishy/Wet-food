@@ -96,19 +96,17 @@
         "{actor2} went to the {location2} . {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "is {actor1} in the {location1}", "a": "{location1} : yes ." },
-        { "q": "is {actor2} in the {location2}", "a": "{location2} : yes ." },
-        { "q": "is {actor1} in the {location2}", "a": "{location2} : no ." },
-        { "q": "is {actor2} in the {location1}", "a": "{location1} : no ." }
+        { "q": "is {actor1} in the {location1}", "a": "{actor1} : yes ." },
+        { "q": "is {actor2} in the {location2}", "a": "{actor2} : yes ." },
+        { "q": "is {actor1} in the {location2}", "a": "{actor1} : no ." },
+        { "q": "is {actor2} in the {location1}", "a": "{actor2} : no ." }
       ]
     },
     {
       "name": "07: Counting",
       "premise": [
         "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
-        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}",
-        "{actor1} has the {item1} . {actor2} has the {item2} and the {item3}",
-        "{actor2} has the {item2} and the {item3} . {actor1} has the {item1}"
+        "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
       ],
       "queries": [
         { "q": "how many items does {actor1} have", "a": "{actor1} : two ." },
@@ -209,8 +207,8 @@
     {
       "name": "16: Basic Induction",
       "premise": [
-        "the {item1} is {colour1} . the {item2} is {colour2} . {actor1} has the {item1}",
-        "the {item2} is {colour2} . the {item1} is {colour1} . {actor1} has the {item1}"
+        "the {item1} is {colour1} . the {item2} is {colour2}",
+        "the {item2} is {colour2} . the {item1} is {colour1}"
       ],
       "queries": [
         { "q": "what colour is the {item1}", "a": "{item1} : {colour1} ." },
