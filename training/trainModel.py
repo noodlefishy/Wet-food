@@ -6,38 +6,67 @@ torch.set_num_threads(4)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from curriculum import generateAtomicSample
 
-with open("config/model.json", "r") as f: modCfg = json.load(f)
-cfgPath = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
-with open(cfgPath, "r") as f: logCfg = json.load(f)
+MODEL_CFG_PATH = "config/model.json"
+WORLD_CFG_PATH = "config/world.json"
 
-weightsMap = modCfg['weights']
+if not os.path.exists(MODEL_CFG_PATH):
+    raise FileNotFoundError(f"[!] FATAL: Missing mandatory config file '{MODEL_CFG_PATH}'.")
+with open(MODEL_CFG_PATH, "r") as f:
+    modCfg = json.load(f)
 
-if not weightsMap and os.path.exists("config/weights.json"):
-    with open("config/weights.json", "r") as f: weightsMap = json.load(f)
+if not os.path.exists(WORLD_CFG_PATH):
+    raise FileNotFoundError(f"[!] FATAL: Missing mandatory config file '{WORLD_CFG_PATH}'.")
+with open(WORLD_CFG_PATH, "r") as f:
+    logCfg = json.load(f)
 
-if not weightsMap:
-    raise RuntimeError("[!] FATAL: No 'weights' found in model.json! Cannot train without category weights.")
+WEIGHTS_PATH = modCfg.get("paths", {}).get("weights_file", "config/weights.json")
 
-# Explicitly apply weights to each category
-missing = []
+if not os.path.exists(WEIGHTS_PATH):
+    raise FileNotFoundError(
+        f"[!] FATAL: Weights configuration file '{WEIGHTS_PATH}' does not exist!\n"
+        f"    Refusing to train with unconfigured/default weights.")
+
+with open(WEIGHTS_PATH, "r") as f:
+    try:weightsMap = json.load(f)
+    except json.JSONDecodeError as err:raise ValueError(f"[!] FATAL: Failed to parse '{WEIGHTS_PATH}' as valid JSON: {err}") from err
+
+if not isinstance(weightsMap, dict): raise TypeError(f"[!] FATAL: '{WEIGHTS_PATH}' must contain a key-value dictionary of category weights.")
+world_cats = [c["name"] for c in logCfg.get("categories", [])]
+if not world_cats: raise ValueError(f"[!] FATAL: No categories found in '{WORLD_CFG_PATH}'.")
+
+missing_cats = [c for c in world_cats if c not in weightsMap]
+extra_cats = [c for c in weightsMap if c not in world_cats]
+
+if missing_cats:
+    raise KeyError(
+        f"[!] FATAL: '{WEIGHTS_PATH}' is missing weights for {len(missing_cats)} categories:\n"
+        + "\n".join(f"    - {c}" for c in missing_cats)
+        + "\nEvery category in world.json must be explicitly mapped in weights.json."
+    )
+
+if extra_cats:
+    raise KeyError(
+        f"[!] FATAL: '{WEIGHTS_PATH}' contains unknown category keys not in world.json:\n"
+        + "\n".join(f"    - {c}" for c in extra_cats))
+
 for cat in logCfg["categories"]:
     cname = cat["name"]
-    if cname in weightsMap:
-        cat["weight"] = float(weightsMap[cname])
-    elif "weight" in cat:
-        pass  # Keep fallback from world.json if present
-    else:
-        missing.append(cname)
+    raw_w = weightsMap[cname]
+    try:
+        w_val = float(raw_w)
+    except (ValueError, TypeError) as err:
+        raise ValueError(f"[!] FATAL: Weight for '{cname}' in '{WEIGHTS_PATH}' is not a valid number: {raw_w}") from err
+    
+    if w_val <= 0.0:
+        raise ValueError(f"[!] FATAL: Weight for '{cname}' must be > 0. Got: {w_val}")
+    
+    cat["weight"] = w_val
 
-if missing:
-    print(f"[!] WARNING: The following {len(missing)} categories are missing from weights: {missing}")
-
-# Sort and print top weights so you can VERIFY them in the Colab output
-top_weights = sorted([(c["name"], c.get("weight", 1.0)) for c in logCfg["categories"]], key=lambda x: x[1], reverse=True)[:5]
-top_str = ", ".join([f"{name[:15]}={w}" for name, w in top_weights])
-print(f"[✓] Successfully loaded weights from model.json! (Top: {top_str}...)")
-print(f"[✓] Applied separate weights dictionary ({len(weightsMap)} category overrides).")
-
+# Log sorted top weights for visual verification
+sorted_weights = sorted(logCfg["categories"], key=lambda c: c["weight"], reverse=True)
+top_preview = ", ".join([f"{c['name'][:14]}={c['weight']}" for c in sorted_weights[:5]])
+print(f"[✓] VERIFIED: 100% match between world.json and '{WEIGHTS_PATH}' ({len(world_cats)} categories).")
+print(f"    Active top weights: {top_preview}...")
 # Architecture Configuration
 VOCAB_SIZE   = modCfg["architecture"]["vocab_size"]
 BLOCK_SIZE   = modCfg["architecture"]["block_size"]
