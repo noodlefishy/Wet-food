@@ -10,6 +10,8 @@
  Core 1: HTTP & Telemetry                 Core 0: LM Head (1024 Logits)
 ```
 
+![video](firmware/Secret%20Demo.mov)
+
 Have you ever wanted to run some amazing (0.87M) autoregressive transformer models across two tiny microcontrollers that beam split layers over wifi? Im so glad you asked!
 
 Meet Meow and Miaou, two horrible electronic kittens made out of custom tensor weights, questionable life choices, love, and standard Microoython. The repo is called **Wet Food** because cats *love* wet food, and this project, you know, feeds raw neural network streams between two cats. So honestly, pretty similar. Anywya....
@@ -94,3 +96,4 @@ Once paired over Wi-Fi, open `http://<meow-ip-address>/` in your browser to run 
 
 ## Grrrr
 Made with love & love (didn't write in kotlin because Intelij takes too much disk space)
+Also be warned, there is still memory issues where the pico's crash. I really dont want to fix it, the ./local.py is the demo anyway
