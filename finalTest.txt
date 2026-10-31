@@ -1,0 +1,290 @@
+(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % ./train\ remote.sh
+===========================================================
+   picoAI: REMOTE COLAB GPU TRAIN & DOWNLOAD PIPELINE
+===========================================================
+[*] Session: pico-build-1793447383
+[*] Spinning up Google Colab GPU (T4)...
+[colab] Creating session 'pico-build-1793447383'...
+[colab] Session READY.
+[*] Uploading runner script to Colab VM...
+[colab] Uploaded 'colabRunner.py' to '/content/colabRunner.py'
+[*] Executing pipeline on remote GPU...
+=================================================================
+     picoAI UNIFIED COLAB BUILD & TEST RUNNER
+=================================================================
+[✓] CUDA verified: Tesla T4
+[*] Cloning repository...
+
+=================================================================
+ STAGE 1: TRAINING & QUANTIZATION (training/trainModel.py)
+=================================================================
+=================================================================
+[✓] VERIFIED: 100% match between world.json and 'config/weights.json' (20 tasks).
+    Active top weights: 01: Single Sup=20.0, 16: Basic Indu=12.0, 06: Yes/No Tru=10.0, 12: Conjunctio=10.0, 07: Counting=6.0...
+=================================================================
+ STAGE 1: PRE-TRAINING (100% TinyStories, 10000 Steps, Batch 32)
+=================================================================
+ [Pre-train] Step     0/10000 | Story Loss: 7.0636 | LR: 0.00000 | ETA: 237.4m
+ [Pre-train] Step   500/10000 | Story Loss: 3.0830 | LR: 0.00200 | ETA: 3.2m
+ [Pre-train] Step  1000/10000 | Story Loss: 2.6680 | LR: 0.00199 | ETA: 2.8m
+ [Pre-train] Step  1500/10000 | Story Loss: 2.4793 | LR: 0.00195 | ETA: 2.6m
+ [Pre-train] Step  2000/10000 | Story Loss: 2.5367 | LR: 0.00189 | ETA: 2.4m
+ [Pre-train] Step  2500/10000 | Story Loss: 2.3172 | LR: 0.00181 | ETA: 2.2m
+ [Pre-train] Step  3000/10000 | Story Loss: 2.2734 | LR: 0.00171 | ETA: 2.1m
+ [Pre-train] Step  3500/10000 | Story Loss: 2.3301 | LR: 0.00159 | ETA: 1.9m
+ [Pre-train] Step  4000/10000 | Story Loss: 2.1770 | LR: 0.00146 | ETA: 1.8m
+ [Pre-train] Step  4500/10000 | Story Loss: 2.2345 | LR: 0.00132 | ETA: 1.6m
+ [Pre-train] Step  5000/10000 | Story Loss: 2.1407 | LR: 0.00117 | ETA: 1.5m
+ [Pre-train] Step  5500/10000 | Story Loss: 2.1355 | LR: 0.00103 | ETA: 1.3m
+ [Pre-train] Step  6000/10000 | Story Loss: 2.0923 | LR: 0.00088 | ETA: 1.2m
+ [Pre-train] Step  6500/10000 | Story Loss: 1.9604 | LR: 0.00074 | ETA: 1.0m
+ [Pre-train] Step  7000/10000 | Story Loss: 2.0398 | LR: 0.00061 | ETA: 0.9m
+ [Pre-train] Step  7500/10000 | Story Loss: 1.8838 | LR: 0.00049 | ETA: 0.7m
+ [Pre-train] Step  8000/10000 | Story Loss: 1.9405 | LR: 0.00039 | ETA: 0.6m
+ [Pre-train] Step  8500/10000 | Story Loss: 1.9699 | LR: 0.00031 | ETA: 0.4m
+ [Pre-train] Step  9000/10000 | Story Loss: 1.7947 | LR: 0.00025 | ETA: 0.3m
+ [Pre-train] Step  9500/10000 | Story Loss: 1.6052 | LR: 0.00021 | ETA: 0.1m
+ [Pre-train] Step 10000/10000 | Story Loss: 1.6376 | LR: 0.00020 | ETA: 0.0m
+
+[*] Assembling deterministic 256-sample validation set for SFT tracking...
+
+=================================================================
+ STAGE 2: LOGIC SFT (20 Canonical bAbI Tasks, 14000 Steps, Batch 24)
+=================================================================
+ [Logic SFT] Step     0/14000 | Batch: 13.5114 | Val Loss: 11.4002 (Best: 11.4002 @ #0) | LR: 0.00040 | ETA: 11.8m
+ [Logic SFT] Step   500/14000 | Batch: 0.3900 | Val Loss: 0.4033 (Best: 0.4033 @ #500) | LR: 0.00040 | ETA: 4.2m
+ [Logic SFT] Step  1000/14000 | Batch: 0.2380 | Val Loss: 0.3439 (Best: 0.3439 @ #1000) | LR: 0.00040 | ETA: 4.0m
+ [Logic SFT] Step  1500/14000 | Batch: 0.3602 | Val Loss: 0.2929 (Best: 0.2929 @ #1500) | LR: 0.00039 | ETA: 3.9m
+ [Logic SFT] Step  2000/14000 | Batch: 0.2048 | Val Loss: 0.2570 (Best: 0.2570 @ #2000) | LR: 0.00038 | ETA: 3.7m
+ [Logic SFT] Step  2500/14000 | Batch: 0.1273 | Val Loss: 0.2109 (Best: 0.2109 @ #2500) | LR: 0.00037 | ETA: 3.6m
+ [Logic SFT] Step  3000/14000 | Batch: 0.1816 | Val Loss: 0.2241 (Best: 0.2109 @ #2500) | LR: 0.00036 | ETA: 3.4m
+ [Logic SFT] Step  3500/14000 | Batch: 0.0683 | Val Loss: 0.1254 (Best: 0.1254 @ #3500) | LR: 0.00034 | ETA: 3.2m
+ [Logic SFT] Step  4000/14000 | Batch: 0.1738 | Val Loss: 0.0949 (Best: 0.0949 @ #4000) | LR: 0.00033 | ETA: 3.1m
+ [Logic SFT] Step  4500/14000 | Batch: 0.0754 | Val Loss: 0.0653 (Best: 0.0653 @ #4500) | LR: 0.00031 | ETA: 2.9m
+ [Logic SFT] Step  5000/14000 | Batch: 0.0111 | Val Loss: 0.0505 (Best: 0.0505 @ #5000) | LR: 0.00029 | ETA: 2.8m
+ [Logic SFT] Step  5500/14000 | Batch: 0.0147 | Val Loss: 0.0167 (Best: 0.0167 @ #5500) | LR: 0.00027 | ETA: 2.6m
+ [Logic SFT] Step  6000/14000 | Batch: 0.0452 | Val Loss: 0.0231 (Best: 0.0167 @ #5500) | LR: 0.00025 | ETA: 2.5m
+ [Logic SFT] Step  6500/14000 | Batch: 0.0041 | Val Loss: 0.0171 (Best: 0.0167 @ #5500) | LR: 0.00023 | ETA: 2.3m
+ [Logic SFT] Step  7000/14000 | Batch: 0.0042 | Val Loss: 0.0095 (Best: 0.0095 @ #7000) | LR: 0.00020 | ETA: 2.2m
+ [Logic SFT] Step  7500/14000 | Batch: 0.0030 | Val Loss: 0.0115 (Best: 0.0095 @ #7000) | LR: 0.00018 | ETA: 2.0m
+ [Logic SFT] Step  8000/14000 | Batch: 0.0005 | Val Loss: 0.0080 (Best: 0.0080 @ #8000) | LR: 0.00016 | ETA: 1.9m
+ [Logic SFT] Step  8500/14000 | Batch: 0.0003 | Val Loss: 0.0011 (Best: 0.0011 @ #8500) | LR: 0.00014 | ETA: 1.7m
+ [Logic SFT] Step  9000/14000 | Batch: 0.0003 | Val Loss: 0.0007 (Best: 0.0007 @ #9000) | LR: 0.00012 | ETA: 1.5m
+ [Logic SFT] Step  9500/14000 | Batch: 0.0006 | Val Loss: 0.0008 (Best: 0.0007 @ #9000) | LR: 0.00010 | ETA: 1.4m
+ [Logic SFT] Step 10000/14000 | Batch: 0.0013 | Val Loss: 0.0005 (Best: 0.0005 @ #10000) | LR: 0.00008 | ETA: 1.2m
+ [Logic SFT] Step 10500/14000 | Batch: 0.0004 | Val Loss: 0.0003 (Best: 0.0003 @ #10500) | LR: 0.00007 | ETA: 1.1m
+ [Logic SFT] Step 11000/14000 | Batch: 0.0001 | Val Loss: 0.0002 (Best: 0.0002 @ #11000) | LR: 0.00005 | ETA: 0.9m
+ [Logic SFT] Step 11500/14000 | Batch: 0.0035 | Val Loss: 0.0002 (Best: 0.0002 @ #11000) | LR: 0.00004 | ETA: 0.8m
+ [Logic SFT] Step 12000/14000 | Batch: 0.0003 | Val Loss: 0.0002 (Best: 0.0002 @ #12000) | LR: 0.00003 | ETA: 0.6m
+ [Logic SFT] Step 12500/14000 | Batch: 0.0001 | Val Loss: 0.0001 (Best: 0.0001 @ #12500) | LR: 0.00002 | ETA: 0.5m
+ [Logic SFT] Step 13000/14000 | Batch: 0.0002 | Val Loss: 0.0001 (Best: 0.0001 @ #13000) | LR: 0.00001 | ETA: 0.3m
+ [Logic SFT] Step 13500/14000 | Batch: 0.0002 | Val Loss: 0.0001 (Best: 0.0001 @ #13500) | LR: 0.00001 | ETA: 0.2m
+ [Logic SFT] Step 14000/14000 | Batch: 0.0001 | Val Loss: 0.0001 (Best: 0.0001 @ #14000) | LR: 0.00001 | ETA: 0.0m
+
+=================================================================
+ CHECKPOINT COMPARISON: Final Step 14000 Val Loss: 0.0001 | Best Step 14000 Val Loss: 0.0001
+[✓] Final model is optimal or equal. Exporting Step 14000.
+=================================================================
+
+[*] Quantizing winning weights (INT8 W8A32) and exporting...
+[✓] Meow Weights (pico1, 3L): 448.8 KB -> Saved to models/local/pico1 weights.model
+[✓] Miaou Weights (pico2, 3L): 453.5 KB -> Saved to models/local/pico2 weights.model
+[✓] Vocab updated: 1024 words.
+
+=================================================================
+ STAGE 2: PACKAGING WEIGHTS
+=================================================================
+[✓] Package created: /content/pico_weights_latest.zip (863.1 KB)
+
+=================================================================
+
+=================================================================
+ STAGE 3: GENERATING EXHAUSTIVE STRESS SUITE (100k+ TESTS)
+=================================================================
+=================================================================
+ GENERATING EXHAUSTIVE CHUNKED MICRO-COT STRESS TEST SUITE
+=================================================================
+  01: Single Supporting Fact              :  2,000 test cases
+  02: Two Supporting Facts                :  1,250 test cases
+  03: Three Supporting Facts              :    750 test cases
+  04: Two Argument Relations              :  2,000 test cases
+  05: Three Argument Relations            :    750 test cases
+  06: Yes/No Truth Verification           :  2,000 test cases
+  07: Counting                            :  1,000 test cases
+  08: Lists and Sets                      :  1,000 test cases
+  09: Simple Negation                     :  1,500 test cases
+  10: Indefinite Knowledge                :  1,500 test cases
+  11: Basic Coreference                   :    500 test cases
+  12: Conjunction                         :  2,500 test cases
+  13: Compound Coreference                :  1,000 test cases
+  14: Time Reasoning                      :    500 test cases
+  15: Basic Deduction                     :    500 test cases
+  16: Basic Induction                     :  1,000 test cases
+  17: Positional Reasoning                :  1,500 test cases
+  18: Size Reasoning                      :  1,500 test cases
+  19: Micro Navigation                    :  1,000 test cases
+  20: Agent Motivations                   :  1,000 test cases
+=================================================================
+[✓] TOTAL TESTS GENERATED: 24,750 -> Saved to /content/Wet-food/config/stressTest.json
+=================================================================
+
+=================================================================
+ STAGE 3: RUNNING FAST EVALUATION (WITH FAILURE LOGGING)
+=================================================================
+[✓] Model loaded (6L RoPE) on CUDA
+
+[*] Loading evaluation suite: config/stressTest.json
+[*] Evaluating 24,750 QA tests across 20 categories...
+
+
+  [Evaluator] Progress:     512/24,750 [  2.1%] | Acc: 100.0% | Elapsed:  0.3s | ETA: 16.3s
+  [Evaluator] Progress:   1,024/24,750 [  4.1%] | Acc: 100.0% | Elapsed:  0.6s | ETA: 13.0s
+  [Evaluator] Progress:   1,536/24,750 [  6.2%] | Acc: 100.0% | Elapsed:  0.8s | ETA: 11.5s
+  [Evaluator] Progress:   2,048/24,750 [  8.3%] | Acc: 100.0% | Elapsed:  1.0s | ETA: 10.6s
+  [Evaluator] Progress:   2,560/24,750 [ 10.3%] | Acc: 100.0% | Elapsed:  1.2s | ETA: 10.0s
+  [Evaluator] Progress:   3,072/24,750 [ 12.4%] | Acc: 100.0% | Elapsed:  1.4s | ETA:  9.6s
+  [Evaluator] Progress:   3,584/24,750 [ 14.5%] | Acc: 100.0% | Elapsed:  1.6s | ETA:  9.2s
+  [Evaluator] Progress:   4,096/24,750 [ 16.5%] | Acc: 100.0% | Elapsed:  1.8s | ETA:  8.9s
+  [Evaluator] Progress:   4,608/24,750 [ 18.6%] | Acc: 100.0% | Elapsed:  2.0s | ETA:  8.6s
+  [Evaluator] Progress:   5,120/24,750 [ 20.7%] | Acc: 100.0% | Elapsed:  2.2s | ETA:  8.3s
+  [Evaluator] Progress:   5,632/24,750 [ 22.8%] | Acc: 100.0% | Elapsed:  2.4s | ETA:  8.0s
+  [Evaluator] Progress:   6,144/24,750 [ 24.8%] | Acc: 100.0% | Elapsed:  2.6s | ETA:  7.8s
+  [Evaluator] Progress:   6,656/24,750 [ 26.9%] | Acc: 100.0% | Elapsed:  2.8s | ETA:  7.5s
+  [Evaluator] Progress:   7,168/24,750 [ 29.0%] | Acc: 100.0% | Elapsed:  3.0s | ETA:  7.3s
+  [Evaluator] Progress:   7,680/24,750 [ 31.0%] | Acc: 100.0% | Elapsed:  3.2s | ETA:  7.0s
+  [Evaluator] Progress:   8,192/24,750 [ 33.1%] | Acc: 100.0% | Elapsed:  3.4s | ETA:  6.8s
+  [Evaluator] Progress:   8,704/24,750 [ 35.2%] | Acc: 100.0% | Elapsed:  3.6s | ETA:  6.5s
+  [Evaluator] Progress:   9,216/24,750 [ 37.2%] | Acc: 100.0% | Elapsed:  3.7s | ETA:  6.3s
+  [Evaluator] Progress:   9,728/24,750 [ 39.3%] | Acc: 100.0% | Elapsed:  3.9s | ETA:  6.1s
+  [Evaluator] Progress:  10,240/24,750 [ 41.4%] | Acc: 100.0% | Elapsed:  4.3s | ETA:  6.0s
+  [Evaluator] Progress:  10,752/24,750 [ 43.4%] | Acc: 100.0% | Elapsed:  4.6s | ETA:  5.9s
+  [Evaluator] Progress:  11,264/24,750 [ 45.5%] | Acc: 100.0% | Elapsed:  4.8s | ETA:  5.7s
+  [Evaluator] Progress:  11,776/24,750 [ 47.6%] | Acc: 100.0% | Elapsed:  5.0s | ETA:  5.5s
+  [Evaluator] Progress:  12,288/24,750 [ 49.6%] | Acc: 100.0% | Elapsed:  5.2s | ETA:  5.3s
+  [Evaluator] Progress:  12,800/24,750 [ 51.7%] | Acc: 100.0% | Elapsed:  5.4s | ETA:  5.0s
+  [Evaluator] Progress:  13,312/24,750 [ 53.8%] | Acc: 100.0% | Elapsed:  5.6s | ETA:  4.8s
+  [Evaluator] Progress:  13,824/24,750 [ 55.9%] | Acc: 100.0% | Elapsed:  5.8s | ETA:  4.6s
+  [Evaluator] Progress:  14,336/24,750 [ 57.9%] | Acc: 100.0% | Elapsed:  6.1s | ETA:  4.4s
+  [Evaluator] Progress:  14,848/24,750 [ 60.0%] | Acc: 100.0% | Elapsed:  6.4s | ETA:  4.2s
+  [Evaluator] Progress:  15,360/24,750 [ 62.1%] | Acc: 100.0% | Elapsed:  6.7s | ETA:  4.1s
+  [Evaluator] Progress:  15,872/24,750 [ 64.1%] | Acc: 100.0% | Elapsed:  6.9s | ETA:  3.9s
+  [Evaluator] Progress:  16,384/24,750 [ 66.2%] | Acc: 100.0% | Elapsed:  7.2s | ETA:  3.7s
+  [Evaluator] Progress:  16,896/24,750 [ 68.3%] | Acc: 100.0% | Elapsed:  7.5s | ETA:  3.5s
+  [Evaluator] Progress:  17,408/24,750 [ 70.3%] | Acc: 100.0% | Elapsed:  7.8s | ETA:  3.3s
+  [Evaluator] Progress:  17,920/24,750 [ 72.4%] | Acc: 100.0% | Elapsed:  8.1s | ETA:  3.1s
+  [Evaluator] Progress:  18,432/24,750 [ 74.5%] | Acc: 100.0% | Elapsed:  8.3s | ETA:  2.9s
+  [Evaluator] Progress:  18,944/24,750 [ 76.5%] | Acc: 100.0% | Elapsed:  8.5s | ETA:  2.6s
+  [Evaluator] Progress:  19,456/24,750 [ 78.6%] | Acc: 100.0% | Elapsed:  8.7s | ETA:  2.4s
+  [Evaluator] Progress:  19,968/24,750 [ 80.7%] | Acc: 100.0% | Elapsed:  8.9s | ETA:  2.1s
+  [Evaluator] Progress:  20,480/24,750 [ 82.7%] | Acc: 100.0% | Elapsed:  9.1s | ETA:  1.9s
+  [Evaluator] Progress:  20,992/24,750 [ 84.8%] | Acc: 100.0% | Elapsed:  9.3s | ETA:  1.7s
+  [Evaluator] Progress:  21,504/24,750 [ 86.9%] | Acc: 100.0% | Elapsed:  9.6s | ETA:  1.4s
+  [Evaluator] Progress:  22,016/24,750 [ 89.0%] | Acc: 100.0% | Elapsed:  9.8s | ETA:  1.2s
+  [Evaluator] Progress:  22,528/24,750 [ 91.0%] | Acc: 100.0% | Elapsed: 10.0s | ETA:  1.0s
+  [Evaluator] Progress:  23,040/24,750 [ 93.1%] | Acc: 100.0% | Elapsed: 10.2s | ETA:  0.8s
+  [Evaluator] Progress:  23,552/24,750 [ 95.2%] | Acc: 100.0% | Elapsed: 10.4s | ETA:  0.5s
+  [Evaluator] Progress:  24,064/24,750 [ 97.2%] | Acc: 100.0% | Elapsed: 10.6s | ETA:  0.3s
+  [Evaluator] Progress:  24,576/24,750 [ 99.3%] | Acc: 100.0% | Elapsed: 10.8s | ETA:  0.1s
+  [Evaluator] Progress:  24,750/24,750 [100.0%] | Acc: 100.0% | Elapsed: 10.9s | ETA:  0.0s
+
+=================================================================
+ FINAL REASONING ACCURACY: 24,744/24,750 = 100.0%  (10.86s)
+=================================================================
+  [✓] 01: Single Supporting Fact               2000/2000   100.0%
+  [✓] 02: Two Supporting Facts                 1250/1250   100.0%
+  [✓] 03: Three Supporting Facts                750/750    100.0%
+  [✓] 04: Two Argument Relations               2000/2000   100.0%
+  [✓] 05: Three Argument Relations              749/750     99.9%
+  [✓] 06: Yes/No Truth Verification            2000/2000   100.0%
+  [✓] 07: Counting                             1000/1000   100.0%
+  [✓] 08: Lists and Sets                       1000/1000   100.0%
+  [✓] 09: Simple Negation                      1500/1500   100.0%
+  [✓] 10: Indefinite Knowledge                 1500/1500   100.0%
+  [✓] 11: Basic Coreference                     500/500    100.0%
+  [✓] 12: Conjunction                          2496/2500    99.8%
+  [✓] 13: Compound Coreference                 1000/1000   100.0%
+  [✓] 14: Time Reasoning                        500/500    100.0%
+  [✓] 15: Basic Deduction                       500/500    100.0%
+  [✓] 16: Basic Induction                      1000/1000   100.0%
+  [✓] 17: Positional Reasoning                 1499/1500    99.9%
+  [✓] 18: Size Reasoning                       1500/1500   100.0%
+  [✓] 19: Micro Navigation                     1000/1000   100.0%
+  [✓] 20: Agent Motivations                    1000/1000   100.0%
+[✓] Saved 6 failures to failures.json
+[✓] Saved 6 failures to /content/failures.json
+
+=================================================================
+ SAMPLE MISPREDICTIONS (First 15)
+=================================================================
+  [05: Three Argument Relations]
+    Q: [q] who gave the cup to toby ? [c] mia gave the cup to toby . then toby gave the cup to daisy . [a]
+    Expected: 'mia .'
+    Generated: 'daisy . <eos>'
+
+  [12: Conjunction]
+    Q: [q] where is charlie ? [c] ruby and sophie went to the balcony . charlie went to the porch . [a]
+    Expected: 'porch .'
+    Generated: 'balcony . <eos>'
+
+  [12: Conjunction]
+    Q: [q] where is oliver ? [c] jack and charlie went to the forest . oliver went to the bedroom . [a]
+    Expected: 'bedroom .'
+    Generated: 'forest . <eos>'
+
+  [12: Conjunction]
+    Q: [q] where is toby ? [c] simba and charlie went to the hallway . toby went to the basement . [a]
+    Expected: 'basement .'
+    Generated: 'hallway . <eos>'
+
+  [12: Conjunction]
+    Q: [q] where is lucy ? [c] mia and lily went to the room . lucy went to the attic . [a]
+    Expected: 'attic .'
+    Generated: 'room . <eos>'
+
+  [17: Positional Reasoning]
+    Q: [q] is the toy to the left of the ball ? [c] the coin is to the left of the ball . the toy is to the left of the coin . [a]
+    Expected: 'yes .'
+    Generated: 'no . <eos>'
+
+ STAGE 4: OUT-OF-DISTRIBUTION PROBES (benchmarks/oodEvaluator.py)
+=================================================================
+/content/Wet-food/benchmarks/oodEvaluator.py:89: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program.(Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+  tensor.data.copy_(torch.from_numpy(np.frombuffer(f.read(tensor.numel() * 4), dtype=np.float32)).view_as(tensor))
+=================================================================
+     OUT-OF-DISTRIBUTION (OOD) GENERALIZATION BENCHMARK
+=================================================================
+  1. Novel Entity Grounding                    :    1/4    ( 25.0%) in 0.10s
+  2. Novel Syntax Generalization               :    3/3    (100.0%) in 0.04s
+  3. Multi-hop Arithmetic Probe                :    0/3    (  0.0%) in 0.04s
+=================================================================
+
+=================================================================
+ STAGE 5: SIMULATOR SMOKE TEST
+=================================================================
+
+Prompt: [c] alice went to the kitchen . bob went to the room . [q] where is alice ? [a]
+Output: kitchen .
+
+Prompt: [c] alice has one cup . bob gave alice two cups . [q] how many items does alice have ? [a]
+Output: one .
+
+Prompt: once upon a time bob went into the green garden .
+Output: 
+ BUILD, TRAIN & EVALUATION PIPELINE COMPLETE!
+=================================================================
+
+[*] Downloading results back to local disk...
+[colab] Downloaded '/content/pico_weights_latest.zip' to 'models/local/pico_weights_latest.zip'
+[colab] Downloaded '/content/failures.json' to 'failures.json'
+[*] Unpacking weights to models/local and firmware/vocab.py...
+
+===========================================================
+ [✓] REMOTE PIPELINE & LOCAL SYNC COMPLETE!
+     - failures.json synced (37 lines)
+===========================================================
+
+[*] Stopping remote Colab session...
+[colab] Stopping session 'pico-build-1793447383'...
+[colab] Session terminated.
+[✓] Colab session stopped.
+(.venv) leuw@Israeli-High-Frequency-Infiltration-Terminal ~/dev/python/picoAI % 

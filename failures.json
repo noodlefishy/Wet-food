@@ -1,152 +1,38 @@
 [
   {
-    "category": "08: Lists and Sets",
-    "question": "[q] what does leo have ? [c] oliver has the ball . leo has the pencil and the box . [a]",
-    "target": "pencil and box .",
-    "got": "pencil . <eos>"
-  },
-  {
-    "category": "10: Indefinite Knowledge",
-    "question": "[q] is rocky in the garage ? [c] rocky is not in the garage . rocky is in the garage or the bedroom . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
+    "category": "05: Three Argument Relations",
+    "question": "[q] who gave the cup to toby ? [c] mia gave the cup to toby . then toby gave the cup to daisy . [a]",
+    "target": "mia .",
+    "got": "daisy . <eos>"
   },
   {
     "category": "12: Conjunction",
-    "question": "[q] where is rocky ? [c] ruby and leo went to the park . rocky went to the balcony . [a]",
-    "target": "balcony .",
-    "got": "park . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the bedroom ? [c] ruby and jack went to the bedroom . buster went to the garden . [a]",
-    "target": "ruby and jack .",
-    "got": "ruby . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] where is lucy ? [c] lucy and rocky went to the attic . mia went to the balcony . [a]",
-    "target": "attic .",
+    "question": "[q] where is charlie ? [c] ruby and sophie went to the balcony . charlie went to the porch . [a]",
+    "target": "porch .",
     "got": "balcony . <eos>"
   },
   {
     "category": "12: Conjunction",
-    "question": "[q] where is bella ? [c] lucy and sam went to the bedroom . bella went to the balcony . [a]",
-    "target": "balcony .",
-    "got": "bedroom . <eos>"
+    "question": "[q] where is oliver ? [c] jack and charlie went to the forest . oliver went to the bedroom . [a]",
+    "target": "bedroom .",
+    "got": "forest . <eos>"
+  },
+  {
+    "category": "12: Conjunction",
+    "question": "[q] where is toby ? [c] simba and charlie went to the hallway . toby went to the basement . [a]",
+    "target": "basement .",
+    "got": "hallway . <eos>"
+  },
+  {
+    "category": "12: Conjunction",
+    "question": "[q] where is lucy ? [c] mia and lily went to the room . lucy went to the attic . [a]",
+    "target": "attic .",
+    "got": "room . <eos>"
   },
   {
     "category": "17: Positional Reasoning",
-    "question": "[q] is the bowl to the left of the hat ? [c] the apple is to the left of the bowl . the hat is to the left of the apple . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the bowl to the left of the stick ? [c] the ball is to the left of the bowl . the stick is to the left of the ball . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the box to the left of the bowl ? [c] the stick is to the left of the box . the bowl is to the left of the stick . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the stick to the left of the hat ? [c] the toy is to the left of the stick . the hat is to the left of the toy . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the bottle to the left of the cup ? [c] the ball is to the left of the bottle . the cup is to the left of the ball . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the ball to the left of the bottle ? [c] the plate is to the left of the ball . the bottle is to the left of the plate . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the book to the left of the cup ? [c] the key is to the left of the book . the cup is to the left of the key . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the bowl to the left of the stick ? [c] the ball is to the left of the bowl . the stick is to the left of the ball . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the ball to the left of the hat ? [c] the key is to the left of the ball . the hat is to the left of the key . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the toy to the left of the hat ? [c] the pencil is to the left of the hat . the toy is to the left of the pencil . [a]",
+    "question": "[q] is the toy to the left of the ball ? [c] the coin is to the left of the ball . the toy is to the left of the coin . [a]",
     "target": "yes .",
     "got": "no . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the stick to the left of the hat ? [c] the plate is to the left of the hat . the stick is to the left of the plate . [a]",
-    "target": "yes .",
-    "got": "no . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the bottle to the left of the hat ? [c] the apple is to the left of the bottle . the hat is to the left of the apple . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the bottle to the left of the hat ? [c] the pencil is to the left of the bottle . the hat is to the left of the pencil . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the key to the left of the cup ? [c] the book is to the left of the key . the cup is to the left of the book . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the box to the left of the stick ? [c] the bottle is to the left of the box . the stick is to the left of the bottle . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "17: Positional Reasoning",
-    "question": "[q] is the cup to the left of the bowl ? [c] the bowl is to the left of the stick . the stick is to the left of the cup . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "18: Size Reasoning",
-    "question": "[q] is the ball bigger than the stick ? [c] the cup is bigger than the ball . the stick is bigger than the cup . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "18: Size Reasoning",
-    "question": "[q] is the bottle bigger than the ball ? [c] the toy is bigger than the bottle . the ball is bigger than the toy . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "18: Size Reasoning",
-    "question": "[q] is the bottle bigger than the ball ? [c] the stick is bigger than the bottle . the ball is bigger than the stick . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
   }
 ]

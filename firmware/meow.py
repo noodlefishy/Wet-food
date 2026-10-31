@@ -4,9 +4,9 @@ from array import array; from machine import Pin
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
-EMBED_DIM = 120
+EMBED_DIM = 96
 BLOCK_SIZE = 64
-NUM_HEADS = 6
+NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 20
 VOCAB_SIZE = 1024
 ROW_B = 4 + EMBED_DIM
@@ -34,15 +34,16 @@ BUF_mlp2  = [0.0] * EMBED_DIM
 BUF_ln_w  = [0.0] * EMBED_DIM
 BUF_ln_b  = [0.0] * EMBED_DIM
 BUF_attn  = [0.0] * BLOCK_SIZE
-ROW_BUF   = bytearray(4 + 4 * EMBED_DIM)
-BIAS_BUF  = bytearray(64 * 4)
+ROW_EMB   = bytearray(EMBED_DIM)
+BUF_LIN   = bytearray(4 * EMBED_DIM * 4)  # 1920 bytes buffer for streaming weights
 
 def read_emb(f, idx, out):
     f.seek(idx * ROW_B)
     s = struct.unpack('f', f.read(4))[0]
-    row = struct.unpack(f'{EMBED_DIM}b', f.read(EMBED_DIM))
+    f.readinto(ROW_EMB)
     for i in range(EMBED_DIM):
-        out[i] = row[i] * s
+        v = ROW_EMB[i]
+        out[i] = (v if v < 128 else v - 256) * s
 
 def unquote(s):
     res = s.replace('+', ' ')
@@ -66,18 +67,17 @@ def recv_all(sock, n):
 
 @micropython.native
 def stream_linear_into(f, r, c, x, out):
-    row_bytes = 4 + c
-    mv = memoryview(ROW_BUF)[:row_bytes]
+    bv = memoryview(BUF_LIN)[:c]
     for i in range(r):
-        f.readinto(mv)
-        scale = struct.unpack_from('f', mv, 0)[0]
+        scale = struct.unpack('f', f.read(4))[0]
+        f.readinto(bv)
         s = 0.0
         for j in range(c):
-            v = mv[4 + j]
+            v = bv[j]
             s += (v if v < 128 else v - 256) * x[j]
         out[i] = s * scale
     bi = 0
-    mv_b = memoryview(BIAS_BUF)
+    mv_b = memoryview(BUF_LIN)
     while bi < r:
         s = min(64, r - bi)
         f.readinto(mv_b[:s * 4])
@@ -95,9 +95,8 @@ def layer_norm_into(x, w, b, out):
         out[i] = ((x[i] - m) / s) * w[i] + b[i]
 
 def read_vec_into(f, c, target):
-    mv = memoryview(BIAS_BUF)[:c * 4]
-    f.readinto(mv)
-    vals = struct.unpack(f'{c}f', mv)
+    raw = f.read(c * 4)
+    vals = struct.unpack(f'{c}f', raw)
     for i in range(c):
         target[i] = vals[i]
 
@@ -168,7 +167,7 @@ def run_layer(f, idx, x, pos):
             BUF_mlp1[t] = ew
             sum_exp += ew
             
-        inv_sum = 1.0 / sum_exp
+        inv_sum = 1.0 / (sum_exp if sum_exp > 1e-12 else 1.0)
         for t in range(seq_len):
             w = BUF_mlp1[t] * inv_sum
             BUF_attn[t] += w / NUM_HEADS
@@ -357,23 +356,8 @@ while True:
         raw_prompt, qca_prompt, is_logic = job_queue.pop(0)
         gc.collect()
 
-        CHUNKS = [
-            ("once upon a time", "once_upon_a_time"),
-            ("who went to the",  "who_went_to_the"),
-            ("who is in the",    "who_is_in_the"),
-            ("went to the",      "went_to_the"),
-            ("walked to the",    "walked_to_the"),
-            ("is in the",        "is_in_the"),
-            ("was in the",       "was_in_the"),
-            ("does not have",    "does_not_have"),
-            ("where is",         "where_is"),
-            ("how many",         "how_many"),
-            ("one day",          "one_day")
-        ]
-        
+        # Tokenize by punctuation/whitespace matching trainModel.py
         p_clean = qca_prompt.lower()
-        for phrase, chunk_tok in CHUNKS:
-            p_clean = p_clean.replace(phrase, f" {chunk_tok} ")
         for char in [".", "?", "!", ",", ":"]:
             p_clean = p_clean.replace(char, f" {char} ")
         p_clean = p_clean.replace("'s", " 's ")

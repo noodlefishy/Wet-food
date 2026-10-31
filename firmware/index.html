@@ -149,12 +149,6 @@
       color: #555;
       border: 1px solid #262626;
     }
-    .chip-active {
-      background: rgba(255, 0, 170, 0.15);
-      border: 1px solid #ff00aa;
-      color: #fff;
-      box-shadow: 0 0 6px rgba(255, 0, 170, 0.7);
-    }
     .chip-done {
       background: rgba(57, 255, 20, 0.12);
       border: 1px solid #39ff14;
@@ -162,6 +156,7 @@
       box-shadow: 0 0 4px rgba(57, 255, 20, 0.4);
     }
 
+    /* CORTEX GRID & NEURON HOVER */
     .cortex-container {
       background: #000;
       border: 1px solid #222;
@@ -179,7 +174,12 @@
       background: #111;
       border-radius: 1px;
       cursor: crosshair;
-      transition: background-color 0.15s ease;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+    .cortex-node:hover {
+      transform: scale(1.35);
+      outline: 1px solid #fff;
+      z-index: 10;
     }
     .cortex-legend {
       display: flex;
@@ -189,6 +189,7 @@
       margin-top: 3px;
     }
 
+    /* TOOLTIPS / POPOVERS */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -218,6 +219,21 @@
       min-width: 2px;
     }
 
+    #node-popover {
+      position: fixed;
+      display: none;
+      background: rgba(0, 0, 0, 0.95);
+      border: 1px solid #39ff14;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: inherit;
+      border-radius: 3px;
+      z-index: 10002;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(57, 255, 20, 0.4);
+      white-space: nowrap;
+    }
+
     .cursor {
       display: inline-block;
       width: 7px;
@@ -237,6 +253,8 @@
     <div id="pop-footer" style="color:#888; font-size:9px; margin-top:3px;"></div>
   </div>
 
+  <div id="node-popover"></div>
+
   <div class="main-title">[ MEOW AND MIAOU : DISTRIBUTED NEURAL ENGINE ]</div>
   
   <div class="container">
@@ -254,7 +272,7 @@
     <div class="side-col">
       <div class="badge">[ FUN FACTS ]</div>
       <div class="metric">
-        Architecture: <span class="text-cyan">6-Layer Transformer (MQA)</span><br>
+        Architecture: <span class="text-cyan">6-Layer Transformer (MHA)</span><br>
         Weights: <span class="text-cyan">INT8 Flash XIP Stream</span><br>
         Engine Speed: <span class="text-cyan" id="tps-meter">0.00</span> TPS
       </div>
@@ -289,7 +307,7 @@
         </div>
         <div class="cortex-legend">
           <span style="color:#ff0055;">&#9632; Negative</span>
-          <span>80 Latent Dimensions</span>
+          <span>Hover cell for value</span>
           <span style="color:#39ff14;">&#9632; Positive</span>
         </div>
       </div>
@@ -300,6 +318,7 @@
     let abortController = null;
     let tokenHistory = [];
     let lastActiveTelemetry = null;
+    let activeVector = null;
     let tokenTimes = [];
 
     const Stopwatch = {
@@ -323,12 +342,41 @@
         const node = document.createElement('div');
         node.className = 'cortex-node';
         node.id = 'node-' + i;
+        node.addEventListener('mouseenter', (e) => showNeuronPopover(i, e));
+        node.addEventListener('mousemove', (e) => moveNeuronPopover(e));
+        node.addEventListener('mouseleave', hideNeuronPopover);
         grid.appendChild(node);
       }
     }
 
+    function showNeuronPopover(idx, e) {
+      const pop = document.getElementById('node-popover');
+      if (!pop) return;
+      const val = (activeVector && idx < activeVector.length) ? activeVector[idx] : 0.0;
+      const sign = val >= 0 ? '+' : '';
+      const color = val >= 0 ? '#39ff14' : '#ff0055';
+      pop.style.borderColor = color;
+      pop.style.boxShadow = `0 0 8px ${color}`;
+      pop.innerHTML = `<span style="color:#aaa;">Neuron #${idx}:</span> <b style="color:${color};">${sign}${val.toFixed(2)}</b>`;
+      moveNeuronPopover(e);
+      pop.style.display = 'block';
+    }
+
+    function moveNeuronPopover(e) {
+      const pop = document.getElementById('node-popover');
+      if (!pop) return;
+      pop.style.left = (e.clientX + 12) + 'px';
+      pop.style.top = (e.clientY - 26) + 'px';
+    }
+
+    function hideNeuronPopover() {
+      const pop = document.getElementById('node-popover');
+      if (pop) pop.style.display = 'none';
+    }
+
     function renderVector(v) {
       if (!v || v.length === 0) return;
+      activeVector = v;
       let energy = 0;
       for (let i = 0; i < 80; i++) {
         const node = document.getElementById('node-' + i);
@@ -475,7 +523,6 @@
             if (data.ranks) renderRanks(data.ranks);
 
             if (data.stage === 'init') {
-              // Populate greyed-out pills for all tokens
               prefContainer.innerHTML = '';
               if (data.qca_tokens) {
                 data.qca_tokens.forEach((t, i) => {
@@ -495,14 +542,12 @@
 
               setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
 
-              // Highlight the corresponding pill as ingested
               const chipIdx = data.cur - 1;
               const chip = document.getElementById('prefill-chip-' + chipIdx);
               if (chip) {
                 chip.className = 'chip chip-done';
               }
 
-              // Append ingested token into the prompt log with hover inspect
               const tokSpan = document.createElement('span');
               tokSpan.className = 'term-tok';
               tokSpan.id = 'term-tok-' + tokIndex;

@@ -3,9 +3,9 @@ import network, socket, struct, math, gc, time, machine
 from machine import Pin; from array import array
 machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
 
-EMBED_DIM = 120
+EMBED_DIM = 96
 BLOCK_SIZE = 64
-NUM_HEADS = 6
+NUM_HEADS = 4
 HEAD_DIM = EMBED_DIM // NUM_HEADS
 VOCAB_SIZE = 1024
 ROW_B = 4 + EMBED_DIM
@@ -28,7 +28,7 @@ BUF_ln_w  = [0.0] * EMBED_DIM
 BUF_ln_b  = [0.0] * EMBED_DIM
 BUF_lg    = [0.0] * VOCAB_SIZE
 ROW_BUF   = bytearray(4 + 4 * EMBED_DIM)
-BIAS_BUF  = bytearray(64 * 4)
+VEC_BUF   = bytearray(max(64, EMBED_DIM) * 4)  # 480 bytes, fits LN and bias chunks
 
 def recv_all(sock, n):
     data = bytearray()
@@ -51,7 +51,7 @@ def stream_linear_into(f, r, c, x, out):
             s += (v if v < 128 else v - 256) * x[j]
         out[i] = s * scale
     bi = 0
-    mv_b = memoryview(BIAS_BUF)
+    mv_b = memoryview(VEC_BUF)
     while bi < r:
         s = min(64, r - bi)
         f.readinto(mv_b[:s * 4])
@@ -69,7 +69,7 @@ def layer_norm_into(x, w, b, out):
         out[i] = ((x[i] - m) / s) * w[i] + b[i]
 
 def read_vec_into(f, c, target):
-    mv = memoryview(BIAS_BUF)[:c * 4]
+    mv = memoryview(VEC_BUF)[:c * 4]
     f.readinto(mv)
     vals = struct.unpack(f'{c}f', mv)
     for i in range(c):
