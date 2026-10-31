@@ -23,10 +23,10 @@
       "min_lr": 0.0002
     },
     "sft": {
-      "steps": 18000,
+      "steps": 25000,
       "batch_size": 24,
-      "base_lr": 0.0005,
-      "min_lr": 0.00005
+      "base_lr": 0.0006,
+      "min_lr": 0.00006
     }
   },
   "dataset": {

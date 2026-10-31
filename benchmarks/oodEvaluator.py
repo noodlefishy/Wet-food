@@ -119,15 +119,29 @@ def evalSuite(tests, desc):
         try: aPos = next(j for j in range(len(toks)-1, -1, -1) if toks[j] == aId)
         except StopIteration:
             toks.append(aId); aPos = len(toks) - 1
-        prompt = toks[:aPos+1]
-        padded = prompt + [padId] * (BLOCK_SIZE - len(prompt))
+            
+        padded = toks[:aPos+1] + [padId] * (BLOCK_SIZE - len(toks[:aPos+1]))
         x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
+        
+        gen = []
         with torch.no_grad():
-            logits = model(x)
-            predId = logits[0, min(aPos, BLOCK_SIZE - 1)].argmax().item()
-            pred = VOCAB[predId] if predId < len(VOCAB) else "<unk>"
-            tgt = target.strip().rstrip(".").split()[0]
-            if pred == tgt: passed += 1
+            curr_pos = aPos
+            for _ in range(6):
+                logits = model(x)
+                predId = logits[0, min(curr_pos, BLOCK_SIZE - 1)].argmax().item()
+                w = VOCAB[predId] if predId < len(VOCAB) else "<unk>"
+                if w in ("<eos>", "<pad>"): break
+                gen.append(w)
+                curr_pos += 1
+                if curr_pos < BLOCK_SIZE: x[0, curr_pos] = predId
+                
+        outStr = " ".join(gen)
+        predClean = outStr.split(":")[-1].strip().rstrip(". ") if ":" in outStr else outStr.strip().rstrip(". ")
+        tgtClean  = target.split(":")[-1].strip().rstrip(". ") if ":" in target else target.strip().rstrip(". ")
+        
+        if predClean.split() and tgtClean.split() and predClean.split()[0] == tgtClean.split()[0]:
+            passed += 1
+            
     pct = (passed / total * 100) if total else 0
     print(f"  {desc:<45}: {passed:>4}/{total:<4} ({pct:5.1f}%) in {time.time()-t0:.2f}s")
     return passed, total
