@@ -26,9 +26,10 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs("firmware", exist_ok=True)
 
 print("=" * 65)
-print(f" TRAINING {NUM_LAYERS}-LAYER MHA RoPE ENGINE ({EMBED_DIM}D, {NUM_HEADS}H)")
+print(f" TWO-STAGE TRAINING: PRE-TRAIN -> LOGIC SFT ({NUM_LAYERS}L MHA, {EMBED_DIM}D, {NUM_HEADS}H)")
 print("=" * 65)
 
+# 1. Dataset & Vocabulary Preparation
 if os.path.exists(STORIES_FILE):
     print(f"[*] Reading TinyStories from cached {STORIES_FILE}...")
     with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f: rawStories = f.read().lower()
@@ -42,7 +43,6 @@ else:
     with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f: rawStories = f.read().lower()
 
 TARGET_LOGIC = modCfg["dataset"].get("logic_samples_target", 50000)
-print(f"[*] Generating {TARGET_LOGIC} synthetic logic tasks...")
 allQaTasks = [generateAtomicSample(logCfg) for _ in range(TARGET_LOGIC)]
 
 TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
@@ -82,11 +82,13 @@ def tokenizeStr(s):
     s = s.replace("'s", " 's ")
     return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
 
+# Prepare TinyStories Chunks
 storyTokens = torch.tensor(tokenizeStr(rawStories), dtype=torch.long)
 numStChunks = (len(storyTokens) - 1) // BLOCK_SIZE
 stXData = storyTokens[:numStChunks * BLOCK_SIZE].view(numStChunks, BLOCK_SIZE).to(DEVICE)
 stYData = storyTokens[1 : numStChunks * BLOCK_SIZE + 1].view(numStChunks, BLOCK_SIZE).to(DEVICE)
 
+# 2. RoPE and Model Architecture
 def precomputeRopeFreqs(headDim, maxSeqLen=BLOCK_SIZE):
     invFreq = 1.0 / (10000.0 ** (torch.arange(0, headDim, 2).float() / headDim))
     t = torch.arange(maxSeqLen).float()
@@ -155,35 +157,78 @@ p2Path = os.path.join(MODELS_DIR, "pico2 weights.model")
 
 if BENCHMARK_MODE:
     print("\n" + "=" * 65)
-    print(" [*] BENCHMARK MODE ACTIVE: Skipping training loop.")
+    print(" [*] BENCHMARK MODE ACTIVE: Skipping training.")
     if os.path.exists(p1Path) and os.path.exists(p2Path):
         print(f" [✓] Found existing weights in {MODELS_DIR}.")
         sys.exit(0)
     print("=" * 65 + "\n")
 
-WARMUP      = modCfg["training"].get("warmup_steps", 1000)
-TOTAL_STEPS = 0 if BENCHMARK_MODE else modCfg["training"].get("total_steps", 32000)
-BASE_LR     = modCfg["training"].get("base_lr", 0.0015)
-MIN_LR      = modCfg["training"].get("min_lr", 0.0001)
-BATCH_QA    = modCfg["training"].get("batch_qa", 16)
-BATCH_ST    = modCfg["training"].get("batch_st", 16)
+# =====================================================================
+# STAGE 1: PRE-TRAINING ON TINYSTORIES
+# =====================================================================
+PRETRAIN_STEPS = 10000
+PRETRAIN_BATCH = 32
+PRETRAIN_LR    = 0.002
+PRETRAIN_MINLR = 0.0002
+WARMUP_STEPS   = 500
 
-optimizer = torch.optim.AdamW(rawModel.parameters(), lr=BASE_LR, weight_decay=modCfg["training"]["weight_decay"])
+optPretrain = torch.optim.AdamW(rawModel.parameters(), lr=PRETRAIN_LR, weight_decay=0.01)
 
-def getLr(step):
-    if step < WARMUP: return BASE_LR * (step + 1) / WARMUP
-    return MIN_LR + 0.5 * (1.0 + math.cos(math.pi * (step - WARMUP) / (TOTAL_STEPS - WARMUP))) * (BASE_LR - MIN_LR)
+def getPretrainLr(step):
+    if step < WARMUP_STEPS: return PRETRAIN_LR * (step + 1) / WARMUP_STEPS
+    prog = (step - WARMUP_STEPS) / max(1, PRETRAIN_STEPS - WARMUP_STEPS)
+    return PRETRAIN_MINLR + 0.5 * (1.0 + math.cos(math.pi * prog)) * (PRETRAIN_LR - PRETRAIN_MINLR)
 
-def getBatch():
+print("\n" + "=" * 65)
+print(f" STAGE 1: PRE-TRAINING (100% TinyStories, {PRETRAIN_STEPS} Steps, Batch {PRETRAIN_BATCH})")
+print("=" * 65)
+
+rawModel.train()
+t0 = time.time()
+for step in range(PRETRAIN_STEPS + 1):
+    lr = getPretrainLr(step)
+    for p in optPretrain.param_groups: p["lr"] = lr
+    
+    stIdx = torch.randint(numStChunks, (PRETRAIN_BATCH,))
+    xSt, ySt = stXData[stIdx], stYData[stIdx]
+    
+    logits = rawModel(xSt)
+    loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), ySt.view(-1))
+    
+    optPretrain.zero_grad(set_to_none=True)
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), 1.0)
+    optPretrain.step()
+    
+    if step % 500 == 0:
+        elapsed = time.time() - t0
+        eta = (PRETRAIN_STEPS - step) * (elapsed / max(1, step)) / 60
+        print(f" [Pre-train] Step {step:5d}/{PRETRAIN_STEPS} | Story Loss: {loss.item():.4f} | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
+
+# =====================================================================
+# STAGE 2: LOGIC SFT (SUPERVISED FINE-TUNING)
+# =====================================================================
+SFT_STEPS = 12000
+SFT_BATCH = 24
+SFT_LR    = 0.0004   # Gentler LR to avoid destroying pre-trained language weights
+SFT_MINLR = 0.00004
+
+optSft = torch.optim.AdamW(rawModel.parameters(), lr=SFT_LR, weight_decay=0.01)
+
+def getSftLr(step):
+    prog = step / max(1, SFT_STEPS)
+    return SFT_MINLR + 0.5 * (1.0 + math.cos(math.pi * prog)) * (SFT_LR - SFT_MINLR)
+
+def getQaBatch(batchSize):
     qaX_list, qaY_list = [], []
-    for _ in range(BATCH_QA):
+    for _ in range(batchSize):
         task = generateAtomicSample(logCfg)
         toks = tokenizeStr(task)
         if len(toks) > BLOCK_SIZE: toks = toks[:BLOCK_SIZE]
         x = toks + [padId] * (BLOCK_SIZE - len(toks))
         y = [-100] * BLOCK_SIZE
         
-        # Loss applies strictly to the direct answer tokens following [a]
+        # Loss falls 100% on target answer tokens
         ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
         if ansStart != -1:
             for idx in range(ansStart, len(toks) - 1): 
@@ -192,43 +237,36 @@ def getBatch():
         qaX_list.append(x)
         qaY_list.append(y)
         
-    xQa = torch.tensor(qaX_list, dtype=torch.long, device=DEVICE)
-    yQa = torch.tensor(qaY_list, dtype=torch.long, device=DEVICE)
+    return (torch.tensor(qaX_list, dtype=torch.long, device=DEVICE),
+            torch.tensor(qaY_list, dtype=torch.long, device=DEVICE))
+
+print("\n" + "=" * 65)
+print(f" STAGE 2: LOGIC SFT (100% QA Tasks, {SFT_STEPS} Steps, Batch {SFT_BATCH})")
+print("=" * 65)
+
+t1 = time.time()
+for step in range(SFT_STEPS + 1):
+    lr = getSftLr(step)
+    for p in optSft.param_groups: p["lr"] = lr
     
-    stIdx = torch.randint(numStChunks, (BATCH_ST,))
-    xSt = stXData[stIdx]
-    ySt = stYData[stIdx]
+    xQa, yQa = getQaBatch(SFT_BATCH)
+    logits = rawModel(xQa)
     
-    return xQa, yQa, xSt, ySt
+    loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
+    
+    optSft.zero_grad(set_to_none=True)
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), 1.0)
+    optSft.step()
+    
+    if step % 500 == 0:
+        elapsed = time.time() - t1
+        eta = (SFT_STEPS - step) * (elapsed / max(1, step)) / 60
+        print(f" [Logic SFT] Step {step:5d}/{SFT_STEPS} | QA Loss: {loss.item():.4f} | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
 
-print(f"\n[*] Training configuration: {TOTAL_STEPS} steps | Batch: {BATCH_QA} QA + {BATCH_ST} Story | Equal 50/50 Loss")
-rawModel.train()
-tStart = time.time()
-
-try:
-    for step in range(TOTAL_STEPS + 1):
-        for p in optimizer.param_groups: p["lr"] = getLr(step)
-        xQa, yQa, xSt, ySt = getBatch()
-        logitsAll = rawModel(torch.cat([xQa, xSt], dim=0))
-        
-        lossQa = F.cross_entropy(logitsAll[:BATCH_QA].view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
-        lossSt = F.cross_entropy(logitsAll[BATCH_QA:].view(-1, VOCAB_SIZE), ySt.view(-1))
-        
-        # Exact 50/50 balance between QA reasoning and Story language modeling
-        loss = (0.50 * lossQa) + (0.50 * lossSt)
-
-        optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(rawModel.parameters(), modCfg["training"]["grad_clip"])
-        optimizer.step()
-
-        if step % 500 == 0:
-            elapsed = time.time() - tStart
-            etaMin = (TOTAL_STEPS - step) * (elapsed / max(step, 1)) / 60
-            print(f"Step {step:5d}/{TOTAL_STEPS} | Total: {loss.item():.4f} | QA: {lossQa.item():.4f} | Story: {lossSt.item():.4f} | ETA: {etaMin:.1f}m", flush=True)
-except KeyboardInterrupt:
-    print("\n[!] Training paused. Saving current checkpoint...")
-
+# =====================================================================
+# STAGE 3: INT8 EXPORT & PACKAGING
+# =====================================================================
 print("\n[*] Quantizing weights (INT8 W8A32) and exporting...")
 
 def dumpTensor(t, f, quantize=True):
