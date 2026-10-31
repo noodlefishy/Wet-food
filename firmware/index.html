@@ -104,7 +104,7 @@
     .text-pink { color: #ff00aa; }
     .text-green { color: #39ff14; }
 
-    /* CYBER SCANNER LOADING BAR */
+    /* SCANNER BAR */
     .scanner-track {
       width: 100%;
       height: 5px;
@@ -156,7 +156,7 @@
       box-shadow: 0 0 4px rgba(57, 255, 20, 0.4);
     }
 
-    /* CORTEX GRID & NEURON HOVER */
+    /* CORTEX GRID */
     .cortex-container {
       background: #000;
       border: 1px solid #222;
@@ -189,7 +189,6 @@
       margin-top: 3px;
     }
 
-    /* TOOLTIPS / POPOVERS */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -262,7 +261,7 @@
       <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
       
       <div class="input-row">
-        <input type="text" id="prompt" value="[q] where is alice ? [c] alice went to the kitchen . [a]">
+        <input type="text" id="prompt" value="[c] alice went to the kitchen . [q] where is alice ? [a]">
         <button class="btn btn-exec" id="btn-exec" onclick="gen()">Execute</button>
         <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
@@ -316,10 +315,10 @@
 
   <script>
     let abortController = null;
-    let tokenHistory = [];
-    let lastActiveTelemetry = null;
     let activeVector = null;
     let tokenTimes = [];
+    let currentRunHistory = [];
+    let currentRunId = '';
 
     const Stopwatch = {
       startTime: 0, elapsed: 0, interval: null, running: false,
@@ -432,8 +431,9 @@
       setStat("Stopped", "#ff66cc");
     }
 
-    function inspectToken(idx, ev) {
-      const item = tokenHistory[idx];
+    // SCOPED HOVER INSPECTION: Uses currentRunId to ensure only the active prompt is highlighted
+    function inspectToken(history, idx, runId, ev) {
+      const item = history[idx];
       if (!item) return;
 
       renderVector(item.v);
@@ -441,10 +441,10 @@
 
       if (item.attn && item.attn.length > 0) {
         item.attn.forEach((weight, tIdx) => {
-          const pastTokEl = document.getElementById('term-tok-' + tIdx);
+          const pastTokEl = document.getElementById(`${runId}-tok-${tIdx}`);
           if (pastTokEl) {
             pastTokEl.classList.add('tok-attended');
-            pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.2));
+            pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.8));
           }
         });
 
@@ -469,11 +469,6 @@
       });
       const pop = document.getElementById('attn-popover');
       if (pop) pop.style.display = 'none';
-
-      if (lastActiveTelemetry) {
-        renderVector(lastActiveTelemetry.v);
-        renderRanks(lastActiveTelemetry.ranks);
-      }
     }
 
     async function gen() {
@@ -485,15 +480,18 @@
       setControls(true);
       Stopwatch.start();
       tokenTimes = [];
-      tokenHistory = [];
-      lastActiveTelemetry = null;
+
+      currentRunId = 'run-' + Date.now();
+      currentRunHistory = [];
 
       const log = document.getElementById('log');
-      const streamSpanId = 'stream-run-' + Date.now();
-      log.innerHTML += `\n&gt; <span id="${streamSpanId}"></span><span class="cursor" id="active-cursor"></span>`;
+      
+      // Preserve prompt line container in terminal log
+      const promptLineId = `${currentRunId}-prompt-line`;
+      const genStreamId   = `${currentRunId}-gen-stream`;
+      log.innerHTML += `\n&gt; <span id="${promptLineId}"></span><span id="${genStreamId}"></span><span class="cursor" id="active-cursor"></span>`;
       log.scrollTop = log.scrollHeight;
 
-      const streamSpan = document.getElementById(streamSpanId);
       const prefContainer = document.getElementById('m_prefill');
       prefContainer.innerHTML = 'Ingesting prompt...';
 
@@ -517,60 +515,67 @@
             let data;
             try { data = JSON.parse(line); } catch(e) { continue; }
 
-            lastActiveTelemetry = data;
             if (data.v) renderVector(data.v);
             if (data.ms) document.getElementById('m_lat').innerText = data.ms;
             if (data.ranks) renderRanks(data.ranks);
 
             if (data.stage === 'init') {
+              // 1. Populate canonical QCA pills in KV Tray
               prefContainer.innerHTML = '';
               if (data.qca_tokens) {
                 data.qca_tokens.forEach((t, i) => {
                   const chip = document.createElement('span');
                   chip.className = 'chip chip-pending';
-                  chip.id = 'prefill-chip-' + i;
+                  chip.id = `${currentRunId}-chip-${i}`;
                   chip.innerText = t;
                   prefContainer.appendChild(chip);
                 });
               }
+
+              // 2. Render user's prompt as entered into the terminal prompt line
+              const promptLine = document.getElementById(promptLineId);
+              if (promptLine && data.user_tokens) {
+                data.user_tokens.forEach((word, idx) => {
+                  const span = document.createElement('span');
+                  span.className = 'term-tok';
+                  span.id = `${currentRunId}-tok-${idx}`;
+                  span.innerText = word + ' ';
+                  currentRunHistory.push({ word: word, v: null, ranks: null, attn: null });
+                  span.onmouseenter = (e) => inspectToken(currentRunHistory, idx, currentRunId, e);
+                  span.onmouseleave = uninspectToken;
+                  promptLine.appendChild(span);
+                });
+              }
             } else if (data.stage === 'error') {
               setStat("Error: " + (data.msg || "Unknown"), "#ff0055");
-              streamSpan.innerHTML += `<span style="color:#ff0055;"> [Error: ${data.msg}]</span>`;
             } else if (data.stage === 'prefill') {
-              const tokIndex = tokenHistory.length;
-              tokenHistory.push({ word: data.tok, v: data.v, ranks: data.ranks, attn: data.attn });
-
               setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
 
-              const chipIdx = data.cur - 1;
-              const chip = document.getElementById('prefill-chip-' + chipIdx);
-              if (chip) {
-                chip.className = 'chip chip-done';
+              // Light up corresponding canonical QCA chip
+              const chip = document.getElementById(`${currentRunId}-chip-${data.cur - 1}`);
+              if (chip) chip.className = 'chip chip-done';
+
+              // Attach attention telemetry to prompt token in history
+              if (data.cur - 1 < currentRunHistory.length) {
+                currentRunHistory[data.cur - 1].v = data.v;
+                currentRunHistory[data.cur - 1].ranks = data.ranks;
+                currentRunHistory[data.cur - 1].attn = data.attn;
               }
-
-              const tokSpan = document.createElement('span');
-              tokSpan.className = 'term-tok';
-              tokSpan.id = 'term-tok-' + tokIndex;
-              tokSpan.innerText = data.tok + ' ';
-              tokSpan.onmouseenter = (e) => inspectToken(tokIndex, e);
-              tokSpan.onmouseleave = uninspectToken;
-              streamSpan.appendChild(tokSpan);
-              log.scrollTop = log.scrollHeight;
-
             } else if (data.stage === 'gen') {
-              const tokIndex = tokenHistory.length;
-              tokenHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
+              setStat("Generating...", "#ff00aa");
+
+              const genStream = document.getElementById(genStreamId);
+              const tokIndex = currentRunHistory.length;
+              currentRunHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
 
               const tokSpan = document.createElement('span');
               tokSpan.className = 'term-tok';
-              tokSpan.id = 'term-tok-' + tokIndex;
+              tokSpan.id = `${currentRunId}-tok-${tokIndex}`;
               tokSpan.innerText = data.w + ' ';
-              tokSpan.onmouseenter = (e) => inspectToken(tokIndex, e);
+              tokSpan.onmouseenter = (e) => inspectToken(currentRunHistory, tokIndex, currentRunId, e);
               tokSpan.onmouseleave = uninspectToken;
-              streamSpan.appendChild(tokSpan);
+              if (genStream) genStream.appendChild(tokSpan);
               log.scrollTop = log.scrollHeight;
-
-              setStat("Generating Answer...", "#ff00aa");
 
               const now = performance.now();
               tokenTimes.push(now);
@@ -584,7 +589,7 @@
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          streamSpan.innerHTML += `<span style="color:#ff0055;">\n[Error: ${err.message}]</span>`;
+          console.error(err);
         }
       } finally {
         const cur = document.getElementById('active-cursor');

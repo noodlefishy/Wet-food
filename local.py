@@ -1,3 +1,4 @@
+# mac_server.py - Dual-Mode (Logic QCA + Open Narrative Story) High-Speed Server
 import os, sys, json, re, time, math, urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import torch, torch.nn.functional as F
@@ -56,16 +57,13 @@ def canonicalize_to_qca(raw):
     if not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
     return p, True
 
-# Real Neural Extraction Hooks on Layer 2
 activation_cache = {}
 
 def layer2_block_hook(module, inp, out):
-    # Hidden Thought Vector (80-D slice)
     activation_cache["thought_vector"] = out[0].detach()
 
 def layer2_attention_hook(module, inp, out):
-    # Extract real multi-head self-attention weights
-    x = inp[0]  # (B, T, C)
+    x = inp[0]
     B, T, C = x.shape
     qkv = module.qkvProj(x)
     q, k, _ = qkv.chunk(3, dim=-1)
@@ -77,10 +75,9 @@ def layer2_attention_hook(module, inp, out):
     scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(HEAD_DIM)
     mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
     scores = scores.masked_fill(mask, float('-inf'))
-    attn_matrix = F.softmax(scores, dim=-1)  # (B, NUM_HEADS, T, T)
+    attn_matrix = F.softmax(scores, dim=-1)
     
-    # Average across all 4 attention heads for holistic visualization
-    avg_head_attn = attn_matrix[0].mean(dim=0)  # (T, T)
+    avg_head_attn = attn_matrix[0].mean(dim=0)
     activation_cache["real_attn_matrix"] = avg_head_attn.detach().cpu()
 
 model.layers[2].register_forward_hook(layer2_block_hook)
@@ -117,20 +114,29 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 self.wfile.write(f"{len(chunk):X}\r\n".encode("utf-8") + chunk + b"\r\n")
                 self.wfile.flush()
 
-            tks = tokenize(qca_prompt)
-            if not tks:
+            canonical_tks = tokenize(qca_prompt)
+            user_tks = tokenize(raw_prompt)
+            if not canonical_tks:
                 send_chunk({"stage": "error", "msg": "Empty prompt"})
                 self.wfile.write(b"0\r\n\r\n")
                 return
 
-            tokens_str = [VOCAB[t] for t in tks]
-            send_chunk({"stage": "init", "user_prompt": raw_prompt, "qca_tokens": tokens_str})
+            qca_words = [VOCAB[t] for t in canonical_tks]
+            user_words = [VOCAB[t] for t in user_tks]
 
-            curr_tokens = list(tks)
+            send_chunk({
+                "stage": "init",
+                "user_prompt": raw_prompt,
+                "qca_tokens": qca_words,
+                "user_tokens": user_words,
+                "is_logic": is_logic
+            })
+
+            curr_tokens = list(canonical_tks)
             
             # Phase 1: Prefill prompt tokens
             t_prev = time.perf_counter()
-            for stp in range(len(tks)):
+            for stp in range(len(canonical_tks)):
                 prefix = curr_tokens[:stp + 1]
                 padded = prefix + [padId] * (BLOCK_SIZE - len(prefix))
                 x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
@@ -141,17 +147,14 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 lat_ms = int((time.perf_counter() - t_prev) * 1000)
                 t_prev = time.perf_counter()
 
-                # Extract 80-D Thought Vector
                 tv = activation_cache.get("thought_vector", None)
                 v_slice = tv[stp, :80].tolist() if tv is not None else [0.0] * 80
 
-                # Extract Top 5 candidate word rankings
                 lg = logits[0, stp].clone()
                 lg[WORD_TO_ID.get("<unk>", 0)] = lg[WORD_TO_ID.get("<pad>", 1)] = -1e9
                 top_indices = torch.topk(lg, 5).indices.tolist()
                 ranks = [VOCAB[idx] for idx in top_indices]
 
-                # Extract REAL authentic attention weights for token at index stp
                 attn_mat = activation_cache.get("real_attn_matrix", None)
                 if attn_mat is not None and stp < attn_mat.shape[0]:
                     attn_row = attn_mat[stp, :stp + 1].tolist()
@@ -162,35 +165,63 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 send_chunk({
                     "stage": "prefill",
                     "cur": stp + 1,
-                    "tot": len(tks),
-                    "tok": VOCAB[tks[stp]],
+                    "tot": len(canonical_tks),
+                    "tok": VOCAB[canonical_tks[stp]],
                     "ms": max(1, lat_ms),
                     "ram": 140000,
                     "v": v_slice,
                     "ranks": ranks,
                     "attn": attn_weights
                 })
-                # Rhythmic cyber pacing for prefill
-                time.sleep(0.08)
+                time.sleep(0.06)
 
             # Phase 2: Autoregressive Generation
-            pred_id = top_indices[0] if is_logic else top_indices[0]
-            for gen_stp in range(40):
+            generated_history = []
+            max_gen = 35 if is_logic else 55
+
+            for gen_stp in range(max_gen):
+                pos = len(curr_tokens) - 1
+                padded = curr_tokens + [padId] * (BLOCK_SIZE - len(curr_tokens))
+                x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
+                
+                with torch.no_grad():
+                    logits = model(x)
+                    
+                lg = logits[0, pos].clone()
+                lg[WORD_TO_ID.get("<unk>", 0)] = lg[WORD_TO_ID.get("<pad>", 1)] = -1e9
+
+                if is_logic:
+                    pred_id = lg.argmax().item()
+                else:
+                    # STORY MODE CONTROLS: Temperature, Repetition Penalty & Min-Length Guard
+                    for past_tok in set(curr_tokens[-12:] + generated_history[-10:]):
+                        lg[past_tok] -= 1.8  # Repetition Penalty prevents `. he . he .` loops
+                    
+                    if gen_stp < 12:
+                        lg[WORD_TO_ID.get("<eos>", 2)] = -1e9  # Keep story going for at least 12 words
+
+                    # Temperature scaling & Top-K (K=25) sampling
+                    probs = F.softmax(lg / 0.75, dim=-1)
+                    top_k_probs, top_k_indices = torch.topk(probs, 25)
+                    sample_idx = torch.multinomial(top_k_probs, 1).item()
+                    pred_id = top_k_indices[sample_idx].item()
+
                 word = VOCAB[pred_id]
                 lat_ms = int((time.perf_counter() - t_prev) * 1000)
                 t_prev = time.perf_counter()
 
-                pos = len(curr_tokens) - 1
                 tv = activation_cache.get("thought_vector", None)
                 v_slice = tv[pos, :80].tolist() if tv is not None else [0.0] * 80
 
-                # Extract REAL attention for generated token
                 attn_mat = activation_cache.get("real_attn_matrix", None)
                 if attn_mat is not None and pos < attn_mat.shape[0]:
                     attn_row = attn_mat[pos, :pos + 1].tolist()
                     attn_weights = [round(w, 3) for w in attn_row]
                 else:
-                    attn_weights = [0.2] * len(curr_tokens)
+                    attn_weights = [0.1] * len(curr_tokens)
+
+                top_indices = torch.topk(lg, 5).indices.tolist()
+                ranks = [VOCAB[idx] for idx in top_indices]
 
                 send_chunk({
                     "stage": "gen",
@@ -206,23 +237,11 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     break
 
                 curr_tokens.append(pred_id)
+                generated_history.append(pred_id)
                 if len(curr_tokens) >= BLOCK_SIZE:
                     break
 
-                padded = curr_tokens + [padId] * (BLOCK_SIZE - len(curr_tokens))
-                x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
-                
-                with torch.no_grad():
-                    logits = model(x)
-                    
-                lg = logits[0, len(curr_tokens) - 1].clone()
-                lg[WORD_TO_ID.get("<unk>", 0)] = lg[WORD_TO_ID.get("<pad>", 1)] = -1e9
-                top_indices = torch.topk(lg, 5).indices.tolist()
-                ranks = [VOCAB[idx] for idx in top_indices]
-                pred_id = top_indices[0]
-                
-                # Rhythmic generation pacing (~7 TPS)
-                time.sleep(0.14)
+                time.sleep(0.12)
 
             self.wfile.write(b"0\r\n\r\n")
 

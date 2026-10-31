@@ -295,9 +295,17 @@ for step in range(SFT_STEPS + 1):
     for p in optSft.param_groups: p["lr"] = lr
     
     xQa, yQa = getQaBatch(SFT_BATCH)
-    logits = rawModel(xQa)
-    loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
+    logitsQa = rawModel(xQa)
+    qa_loss = F.cross_entropy(logitsQa.view(-1, VOCAB_SIZE), yQa.view(-1), ignore_index=-100)
     
+    stIdx = torch.randint(numStChunks, (SFT_BATCH // 2,))
+    xSt, ySt = stXData[stIdx], stYData[stIdx]
+    logitsSt = rawModel(xSt)
+    story_loss = F.cross_entropy(logitsSt.view(-1, VOCAB_SIZE), ySt.view(-1))
+    
+    # Combined loss
+    loss = 2.5 * qa_loss + 0.25 * story_loss
+
     optSft.zero_grad(set_to_none=True)
     loss.backward()
     torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
