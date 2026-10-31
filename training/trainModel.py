@@ -208,9 +208,9 @@ for step in range(PRETRAIN_STEPS + 1):
 # =====================================================================
 # STAGE 2: LOGIC SFT (SUPERVISED FINE-TUNING)
 # =====================================================================
-SFT_STEPS = 12000
+SFT_STEPS = 20000
 SFT_BATCH = 24
-SFT_LR    = 0.0004   # Gentler LR to avoid destroying pre-trained language weights
+SFT_LR    = 0.0006   # Gentler LR to avoid destroying pre-trained language weights
 SFT_MINLR = 0.00004
 
 optSft = torch.optim.AdamW(rawModel.parameters(), lr=SFT_LR, weight_decay=0.01)
