@@ -8,7 +8,8 @@ def formatQaSequence(premise, question, answer):
     p = normalizeText(premise.strip().rstrip(". "))
     q = normalizeText(question.strip().rstrip("?.: "))
     a = normalizeText(answer.strip().rstrip(". "))
-    return f"[c] {p} . [q] {q} ? [a] {a} . <eos>"
+    # QUESTION-FIRST FORMAT: The mathematically correct way for causal attention
+    return f"[q] {q} ? [c] {p} . [a] {a} . <eos>"
 
 def splitQa(sequenceStr):
     parts = sequenceStr.split(" [a] ")
@@ -44,35 +45,8 @@ def generateAtomicSample(cfg, targetCategory=None):
     ctype = cat.get("type", "")
     premiseTmpl = random.choice(cat.get("premise", cat.get("premises", [""])))
     queries     = cat["queries"]
-
-    # 1. Strict 50/50 balance for boolean / polar queries
-    hasYes = any("yes" in str(q.get("a", "")) for q in queries)
-    hasNo  = any("no" in str(q.get("a", "")) for q in queries)
-    if hasYes and hasNo:
-        wantYes = random.random() < 0.50
-        filtered = [q for q in queries if ("yes" in str(q.get("a", ""))) == wantYes]
-        queryObj = random.choice(filtered) if filtered else random.choice(queries)
-
-    # 2. Adversarial Anti-Recency Engine: Penalizes lazy token-distance shortcuts
-    elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
-        dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
-        rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
-        
-        dist_queries = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
-        rec_queries  = [q for q in queries if f"{{{rec_actor}}}" in str(q)]
-        other_queries = [q for q in queries if q not in dist_queries and q not in rec_queries]
-        
-        r = random.random()
-        if r < 0.60 and dist_queries:      # 60% Distant Penalty forces true pointer routing
-            queryObj = random.choice(dist_queries)
-        elif r < 0.85 and rec_queries:     # 25% Recent
-            queryObj = random.choice(rec_queries)
-        elif other_queries:                # 15% Other
-            queryObj = random.choice(other_queries)
-        else:
-            queryObj = random.choice(queries)
-    else:
-        queryObj = random.choice(queries)
+    
+    queryObj = random.choice(queries)
 
     actors  = random.sample(pools["actor"], min(5, len(pools["actor"])))
     locs    = random.sample(pools["location"], min(5, len(pools["location"])))
