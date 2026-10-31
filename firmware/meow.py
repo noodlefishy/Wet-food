@@ -4,9 +4,17 @@ from array import array; from machine import Pin # pyright: ignore[reportMissing
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
-EMBED_DIM = 80; BLOCK_SIZE = 64; NUM_HEADS = 4; HEAD_DIM = EMBED_DIM // NUM_HEADS; VOCAB_SIZE = 1024; BUF = bytearray(320 * 4)
-ROW_B = 4 + EMBED_DIM; L0_OFF = VOCAB_SIZE * ROW_B
-SINK_SIZE = 4; WINDOW_SIZE = 32; LAYERS = 3
+EMBED_DIM = 120
+BLOCK_SIZE = 64
+NUM_HEADS = 6
+HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 20
+VOCAB_SIZE = 1024
+BUF = bytearray(480 * 4)           # 4 * EMBED_DIM = 480 floats for MLP
+ROW_B = 4 + EMBED_DIM
+L0_OFF = VOCAB_SIZE * ROW_B
+SINK_SIZE = 4
+WINDOW_SIZE = 20                   # 20 window + 4 sinks = 24 tokens (69.1 KB SRAM)
+LAYERS = 3
 
 try: import vocab; VOCAB = vocab.VOCAB
 except: VOCAB = ["<unk>", "<pad>", "<eos>"] + ["w" + str(i) for i in range(1021)]
