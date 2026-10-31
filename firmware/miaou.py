@@ -1,4 +1,4 @@
-# miaou.py - Worker (Slave) node for distributed transformer
+# miaou.py - Worker (Slave) node for distributed transformer (96-D / 4-Head MHA)
 import network, socket, struct, math, gc, time, machine
 from machine import Pin; from array import array
 machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
@@ -6,12 +6,12 @@ machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
 EMBED_DIM = 96
 BLOCK_SIZE = 64
 NUM_HEADS = 4
-HEAD_DIM = EMBED_DIM // NUM_HEADS
+HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 24
 VOCAB_SIZE = 1024
 ROW_B = 4 + EMBED_DIM
 L0_OFF = VOCAB_SIZE * ROW_B
-SINK_SIZE = 4
-WINDOW_SIZE = 20
+SINK_SIZE = 2
+WINDOW_SIZE = 10
 LAYERS = 3
 
 try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
@@ -27,8 +27,7 @@ BUF_mlp2  = [0.0] * EMBED_DIM
 BUF_ln_w  = [0.0] * EMBED_DIM
 BUF_ln_b  = [0.0] * EMBED_DIM
 BUF_lg    = [0.0] * VOCAB_SIZE
-ROW_BUF   = bytearray(4 + 4 * EMBED_DIM)
-VEC_BUF   = bytearray(max(64, EMBED_DIM) * 4)  # 480 bytes, fits LN and bias chunks
+BUF_LIN   = bytearray(4 * EMBED_DIM * 4)
 
 def recv_all(sock, n):
     data = bytearray()
@@ -40,18 +39,17 @@ def recv_all(sock, n):
 
 @micropython.native
 def stream_linear_into(f, r, c, x, out):
-    row_bytes = 4 + c
-    mv = memoryview(ROW_BUF)[:row_bytes]
+    bv = memoryview(BUF_LIN)[:c]
     for i in range(r):
-        f.readinto(mv)
-        scale = struct.unpack_from('f', mv, 0)[0]
+        scale = struct.unpack('f', f.read(4))[0]
+        f.readinto(bv)
         s = 0.0
         for j in range(c):
-            v = mv[4 + j]
+            v = bv[j]
             s += (v if v < 128 else v - 256) * x[j]
         out[i] = s * scale
     bi = 0
-    mv_b = memoryview(VEC_BUF)
+    mv_b = memoryview(BUF_LIN)
     while bi < r:
         s = min(64, r - bi)
         f.readinto(mv_b[:s * 4])
@@ -69,9 +67,8 @@ def layer_norm_into(x, w, b, out):
         out[i] = ((x[i] - m) / s) * w[i] + b[i]
 
 def read_vec_into(f, c, target):
-    mv = memoryview(VEC_BUF)[:c * 4]
-    f.readinto(mv)
-    vals = struct.unpack(f'{c}f', mv)
+    raw = f.read(c * 4)
+    vals = struct.unpack(f'{c}f', raw)
     for i in range(c):
         target[i] = vals[i]
 
@@ -81,7 +78,7 @@ cos_tab = [[math.cos(p * inv_freq[i]) for i in range(half_head)] for p in range(
 sin_tab = [[math.sin(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
 
 print("\n" + "="*50)
-print("[MIAOU] Initializing 3-Layer Worker (Layers 3-5, Zero-Allocation)...")
+print("[MIAOU] Initializing 96-D / 4-Head Worker (Layers 3-5)...")
 
 try: network.hostname('miaou')
 except: pass
@@ -182,7 +179,7 @@ def run_layer(f, idx, x, pos):
             BUF_mlp1[t] = ew
             sum_exp += ew
             
-        inv_sum = 1.0 / sum_exp
+        inv_sum = 1.0 / (sum_exp if sum_exp > 1e-12 else 1.0)
         for t in range(seq_len):
             w = BUF_mlp1[t] * inv_sum
             v_t = kv[idx]['v'][t]

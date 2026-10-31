@@ -1,4 +1,4 @@
-# meow.py - Host (Master) node for distributed transformer
+# meow.py - Host (Master) node for distributed transformer (96-D / 4-Head MHA)
 import network, socket, struct, math, gc, time, machine, random, _thread, ure as re
 from array import array; from machine import Pin
 machine.freq(240_000_000)
@@ -7,12 +7,12 @@ led = Pin("LED", Pin.OUT); led.off()
 EMBED_DIM = 96
 BLOCK_SIZE = 64
 NUM_HEADS = 4
-HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 20
+HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 24
 VOCAB_SIZE = 1024
 ROW_B = 4 + EMBED_DIM
 L0_OFF = VOCAB_SIZE * ROW_B
-SINK_SIZE = 4
-WINDOW_SIZE = 20
+SINK_SIZE = 2
+WINDOW_SIZE = 10                   # 12 tokens max in RAM (27.6 KB, safely below 36.5 KB heap)
 LAYERS = 3
 
 try: import vocab; VOCAB = vocab.VOCAB
@@ -35,7 +35,7 @@ BUF_ln_w  = [0.0] * EMBED_DIM
 BUF_ln_b  = [0.0] * EMBED_DIM
 BUF_attn  = [0.0] * BLOCK_SIZE
 ROW_EMB   = bytearray(EMBED_DIM)
-BUF_LIN   = bytearray(4 * EMBED_DIM * 4)  # 1920 bytes buffer for streaming weights
+BUF_LIN   = bytearray(4 * EMBED_DIM * 4)
 
 def read_emb(f, idx, out):
     f.seek(idx * ROW_B)
@@ -228,7 +228,7 @@ def canonicalize_to_qca(raw):
     return p, True
 
 print("\n" + "="*50)
-print("[MEOW] Initializing Zero-Allocation Dual-Core Transformer Engine...")
+print(f"[MEOW] Initializing 96-D / 4-Head Master Engine...")
 
 try: network.hostname('meow')
 except: pass
@@ -356,15 +356,22 @@ while True:
         raw_prompt, qca_prompt, is_logic = job_queue.pop(0)
         gc.collect()
 
-        # Tokenize by punctuation/whitespace matching trainModel.py
         p_clean = qca_prompt.lower()
         for char in [".", "?", "!", ",", ":"]:
             p_clean = p_clean.replace(char, f" {char} ")
         p_clean = p_clean.replace("'s", " 's ")
 
-        words = [w for w in p_clean.split() if w]
-        tks = [WORD_TO_ID.get(w, 0) for w in words]
-        if not tks:
+        words_qca = [w for w in p_clean.split() if w]
+        canonical_tks = [WORD_TO_ID.get(w, 0) for w in words_qca]
+        
+        # User typed words for ghost slot matching
+        p_user = raw_prompt.lower()
+        for char in [".", "?", "!", ",", ":"]:
+            p_user = p_user.replace(char, f" {char} ")
+        p_user = p_user.replace("'s", " 's ")
+        words_user = [w for w in p_user.split() if w]
+
+        if not canonical_tks:
             telemetry_fifo.append("DONE")
             continue
 
@@ -385,20 +392,20 @@ while True:
             telemetry_fifo.append("DONE")
             continue
         
-        # Telemetry: Send full QCA tokens immediately for prefill pills display
-        tokens_json = "[" + ",".join([f'"{VOCAB[t]}"' for t in tks]) + "]"
-        telemetry_fifo.append(f'{{"stage":"init","user_prompt":"{raw_prompt}","qca_tokens":{tokens_json}}}\n')
+        qca_json = "[" + ",".join([f'"{w}"' for w in words_qca]) + "]"
+        user_json = "[" + ",".join([f'"{w}"' for w in words_user]) + "]"
+        telemetry_fifo.append(f'{{"stage":"init","user_prompt":"{raw_prompt}","qca_tokens":{qca_json},"user_tokens":{user_json},"is_logic":{str(is_logic).lower()}}}\n')
         
         t_start = time.ticks_ms()
-        cur = tks[0]
+        cur = canonical_tks[0]
         ct_ranks = [0, 0, 0, 0, 0]
         aborted = False
         
         # Phase 1: Prefill prompt tokens
-        for stp in range(len(tks)):
+        for stp in range(len(canonical_tks)):
             if not client_active[0]: aborted = True; break
             led.on()
-            tid = tks[stp]
+            tid = canonical_tks[stp]
             read_emb(f_w, tid, cur_x)
             
             last_attn = []
@@ -406,7 +413,7 @@ while True:
             for l in range(LAYERS):
                 last_attn = run_layer(f_w, l, cur_x, stp)
             
-            is_last = (stp == len(tks) - 1)
+            is_last = (stp == len(canonical_tks) - 1)
             mode_byte = b'\x01' if is_last else b'\x00'
             
             try:
@@ -437,16 +444,20 @@ while True:
             attn_str = "[" + ",".join([f"{a:.2f}" for a in last_attn]) + "]"
             
             telemetry_fifo.append(
-                f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n'
+                f'{{"stage":"prefill","cur":{stp+1},"tot":{len(canonical_tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n'
             )
             led.off()
 
         # Phase 2: Autoregressive Generation
         if not aborted:
-            for gen_stp in range(40):
+            for gen_stp in range(35):
                 if not client_active[0]: break
-                led.on()
                 word = VOCAB[cur]
+                if word in ("<eos>", "<pad>"):
+                    led.off()
+                    break
+
+                led.on()
                 lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
                 v_str = "[" + ",".join([f"{v:.2f}" for v in cur_x[:80]]) + "]"
                 ranks = [VOCAB[t] for t in ct_ranks]
@@ -457,9 +468,7 @@ while True:
                     f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n'
                 )
                 
-                if word in ("<eos>", "<pad>"): led.off(); break
-                
-                pos = len(tks) + gen_stp
+                pos = len(canonical_tks) + gen_stp
                 read_emb(f_w, cur, cur_x)
                 
                 f_w.seek(L0_OFF)

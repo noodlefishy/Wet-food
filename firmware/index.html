@@ -13,6 +13,26 @@
       font-size: 12px;
     }
 
+    .tok-ai {
+      color: #00e5ff !important;
+      text-shadow: 0 0 6px rgba(0, 229, 255, 0.45);
+    }
+    .tok-ai.tok-revealed {
+      animation: tokPopCyan 0.22s ease-out;
+    }
+    @keyframes tokPopCyan {
+      0% { 
+        opacity: 0; 
+        transform: translateY(-2px) scale(1.18); 
+        color: #ffffff; 
+        text-shadow: 0 0 10px #00e5ff; 
+      }
+      100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1.0); 
+        color: #00e5ff; 
+      }
+    }
     .main-title {
       color: #ff66cc;
       font-size: 13px;
@@ -68,6 +88,7 @@
     .btn-stop { background: #ff0055; color: #fff; }
     #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; }
 
+    /* TYPEWRITER TOKENS & SLOTS */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
@@ -75,6 +96,23 @@
       transition: background-color 0.1s ease, color 0.1s ease;
       display: inline-block;
     }
+    .tok-ghost {
+      color: transparent !important;
+      border-bottom: 1px dotted #333;
+      user-select: none;
+      margin-right: 2px;
+      transition: all 0.25s ease;
+    }
+    .tok-revealed {
+      color: #39ff14 !important;
+      border-bottom: 1px solid transparent !important;
+      animation: tokPop 0.22s ease-out;
+    }
+    @keyframes tokPop {
+      0% { opacity: 0; transform: translateY(-2px) scale(1.15); color: #ff00aa; text-shadow: 0 0 10px #ff00aa; }
+      100% { opacity: 1; transform: translateY(0) scale(1.0); color: #39ff14; }
+    }
+
     .term-tok:hover, .tok-inspect {
       background-color: rgba(255, 0, 127, 0.35) !important;
       color: #fff !important;
@@ -199,9 +237,11 @@
       border-radius: 3px;
       display: none;
       z-index: 10000;
-      pointer-events: none;
+      pointer-events: none !important; /* Prevents popover from intercepting mouse */
       box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
       min-width: 170px;
+      transform: translate(-50%, -100%); /* Centers directly above cursor */
+      transition: opacity 0.1s ease;
     }
     .attn-bars {
       display: flex;
@@ -319,6 +359,7 @@
     let tokenTimes = [];
     let currentRunHistory = [];
     let currentRunId = '';
+    let qcaToUserMap = [];
 
     const Stopwatch = {
       startTime: 0, elapsed: 0, interval: null, running: false,
@@ -431,7 +472,7 @@
       setStat("Stopped", "#ff66cc");
     }
 
-    // SCOPED HOVER INSPECTION: Uses currentRunId to ensure only the active prompt is highlighted
+    // Scoped inspection: highlights strictly within the current run
     function inspectToken(history, idx, runId, ev) {
       const item = history[idx];
       if (!item) return;
@@ -441,7 +482,9 @@
 
       if (item.attn && item.attn.length > 0) {
         item.attn.forEach((weight, tIdx) => {
-          const pastTokEl = document.getElementById(`${runId}-tok-${tIdx}`);
+          // Map internal attention index to the user's displayed slot index
+          const userSlotIdx = (qcaToUserMap && tIdx < qcaToUserMap.length) ? qcaToUserMap[tIdx] : tIdx;
+          const pastTokEl = document.getElementById(`${runId}-tok-${userSlotIdx}`) || document.getElementById(`${runId}-tok-${tIdx}`);
           if (pastTokEl) {
             pastTokEl.classList.add('tok-attended');
             pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.8));
@@ -456,8 +499,11 @@
         ).join('');
         document.getElementById('pop-footer').innerText = `Layer 2 Self-Attention (${item.attn.length} tokens)`;
         
-        pop.style.left = (ev.clientX + 14) + 'px';
-        pop.style.top = (ev.clientY - 20) + 'px';
+        const targetX = Math.max(90, Math.min(window.innerWidth - 90, ev.clientX));
+        const targetY = Math.max(40, ev.clientY - 12);
+        
+        pop.style.left = targetX + 'px';
+        pop.style.top = targetY + 'px';
         pop.style.display = 'block';
       }
     }
@@ -469,6 +515,34 @@
       });
       const pop = document.getElementById('attn-popover');
       if (pop) pop.style.display = 'none';
+    }
+
+    // Computes bijective mapping from canonical QCA index to user's typed slot index
+    function computeQcaToUserMap(userTokens, qcaTokens) {
+      const uLower = userTokens.map(w => w.toLowerCase());
+      const qLower = qcaTokens.map(w => w.toLowerCase());
+      
+      const cPosU = uLower.indexOf('[c]');
+      const qPosU = uLower.indexOf('[q]');
+      
+      // If user typed CQA: [c] ... [q] ... [a]
+      if (cPosU !== -1 && qPosU !== -1 && cPosU < qPosU) {
+        const qLen = uLower.length - qPosU - 1; // question tokens count
+        const map = [];
+        for (let i = 0; i < qcaTokens.length; i++) {
+          if (i < qLen) {
+            map.push(qPosU + i); // QCA question part maps to user question part
+          } else if (i < qcaTokens.length - 1) {
+            map.push(i - qLen);   // QCA context part maps to user context part at beginning
+          } else {
+            map.push(userTokens.length - 1); // [a]
+          }
+        }
+        return map;
+      }
+      
+      // Standard QCA or Story: 1:1 direct mapping
+      return qcaTokens.map((_, i) => i);
     }
 
     async function gen() {
@@ -483,12 +557,13 @@
 
       currentRunId = 'run-' + Date.now();
       currentRunHistory = [];
+      qcaToUserMap = [];
 
       const log = document.getElementById('log');
-      
-      // Preserve prompt line container in terminal log
       const promptLineId = `${currentRunId}-prompt-line`;
       const genStreamId   = `${currentRunId}-gen-stream`;
+      
+      // Initialize prompt line with blinking cursor
       log.innerHTML += `\n&gt; <span id="${promptLineId}"></span><span id="${genStreamId}"></span><span class="cursor" id="active-cursor"></span>`;
       log.scrollTop = log.scrollHeight;
 
@@ -520,7 +595,6 @@
             if (data.ranks) renderRanks(data.ranks);
 
             if (data.stage === 'init') {
-              // 1. Populate canonical QCA pills in KV Tray
               prefContainer.innerHTML = '';
               if (data.qca_tokens) {
                 data.qca_tokens.forEach((t, i) => {
@@ -532,12 +606,14 @@
                 });
               }
 
-              // 2. Render user's prompt as entered into the terminal prompt line
+              qcaToUserMap = computeQcaToUserMap(data.user_tokens, data.qca_tokens);
+
+              // Create ghost placeholder slots for the user's prompt
               const promptLine = document.getElementById(promptLineId);
               if (promptLine && data.user_tokens) {
                 data.user_tokens.forEach((word, idx) => {
                   const span = document.createElement('span');
-                  span.className = 'term-tok';
+                  span.className = 'term-tok tok-ghost';
                   span.id = `${currentRunId}-tok-${idx}`;
                   span.innerText = word + ' ';
                   currentRunHistory.push({ word: word, v: null, ranks: null, attn: null });
@@ -551,25 +627,36 @@
             } else if (data.stage === 'prefill') {
               setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
 
-              // Light up corresponding canonical QCA chip
-              const chip = document.getElementById(`${currentRunId}-chip-${data.cur - 1}`);
+              // 1. Light up corresponding QCA chip in KV tray
+              const qcaIdx = data.cur - 1;
+              const chip = document.getElementById(`${currentRunId}-chip-${qcaIdx}`);
               if (chip) chip.className = 'chip chip-done';
 
-              // Attach attention telemetry to prompt token in history
-              if (data.cur - 1 < currentRunHistory.length) {
-                currentRunHistory[data.cur - 1].v = data.v;
-                currentRunHistory[data.cur - 1].ranks = data.ranks;
-                currentRunHistory[data.cur - 1].attn = data.attn;
+              // 2. Typewriter: Reveal the corresponding slot in the prompt line!
+              const userSlotIdx = (qcaToUserMap && qcaIdx < qcaToUserMap.length) ? qcaToUserMap[qcaIdx] : qcaIdx;
+              const slotSpan = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`);
+              if (slotSpan) {
+                slotSpan.classList.remove('tok-ghost');
+                slotSpan.classList.add('tok-revealed');
               }
+
+              // Save attention data into history
+              if (userSlotIdx < currentRunHistory.length) {
+                currentRunHistory[userSlotIdx].v = data.v;
+                currentRunHistory[userSlotIdx].ranks = data.ranks;
+                currentRunHistory[userSlotIdx].attn = data.attn;
+              }
+              log.scrollTop = log.scrollHeight;
+
             } else if (data.stage === 'gen') {
-              setStat("Generating...", "#ff00aa");
+              setStat("Generating...", "#00e5ff");
 
               const genStream = document.getElementById(genStreamId);
               const tokIndex = currentRunHistory.length;
               currentRunHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
 
               const tokSpan = document.createElement('span');
-              tokSpan.className = 'term-tok';
+              tokSpan.className = 'term-tok tok-revealed tok-ai';
               tokSpan.id = `${currentRunId}-tok-${tokIndex}`;
               tokSpan.innerText = data.w + ' ';
               tokSpan.onmouseenter = (e) => inspectToken(currentRunHistory, tokIndex, currentRunId, e);

@@ -1,4 +1,4 @@
-# mac_server.py - Dual-Mode (Logic QCA + Open Narrative Story) High-Speed Server
+# local.py - High-speed local Mac runner with authentic attention extraction & story sampling
 import os, sys, json, re, time, math, urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import torch, torch.nn.functional as F
@@ -6,11 +6,14 @@ import torch, torch.nn.functional as F
 projectRoot = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, projectRoot)
 
-from benchmarks.fastEvaluator import model, VOCAB, WORD_TO_ID, BLOCK_SIZE, padId, device, NUM_HEADS, HEAD_DIM, EMBED_DIM, cosC, sinC, applyRope
+from benchmarks.fastEvaluator import (
+    model, VOCAB, WORD_TO_ID, BLOCK_SIZE, padId, device, 
+    NUM_HEADS, HEAD_DIM, EMBED_DIM, cosC, sinC, applyRope
+)
 
 model.eval()
 print("=" * 65)
-print(f"[*] Loaded PyTorch Model ({EMBED_DIM}-D, {NUM_HEADS} Heads) on {str(device).upper()}")
+print(f"[*] Loaded PyTorch Model ({EMBED_DIM}-D, {NUM_HEADS} Heads, dk={HEAD_DIM}) on {str(device).upper()}")
 print("[*] Starting Local Neon Cyber-Terminal at http://localhost:8080")
 print("=" * 65)
 
@@ -81,7 +84,7 @@ def layer2_attention_hook(module, inp, out):
     activation_cache["real_attn_matrix"] = avg_head_attn.detach().cpu()
 
 model.layers[2].register_forward_hook(layer2_block_hook)
-model.layers[2].sa.register_forward_hook(layer2_attention_hook)
+model.layers[2].sa.register_forward_hook(layer2_attention_hook) # pyright: ignore[reportAttributeAccessIssue]
 
 class SimulatorHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -89,8 +92,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
         
         if parsed.path in ("/", "/index.html"):
             html_path = os.path.join(projectRoot, "firmware", "index.html")
-            with open(html_path, "rb") as f:
-                content = f.read()
+            with open(html_path, "rb") as f: content = f.read()
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(content)))
@@ -134,7 +136,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
 
             curr_tokens = list(canonical_tks)
             
-            # Phase 1: Prefill prompt tokens
+            # Phase 1: Prefill prompt tokens (Typewriter sync)
             t_prev = time.perf_counter()
             for stp in range(len(canonical_tks)):
                 prefix = curr_tokens[:stp + 1]
@@ -177,7 +179,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
 
             # Phase 2: Autoregressive Generation
             generated_history = []
-            max_gen = 35 if is_logic else 55
+            max_gen = 30 if is_logic else 60
 
             for gen_stp in range(max_gen):
                 pos = len(curr_tokens) - 1
@@ -193,20 +195,24 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 if is_logic:
                     pred_id = lg.argmax().item()
                 else:
-                    # STORY MODE CONTROLS: Temperature, Repetition Penalty & Min-Length Guard
-                    for past_tok in set(curr_tokens[-12:] + generated_history[-10:]):
-                        lg[past_tok] -= 1.8  # Repetition Penalty prevents `. he . he .` loops
+                    for past_tok in set(curr_tokens[-16:] + generated_history[-10:]):
+                        lg[past_tok] -= 1.8
                     
-                    if gen_stp < 12:
-                        lg[WORD_TO_ID.get("<eos>", 2)] = -1e9  # Keep story going for at least 12 words
+                    if gen_stp < 14:
+                        lg[WORD_TO_ID.get("<eos>", 2)] = -1e9
+                        lg[WORD_TO_ID.get(".", 3)] -= 0.8
 
-                    # Temperature scaling & Top-K (K=25) sampling
                     probs = F.softmax(lg / 0.75, dim=-1)
                     top_k_probs, top_k_indices = torch.topk(probs, 25)
                     sample_idx = torch.multinomial(top_k_probs, 1).item()
-                    pred_id = top_k_indices[sample_idx].item()
+                    pred_id = top_k_indices[sample_idx].item() # pyright: ignore[reportArgumentType]
 
-                word = VOCAB[pred_id]
+                word = VOCAB[pred_id] # type: ignore
+                
+                # Suppress <eos> or <pad> tag from being displayed
+                if word in ("<eos>", "<pad>"):
+                    break
+
                 lat_ms = int((time.perf_counter() - t_prev) * 1000)
                 t_prev = time.perf_counter()
 
@@ -233,10 +239,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "attn": attn_weights
                 })
 
-                if word in ("<eos>", "<pad>"):
-                    break
-
-                curr_tokens.append(pred_id)
+                curr_tokens.append(pred_id) # pyright: ignore[reportArgumentType]
                 generated_history.append(pred_id)
                 if len(curr_tokens) >= BLOCK_SIZE:
                     break
