@@ -30,11 +30,13 @@
   "categories": [
     {
       "name": "01: Single Supporting Fact",
-      "weight": 3.5,
+      "weight": 15,
       "premise": [
-        "{actor1} went to the {location1} . {actor2} went to the {location2}",
-        "{actor2} went to the {location2} . {actor1} went to the {location1}"
-      ],
+  "{actor1} went to the {location1} . {actor2} went to the {location2}",
+  "{actor2} went to the {location2} . {actor1} went to the {location1}",
+  "{actor1} went to the {location1} . {actor2} went to the {location2} . {actor3} went to the {location3}",
+  "{actor3} went to the {location3} . {actor1} went to the {location1} . {actor2} went to the {location2}"
+],
       "queries": [
         { "q": "where is {actor1}", "a": "{location1} ." },
         { "q": "where is {actor2}", "a": "{location2} ." },
@@ -96,7 +98,7 @@
     },
     {
       "name": "06: Yes/No Truth Verification",
-      "weight": 4.0,
+      "weight": 12,
       "premise": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
         "{actor2} went to the {location2} . {actor1} went to the {location1}"
@@ -235,7 +237,7 @@
     },
     {
       "name": "16: Basic Induction",
-      "weight": 4.0,
+      "weight": 10,
       "premise": [
         "{actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . {actor3} has the {item1}",
         "{actor2} has a {colour2} {item2} . {actor1} has a {colour1} {item1} . {actor3} has the {item1}"
