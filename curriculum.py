@@ -102,10 +102,7 @@ FEMALE_ACTORS = {"alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "
 def generateAtomicSample(cfg, targetCategory=None):
     pools      = cfg["pools"]
     categories = cfg["categories"]
-    
-    # Priority: explicit "weights" dictionary -> individual category["weight"] -> default 2.0
-    w_dict = cfg.get("weights") or cfg.get("category_weights") or {}
-    weights = [float(w_dict.get(c["name"], c.get("weight", 2.0))) for c in categories]
+    weights    = [float(c["weight"]) for c in categories]
 
     cat = (next((c for c in categories if c["name"] == targetCategory), None)
            if targetCategory else random.choices(categories, weights=weights)[0])

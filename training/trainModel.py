@@ -10,23 +10,33 @@ with open("config/model.json", "r") as f: modCfg = json.load(f)
 cfgPath = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
 with open(cfgPath, "r") as f: logCfg = json.load(f)
 
-weightsOverride = (
-    modCfg.get("weights")
-    or modCfg.get("training", {}).get("weights")
-    or modCfg.get("category_weights")
-    or modCfg.get("training", {}).get("category_weights")
-    or logCfg.get("weights")
-)
-if os.path.exists("config/weights.json"):
-    try:
-        with open("config/weights.json", "r") as f:
-            weightsOverride = json.load(f)
-    except Exception:
-        pass
+weightsMap = modCfg['weights']
 
-if weightsOverride:
-    logCfg["weights"] = weightsOverride
-    print(f"[✓] Applied separate weights dictionary ({len(weightsOverride)} category overrides).")
+if not weightsMap and os.path.exists("config/weights.json"):
+    with open("config/weights.json", "r") as f: weightsMap = json.load(f)
+
+if not weightsMap:
+    raise RuntimeError("[!] FATAL: No 'weights' found in model.json! Cannot train without category weights.")
+
+# Explicitly apply weights to each category
+missing = []
+for cat in logCfg["categories"]:
+    cname = cat["name"]
+    if cname in weightsMap:
+        cat["weight"] = float(weightsMap[cname])
+    elif "weight" in cat:
+        pass  # Keep fallback from world.json if present
+    else:
+        missing.append(cname)
+
+if missing:
+    print(f"[!] WARNING: The following {len(missing)} categories are missing from weights: {missing}")
+
+# Sort and print top weights so you can VERIFY them in the Colab output
+top_weights = sorted([(c["name"], c.get("weight", 1.0)) for c in logCfg["categories"]], key=lambda x: x[1], reverse=True)[:5]
+top_str = ", ".join([f"{name[:15]}={w}" for name, w in top_weights])
+print(f"[✓] Successfully loaded weights from model.json! (Top: {top_str}...)")
+print(f"[✓] Applied separate weights dictionary ({len(weightsMap)} category overrides).")
 
 # Architecture Configuration
 VOCAB_SIZE   = modCfg["architecture"]["vocab_size"]
