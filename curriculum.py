@@ -20,108 +20,57 @@ def pluralize(word, count=2):
     if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou": return word[:-1] + "ies"
     return word + "s"
 
-# ── Propositional Logic ────────────────────────────────────────────────────────
-PROP_RULES = [
-    {"cond": "the door is open",   "concl": "the dog is outside",   "target": "is the dog outside"},
-    {"cond": "it is raining",      "concl": "the ground is wet",     "target": "is the ground wet"},
-    {"cond": "the sun is warm",    "concl": "the park is crowded",   "target": "is the park crowded"},
-    {"cond": "the box is heavy",   "concl": "it is hard to carry",   "target": "is it hard to carry"},
-    {"cond": "alice is hungry",    "concl": "alice wants to eat",    "target": "does alice want to eat"},
-    {"cond": "the window is open", "concl": "the room is cold",      "target": "is the room cold"},
-    {"cond": "bob is tired",       "concl": "bob wants to sleep",    "target": "does bob want to sleep"},
-    {"cond": "the cat is inside",  "concl": "the cat is warm",       "target": "is the cat warm"},
-    {"cond": "luna is happy",      "concl": "luna is smiling",       "target": "is luna smiling"},
-    {"cond": "the jar is full",    "concl": "the jar is heavy",      "target": "is the jar heavy"}
-]
-
-def generatePropositionalSample():
-    rule = random.choice(PROP_RULES)
-    modePonens = random.random() < 0.5
-    if modePonens:
-        premise = f"if {rule['cond']} then {rule['concl']} . {rule['cond']}"
-        answer  = "yes"
-    else:
-        premise = f"if {rule['cond']} then {rule['concl']} . {rule['concl']} is not true"
-        answer  = "no"
-    return formatQaSequence(premise, rule["target"], answer)
-
-# ── Comparative Chains ─────────────────────────────────────────────────────────
-COMP_PAIRS    = [("bigger", "biggest"), ("smaller", "smallest"),
-                 ("faster", "fastest"), ("slower",  "slowest")]
-COMP_ENTITIES = ["the elephant", "the lion", "the dog", "the rabbit", "the turtle",
-                 "the cat", "the bird", "alice", "bob", "felix", "luna"]
-
-def generateComparativeSample():
-    comp, sup = random.choice(COMP_PAIRS)
-    e1, e2, e3 = random.sample(COMP_ENTITIES, 3)
-    opp_sup = {"biggest": "smallest", "smallest": "biggest",
-               "fastest": "slowest",  "slowest":  "fastest"}[sup]
-    askTop = random.random() < 0.5
-    premise = f"{e1} is {comp} than {e2} . {e2} is {comp} than {e3}"
-    if askTop:
-        question = f"who is the {sup}"
-        answer   = e1
-    else:
-        question = f"who is the {opp_sup}"
-        answer   = e3
-    return formatQaSequence(premise, question, answer)
-
-# ── General Conversation ───────────────────────────────────────────────────────
-_CONV = {
-    "greet": {
-        "u": ["hello", "hi", "hey", "good morning", "good day"],
-        "r": ["hello friend"]
-    },
-    "howru": {
-        "u": ["how are you", "how are you doing", "how is your day", "are you well"],
-        "r": ["i am doing great"]
-    },
-    "identity": {
-        "u": ["who are you", "what are you", "are you an ai", "what can you do"],
-        "r": ["i am an ai"]
-    },
-    "thanks": {
-        "u": ["thank you", "thanks", "thank you very much"],
-        "r": ["you are welcome"]
-    },
-    "bye": {
-        "u": ["goodbye", "bye", "see you later", "have a good day"],
-        "r": ["goodbye friend"]
-    }
-}
-
-def generateConversationSample():
-    intent = random.choice(list(_CONV.keys()))
-    utterance = random.choice(_CONV[intent]["u"])
-    reply     = random.choice(_CONV[intent]["r"])
-    return formatQaSequence(f"user : {utterance}", "how do you respond", f"reply : {reply}")
-
 NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 FEMALE_ACTORS = {"alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"}
 
 def generateAtomicSample(cfg, targetCategory=None):
     pools      = cfg["pools"]
     categories = cfg["categories"]
-    weights    = [float(c["weight"]) for c in categories]
+
+    weights = []
+    for c in categories:
+        if "weight" not in c:
+            raise KeyError(f"[!] FATAL: Category '{c.get('name')}' is missing mandatory 'weight' field.")
+        w = float(c["weight"])
+        if w <= 0.0:
+            raise ValueError(f"[!] FATAL: Category '{c.get('name')}' has non-positive weight: {w}")
+        weights.append(w)
 
     cat = (next((c for c in categories if c["name"] == targetCategory), None)
            if targetCategory else random.choices(categories, weights=weights)[0])
-    if cat is None: cat = random.choice(categories)
+    if cat is None:
+        raise RuntimeError("[!] FATAL: Failed to sample category from curriculum.")
 
     ctype = cat.get("type", "")
-    if ctype == "propositional_logic": return generatePropositionalSample()
-    if ctype == "comparative_chains":  return generateComparativeSample()
-    if ctype == "conversation":        return generateConversationSample()
-
     premiseTmpl = random.choice(cat.get("premise", cat.get("premises", [""])))
     queries     = cat["queries"]
 
+    # 1. Strict 50/50 balance for boolean / polar queries
     hasYes = any("yes" in str(q.get("a", "")) for q in queries)
     hasNo  = any("no" in str(q.get("a", "")) for q in queries)
     if hasYes and hasNo:
         wantYes = random.random() < 0.50
         filtered = [q for q in queries if ("yes" in str(q.get("a", ""))) == wantYes]
         queryObj = random.choice(filtered) if filtered else random.choice(queries)
+
+    # 2. Adversarial Anti-Recency Engine: Penalizes lazy token-distance shortcuts
+    elif "{actor1}" in premiseTmpl and "{actor2}" in premiseTmpl:
+        dist_actor = "actor1" if premiseTmpl.find("{actor1}") < premiseTmpl.find("{actor2}") else "actor2"
+        rec_actor = "actor2" if dist_actor == "actor1" else "actor1"
+        
+        dist_queries = [q for q in queries if f"{{{dist_actor}}}" in str(q)]
+        rec_queries  = [q for q in queries if f"{{{rec_actor}}}" in str(q)]
+        other_queries = [q for q in queries if q not in dist_queries and q not in rec_queries]
+        
+        r = random.random()
+        if r < 0.60 and dist_queries:      # 60% Distant Penalty forces true pointer routing
+            queryObj = random.choice(dist_queries)
+        elif r < 0.85 and rec_queries:     # 25% Recent
+            queryObj = random.choice(rec_queries)
+        elif other_queries:                # 15% Other
+            queryObj = random.choice(other_queries)
+        else:
+            queryObj = random.choice(queries)
     else:
         queryObj = random.choice(queries)
 
@@ -141,30 +90,6 @@ def generateAtomicSample(cfg, targetCategory=None):
 
     for k in ("item1", "item2", "item3", "item4"):
         bindings[f"{k}_plural"] = pluralize(bindings[k], 2)
-
-    if ctype == "direct_arithmetic":
-        isSub = "minus" in premiseTmpl
-        if isSub:
-            n1 = random.randint(1, 9); n2 = random.randint(0, n1); ans = n1 - n2
-        else:
-            n1 = random.randint(0, 9); n2 = random.randint(0, 9 - n1); ans = n1 + n2
-        bindings["n1_word"]  = NUM_WORDS[n1]
-        bindings["n2_word"]  = NUM_WORDS[n2]
-        bindings["ans_word"] = NUM_WORDS[ans] if ans > 0 else "zero"
-
-    elif ctype == "arithmetic" or "Arithmetic" in cat.get("name", ""):
-        isSub = "gave" in premiseTmpl and "to {actor2}" in premiseTmpl
-        if isSub:
-            n1 = random.randint(1, 5); n2 = random.randint(1, n1); ans = n1 - n2
-        else:
-            n1 = random.randint(1, 4); n2 = random.randint(1, 4); ans = n1 + n2
-            
-        bindings["n1_word"]   = NUM_WORDS[n1]
-        bindings["n2_word"]   = NUM_WORDS[n2]
-        bindings["ans_word"]  = NUM_WORDS[ans] if ans > 0 else "none"
-        bindings["item1_n1"]  = pluralize(bindings["item1"], n1)
-        bindings["item1_n2"]  = pluralize(bindings["item1"], n2)
-        bindings["item1_ans"] = pluralize(bindings["item1"], ans)
 
     rawQ      = queryObj["q"]
     qStr      = random.choice(rawQ) if isinstance(rawQ, list) else rawQ
