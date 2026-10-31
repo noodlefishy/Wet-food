@@ -1,302 +1,152 @@
 [
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] rocky went to the garden . leo went to the shed . [q] where is leo ? [a]",
-    "target": "leo : shed .",
-    "got": "leo : garden . <eos>"
+    "category": "08: Lists and Sets",
+    "question": "[q] what does leo have ? [c] oliver has the ball . leo has the pencil and the box . [a]",
+    "target": "pencil and box .",
+    "got": "pencil . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the shed . rocky went to the garden . [q] where is rocky ? [a]",
-    "target": "rocky : garden .",
-    "got": "rocky : shed . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is rocky in the garage ? [c] rocky is not in the garage . rocky is in the garage or the bedroom . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the library . charlie went to the yard . [q] where is charlie ? [a]",
-    "target": "charlie : yard .",
-    "got": "charlie : library . <eos>"
+    "category": "12: Conjunction",
+    "question": "[q] where is rocky ? [c] ruby and leo went to the park . rocky went to the balcony . [a]",
+    "target": "balcony .",
+    "got": "park . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the yard . chloe went to the library . [q] where is chloe ? [a]",
-    "target": "chloe : library .",
-    "got": "chloe : yard . <eos>"
+    "category": "12: Conjunction",
+    "question": "[q] who is in the bedroom ? [c] ruby and jack went to the bedroom . buster went to the garden . [a]",
+    "target": "ruby and jack .",
+    "got": "ruby . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] ruby went to the garden . bob went to the basement . [q] where is bob ? [a]",
-    "target": "bob : basement .",
-    "got": "bob : garden . <eos>"
+    "category": "12: Conjunction",
+    "question": "[q] where is lucy ? [c] lucy and rocky went to the attic . mia went to the balcony . [a]",
+    "target": "attic .",
+    "got": "balcony . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] bob went to the basement . ruby went to the garden . [q] where is ruby ? [a]",
-    "target": "ruby : garden .",
-    "got": "ruby : basement . <eos>"
+    "category": "12: Conjunction",
+    "question": "[q] where is bella ? [c] lucy and sam went to the bedroom . bella went to the balcony . [a]",
+    "target": "balcony .",
+    "got": "bedroom . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] simba went to the room . felix went to the attic . [q] where is felix ? [a]",
-    "target": "felix : attic .",
-    "got": "felix : room . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the bowl to the left of the hat ? [c] the apple is to the left of the bowl . the hat is to the left of the apple . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] felix went to the attic . simba went to the room . [q] where is simba ? [a]",
-    "target": "simba : room .",
-    "got": "simba : attic . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the bowl to the left of the stick ? [c] the ball is to the left of the bowl . the stick is to the left of the ball . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] rocky went to the yard . chloe went to the park . [q] where is chloe ? [a]",
-    "target": "chloe : park .",
-    "got": "chloe : yard . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the box to the left of the bowl ? [c] the stick is to the left of the box . the bowl is to the left of the stick . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the park . rocky went to the yard . [q] where is rocky ? [a]",
-    "target": "rocky : yard .",
-    "got": "rocky : park . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the stick to the left of the hat ? [c] the toy is to the left of the stick . the hat is to the left of the toy . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] ruby went to the garage . lily went to the forest . [q] where is lily ? [a]",
-    "target": "lily : forest .",
-    "got": "lily : garage . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the bottle to the left of the cup ? [c] the ball is to the left of the bottle . the cup is to the left of the ball . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] lily went to the forest . ruby went to the garage . [q] where is ruby ? [a]",
-    "target": "ruby : garage .",
-    "got": "ruby : forest . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the ball to the left of the bottle ? [c] the plate is to the left of the ball . the bottle is to the left of the plate . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] bob went to the garden . simba went to the hallway . [q] where is simba ? [a]",
-    "target": "simba : hallway .",
-    "got": "simba : garden . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the book to the left of the cup ? [c] the key is to the left of the book . the cup is to the left of the key . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] simba went to the hallway . bob went to the garden . [q] where is bob ? [a]",
-    "target": "bob : garden .",
-    "got": "bob : hallway . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the bowl to the left of the stick ? [c] the ball is to the left of the bowl . the stick is to the left of the ball . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] bob went to the hallway . oliver went to the garden . [q] where is oliver ? [a]",
-    "target": "oliver : garden .",
-    "got": "oliver : hallway . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the ball to the left of the hat ? [c] the key is to the left of the ball . the hat is to the left of the key . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the garden . bob went to the hallway . [q] where is bob ? [a]",
-    "target": "bob : hallway .",
-    "got": "bob : garden . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the toy to the left of the hat ? [c] the pencil is to the left of the hat . the toy is to the left of the pencil . [a]",
+    "target": "yes .",
+    "got": "no . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the yard . oliver went to the forest . [q] where is oliver ? [a]",
-    "target": "oliver : forest .",
-    "got": "oliver : yard . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the stick to the left of the hat ? [c] the plate is to the left of the hat . the stick is to the left of the plate . [a]",
+    "target": "yes .",
+    "got": "no . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the forest . sam went to the yard . [q] where is sam ? [a]",
-    "target": "sam : yard .",
-    "got": "sam : forest . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the bottle to the left of the hat ? [c] the apple is to the left of the bottle . the hat is to the left of the apple . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the bedroom . charlie went to the garden . [q] where is charlie ? [a]",
-    "target": "charlie : garden .",
-    "got": "charlie : bedroom . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the bottle to the left of the hat ? [c] the pencil is to the left of the bottle . the hat is to the left of the pencil . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the garden . oliver went to the bedroom . [q] where is oliver ? [a]",
-    "target": "oliver : bedroom .",
-    "got": "oliver : garden . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the key to the left of the cup ? [c] the book is to the left of the key . the cup is to the left of the book . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the kitchen . lucy went to the porch . [q] where is lucy ? [a]",
-    "target": "lucy : porch .",
-    "got": "lucy : kitchen . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the box to the left of the stick ? [c] the bottle is to the left of the box . the stick is to the left of the bottle . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] lucy went to the porch . charlie went to the kitchen . [q] where is charlie ? [a]",
-    "target": "charlie : kitchen .",
-    "got": "charlie : porch . <eos>"
+    "category": "17: Positional Reasoning",
+    "question": "[q] is the cup to the left of the bowl ? [c] the bowl is to the left of the stick . the stick is to the left of the cup . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the basement . lucy went to the room . [q] where is lucy ? [a]",
-    "target": "lucy : room .",
-    "got": "lucy : basement . <eos>"
+    "category": "18: Size Reasoning",
+    "question": "[q] is the ball bigger than the stick ? [c] the cup is bigger than the ball . the stick is bigger than the cup . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] lucy went to the room . chloe went to the basement . [q] where is chloe ? [a]",
-    "target": "chloe : basement .",
-    "got": "chloe : room . <eos>"
+    "category": "18: Size Reasoning",
+    "question": "[q] is the bottle bigger than the ball ? [c] the toy is bigger than the bottle . the ball is bigger than the toy . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the park . ruby went to the forest . [q] where is ruby ? [a]",
-    "target": "ruby : forest .",
-    "got": "ruby : park . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] ruby went to the forest . leo went to the park . [q] where is leo ? [a]",
-    "target": "leo : park .",
-    "got": "leo : forest . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] max went to the garden . lucy went to the library . [q] where is lucy ? [a]",
-    "target": "lucy : library .",
-    "got": "lucy : garden . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] max went to the garden . lucy went to the library . [q] who went to the library ? [a]",
-    "target": "library : lucy .",
-    "got": "library : max . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] lucy went to the library . max went to the garden . [q] where is max ? [a]",
-    "target": "max : garden .",
-    "got": "max : library . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] lucy went to the library . max went to the garden . [q] who went to the library ? [a]",
-    "target": "library : lucy .",
-    "got": "library : max . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] leo went to the bedroom . zoe went to the library . [q] where is zoe ? [a]",
-    "target": "zoe : library .",
-    "got": "zoe : bedroom . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] zoe went to the library . leo went to the bedroom . [q] where is leo ? [a]",
-    "target": "leo : bedroom .",
-    "got": "leo : library . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] bella went to the shed . rocky went to the basement . [q] where is rocky ? [a]",
-    "target": "rocky : basement .",
-    "got": "rocky : shed . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] rocky went to the basement . bella went to the shed . [q] where is bella ? [a]",
-    "target": "bella : shed .",
-    "got": "bella : basement . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] buster went to the yard . oliver went to the shed . [q] where is oliver ? [a]",
-    "target": "oliver : shed .",
-    "got": "oliver : yard . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the shed . buster went to the yard . [q] where is buster ? [a]",
-    "target": "buster : yard .",
-    "got": "buster : shed . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the shed . oliver went to the porch . [q] where is oliver ? [a]",
-    "target": "oliver : porch .",
-    "got": "oliver : shed . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the shed . oliver went to the porch . [q] who went to the shed ? [a]",
-    "target": "shed : sam .",
-    "got": "shed : oliver . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the porch . sam went to the shed . [q] where is sam ? [a]",
-    "target": "sam : shed .",
-    "got": "sam : porch . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] alice went to the hallway . chloe went to the attic . [q] where is chloe ? [a]",
-    "target": "chloe : attic .",
-    "got": "chloe : hallway . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] chloe went to the attic . alice went to the hallway . [q] where is alice ? [a]",
-    "target": "alice : hallway .",
-    "got": "alice : attic . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the library . oliver went to the forest . [q] where is sam ? [a]",
-    "target": "sam : library .",
-    "got": "sam : forest . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oliver went to the forest . sam went to the library . [q] where is sam ? [a]",
-    "target": "sam : library .",
-    "got": "sam : forest . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] charlie went to the garden . toby went to the porch . [q] where is toby ? [a]",
-    "target": "toby : porch .",
-    "got": "toby : garden . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] toby went to the porch . charlie went to the garden . [q] where is charlie ? [a]",
-    "target": "charlie : garden .",
-    "got": "charlie : porch . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] lucy went to the garage . sam went to the bedroom . [q] where is sam ? [a]",
-    "target": "sam : bedroom .",
-    "got": "sam : garage . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] sam went to the bedroom . lucy went to the garage . [q] where is lucy ? [a]",
-    "target": "lucy : garage .",
-    "got": "lucy : bedroom . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oscar went to the shed . ruby went to the porch . [q] where is ruby ? [a]",
-    "target": "ruby : porch .",
-    "got": "ruby : shed . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] oscar went to the shed . ruby went to the porch . [q] who went to the shed ? [a]",
-    "target": "shed : oscar .",
-    "got": "shed : ruby . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[c] ruby went to the porch . oscar went to the shed . [q] where is oscar ? [a]",
-    "target": "oscar : shed .",
-    "got": "oscar : porch . <eos>"
+    "category": "18: Size Reasoning",
+    "question": "[q] is the bottle bigger than the ball ? [c] the stick is bigger than the bottle . the ball is bigger than the stick . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   }
 ]
