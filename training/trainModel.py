@@ -10,6 +10,24 @@ with open("config/model.json", "r") as f: modCfg = json.load(f)
 cfgPath = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
 with open(cfgPath, "r") as f: logCfg = json.load(f)
 
+weightsOverride = (
+    modCfg.get("weights")
+    or modCfg.get("training", {}).get("weights")
+    or modCfg.get("category_weights")
+    or modCfg.get("training", {}).get("category_weights")
+    or logCfg.get("weights")
+)
+if os.path.exists("config/weights.json"):
+    try:
+        with open("config/weights.json", "r") as f:
+            weightsOverride = json.load(f)
+    except Exception:
+        pass
+
+if weightsOverride:
+    logCfg["weights"] = weightsOverride
+    print(f"[✓] Applied separate weights dictionary ({len(weightsOverride)} category overrides).")
+
 # Architecture Configuration
 VOCAB_SIZE   = modCfg["architecture"]["vocab_size"]
 BLOCK_SIZE   = modCfg["architecture"]["block_size"]

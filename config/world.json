@@ -30,7 +30,6 @@
   "categories": [
     {
       "name": "01: Single Supporting Fact",
-      "weight": 30.0,
       "premise": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
         "{actor2} went to the {location2} . {actor1} went to the {location1}"
@@ -44,7 +43,6 @@
     },
     {
       "name": "02: Two Supporting Facts",
-      "weight": 2.0,
       "premise": [
         "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}"
       ],
@@ -58,7 +56,6 @@
     },
     {
       "name": "03: Three Supporting Facts",
-      "weight": 2.0,
       "premise": [
         "{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}"
       ],
@@ -70,7 +67,6 @@
     },
     {
       "name": "04: Two Argument Relations",
-      "weight": 4.0,
       "premise": [
         "the {location1} is north of the {location2} . the {location2} is north of the {location3}",
         "the {location2} is north of the {location3} . the {location1} is north of the {location2}"
@@ -84,7 +80,6 @@
     },
     {
       "name": "05: Three Argument Relations",
-      "weight": 2.0,
       "premise": [
         "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}"
       ],
@@ -96,21 +91,19 @@
     },
     {
       "name": "06: Yes/No Truth Verification",
-      "weight": 10.0,
       "premise": [
         "{actor1} went to the {location1} . {actor2} went to the {location2}",
         "{actor2} went to the {location2} . {actor1} went to the {location1}"
       ],
       "queries": [
-        { "q": "is {actor1} in the {location1}", "a": "{location1} : yes ." },
-        { "q": "is {actor2} in the {location2}", "a": "{location2} : yes ." },
-        { "q": "is {actor1} in the {location2}", "a": "{location2} : no ." },
-        { "q": "is {actor2} in the {location1}", "a": "{location1} : no ." }
+        { "q": "is {actor1} in the {location1}", "a": "{actor1} : yes ." },
+        { "q": "is {actor2} in the {location2}", "a": "{actor2} : yes ." },
+        { "q": "is {actor1} in the {location2}", "a": "{actor1} : no ." },
+        { "q": "is {actor2} in the {location1}", "a": "{actor2} : no ." }
       ]
     },
     {
       "name": "07: Counting",
-      "weight": 6.0,
       "premise": [
         "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
         "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
@@ -122,7 +115,6 @@
     },
     {
       "name": "07: Counting Inverse Symmetry",
-      "weight": 6.0,
       "premise": [
         "{actor1} has the {item1} . {actor2} has the {item2} and the {item3}",
         "{actor2} has the {item2} and the {item3} . {actor1} has the {item1}"
@@ -134,7 +126,6 @@
     },
     {
       "name": "08: Lists and Sets",
-      "weight": 6.0,
       "premise": [
         "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
         "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
@@ -146,7 +137,6 @@
     },
     {
       "name": "09: Simple Negation",
-      "weight": 3.0,
       "premise": [
         "{actor1} is not in the {location1} . {actor1} is in the {location2}",
         "{actor1} is in the {location2} . {actor1} is not in the {location1}"
@@ -159,7 +149,6 @@
     },
     {
       "name": "10: Indefinite Knowledge",
-      "weight": 3.0,
       "premise": [
         "{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}",
         "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"
@@ -172,7 +161,6 @@
     },
     {
       "name": "11: Basic Coreference",
-      "weight": 2.0,
       "premise": [
         "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}"
       ],
@@ -183,7 +171,6 @@
     },
     {
       "name": "12: Conjunction",
-      "weight": 6.0,
       "premise": [
         "{actor1} and {actor2} went to the {location1} . {actor3} went to the {location2}",
         "{actor3} went to the {location2} . {actor1} and {actor2} went to the {location1}"
@@ -198,7 +185,6 @@
     },
     {
       "name": "13: Compound Coreference",
-      "weight": 2.5,
       "premise": [
         "{actor1} and {actor2} were in the {location1} . then they went to the {location2}"
       ],
@@ -211,7 +197,6 @@
     },
     {
       "name": "14: Time Reasoning",
-      "weight": 2.0,
       "premise": [
         "first {actor1} was in the {location1} . then {actor1} was in the {location2}"
       ],
@@ -222,7 +207,6 @@
     },
     {
       "name": "15: Basic Deduction",
-      "weight": 2.0,
       "premise": [
         "cats like the {item1} . {actor1} is a cat",
         "{actor1} is a cat . cats like the {item1}"
@@ -233,10 +217,9 @@
     },
     {
       "name": "16: Basic Induction",
-      "weight": 8.0,
       "premise": [
-        "{actor1} has a {colour1} {item1} . {actor2} has a {colour2} {item2} . {actor3} has the {item1}",
-        "{actor2} has a {colour2} {item2} . {actor1} has a {colour1} {item1} . {actor3} has the {item1}"
+        "the {item1} is {colour1} . the {item2} is {colour2} . {actor1} has the {item1}",
+        "the {item2} is {colour2} . the {item1} is {colour1} . {actor1} has the {item1}"
       ],
       "queries": [
         { "q": "what colour is the {item1}", "a": "{item1} : {colour1} ." },
@@ -245,33 +228,30 @@
     },
     {
       "name": "17: Positional Reasoning",
-      "weight": 4.0,
       "premise": [
         "the {item1} is to the left of the {item2} . the {item2} is to the left of the {item3}",
         "the {item2} is to the left of the {item3} . the {item1} is to the left of the {item2}"
       ],
       "queries": [
         { "q": "what is to the left of the {item2}", "a": "left : {item1} ." },
-        { "q": "is the {item1} to the left of the {item3}", "a": "answer : yes ." },
-        { "q": "is the {item3} to the left of the {item1}", "a": "answer : no ." }
+        { "q": "is the {item1} to the left of the {item3}", "a": "{item1} : yes ." },
+        { "q": "is the {item3} to the left of the {item1}", "a": "{item3} : no ." }
       ]
     },
     {
       "name": "18: Size Reasoning",
-      "weight": 4.0,
       "premise": [
         "the {item1} is bigger than the {item2} . the {item2} is bigger than the {item3}",
         "the {item2} is bigger than the {item3} . the {item1} is bigger than the {item2}"
       ],
       "queries": [
         { "q": "what is bigger than the {item2}", "a": "bigger : {item1} ." },
-        { "q": "is the {item1} bigger than the {item3}", "a": "answer : yes ." },
-        { "q": "is the {item3} bigger than the {item1}", "a": "answer : no ." }
+        { "q": "is the {item1} bigger than the {item3}", "a": "{item1} : yes ." },
+        { "q": "is the {item3} bigger than the {item1}", "a": "{item3} : no ." }
       ]
     },
     {
       "name": "19: Micro Navigation",
-      "weight": 2.0,
       "premise": [
         "the {location1} leads to the {location2} . the {location2} leads to the {location3}",
         "the {location2} leads to the {location3} . the {location1} leads to the {location2}"
@@ -283,7 +263,6 @@
     },
     {
       "name": "20: Agent Motivations",
-      "weight": 2.0,
       "premise": [
         "{actor1} is hungry . {actor1} went to the kitchen . {actor2} is tired . {actor2} went to the room",
         "{actor2} is tired . {actor2} went to the room . {actor1} is hungry . {actor1} went to the kitchen"
@@ -295,7 +274,6 @@
     },
     {
       "name": "22: Polar Possession",
-      "weight": 10.0,
       "premise": [
         "{actor1} has the {item1} . {actor2} has the {item2}",
         "{actor2} has the {item2} . {actor1} has the {item1}"
@@ -309,7 +287,6 @@
     },
     {
       "name": "23: Basic Arithmetic",
-      "weight": 0.5,
       "type": "arithmetic",
       "premise": [
         "{actor1} had {n1_word} {item1_n1} . {actor2} gave {actor1} {n2_word} {item1_n2}",
@@ -321,7 +298,6 @@
     },
     {
       "name": "24: Direct Arithmetic",
-      "weight": 1.0,
       "type": "direct_arithmetic",
       "premise": [
         "{n1_word} plus {n2_word}",
@@ -333,21 +309,18 @@
     },
     {
       "name": "25: Propositional Logic",
-      "weight": 1.0,
       "type": "propositional_logic",
       "premise": ["_generated_"],
       "queries": [{ "q": "_generated_", "a": "_generated_" }]
     },
     {
       "name": "26: Comparative Chains",
-      "weight": 2.5,
       "type": "comparative_chains",
       "premise": ["_generated_"],
       "queries": [{ "q": "_generated_", "a": "_generated_" }]
     },
     {
       "name": "27: General Conversation",
-      "weight": 1.0,
       "type": "conversation",
       "premise": ["_generated_"],
       "queries": [{ "q": "_generated_", "a": "_generated_" }]
