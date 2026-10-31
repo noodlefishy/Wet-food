@@ -13,30 +13,36 @@
   },
   "training": {
     "device": "cuda",
-    "total_steps": 20000,
-    "warmup_steps": 1000,
-    "base_lr": 0.0015,
-    "min_lr": 0.0001,
-    "batch_qa": 16,
-    "batch_st": 10,
     "weight_decay": 0.01,
     "grad_clip": 1.0,
-    "loss_weights": {
-      "qa": 1.2,
-      "story_base": 0.35,
-      "story_min": 0.15
+    "pretrain": {
+      "steps": 10000,
+      "batch_size": 32,
+      "warmup_steps": 500,
+      "base_lr": 0.002,
+      "min_lr": 0.0002
+    },
+    "sft": {
+      "steps": 16000,
+      "batch_size": 24,
+      "base_lr": 0.0005,
+      "min_lr": 0.00005
     }
   },
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
-    "logic_samples_target": 50000,
+    "logic_samples_target": 8000,
     "core_words": [
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
       "question", "answer", "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
       "who", "what", "where", "how", "many", "why", "is", "are", "was", "were", "does", "did",
       "he", "she", "they", "it", "alice", "bob", "felix", "luna", "cat", "cats",
-      "garden", "kitchen", "park", "room", "ball", "balls", "box", "boxes", "book", "books",
-      "cup", "cups", "key", "keys", "bag", "bags", "toy", "toys",
+      "garden", "kitchen", "park", "room", "bedroom", "attic", "basement",
+      "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony",
+      "ball", "balls", "box", "boxes", "book", "books", "cup", "cups", "key", "keys",
+      "bag", "bags", "toy", "toys", "stick", "sticks", "blanket", "blankets",
+      "apple", "apples", "hat", "hats", "bottle", "bottles", "bowl", "bowls",
+      "plate", "plates", "pencil", "pencils", "coin", "coins",
       "red", "blue", "yellow", "green", "white", "black", "colour", "hot", "cold", "heavy", "light",
       "clean", "dirty", "open", "closed", "north", "south", "left", "right",
       "bigger", "smaller", "faster", "slower", "biggest", "smallest", "fastest", "slowest",

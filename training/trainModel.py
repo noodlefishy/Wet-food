@@ -10,6 +10,7 @@ with open("config/model.json", "r") as f: modCfg = json.load(f)
 cfgPath = "config/world.json" if os.path.exists("config/world.json") else "config/logic.json"
 with open(cfgPath, "r") as f: logCfg = json.load(f)
 
+# Architecture Configuration
 VOCAB_SIZE   = modCfg["architecture"]["vocab_size"]
 BLOCK_SIZE   = modCfg["architecture"]["block_size"]
 EMBED_DIM    = modCfg["architecture"]["embed_dim"]
@@ -19,6 +20,24 @@ MEOW_LAYERS  = modCfg["architecture"].get("meow_layers", 3)
 MIAOU_LAYERS = modCfg["architecture"].get("miaou_layers", 3)
 HEAD_DIM     = EMBED_DIM // NUM_HEADS
 DEVICE       = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+
+# Training Hyperparameters loaded from model.json
+trnCfg = modCfg.get("training", {})
+WEIGHT_DECAY = trnCfg.get("weight_decay", 0.01)
+GRAD_CLIP    = trnCfg.get("grad_clip", 1.0)
+
+pretrainCfg    = trnCfg.get("pretrain", {})
+PRETRAIN_STEPS = pretrainCfg.get("steps", 10000)
+PRETRAIN_BATCH = pretrainCfg.get("batch_size", 32)
+PRETRAIN_LR    = pretrainCfg.get("base_lr", 0.002)
+PRETRAIN_MINLR = pretrainCfg.get("min_lr", 0.0002)
+WARMUP_STEPS   = pretrainCfg.get("warmup_steps", 500)
+
+sftCfg    = trnCfg.get("sft", {})
+SFT_STEPS = sftCfg.get("steps", 16000)
+SFT_BATCH = sftCfg.get("batch_size", 24)
+SFT_LR    = sftCfg.get("base_lr", 0.0005)
+SFT_MINLR = sftCfg.get("min_lr", 0.00005)
 
 MODELS_DIR = modCfg["paths"]["models_dir"]
 STORIES_FILE = modCfg["paths"]["stories_file"]
@@ -42,8 +61,8 @@ else:
             if f.tell() >= 6 * 1024 * 1024: break
     with open(STORIES_FILE, "r", encoding="utf-8", errors="ignore") as f: rawStories = f.read().lower()
 
-TARGET_LOGIC = modCfg["dataset"].get("logic_samples_target", 50000)
-allQaTasks = [generateAtomicSample(logCfg) for _ in range(TARGET_LOGIC)]
+TARGET_VOCAB_SAMPLES = modCfg["dataset"].get("logic_samples_target", 8000)
+allQaTasks = [generateAtomicSample(logCfg) for _ in range(TARGET_VOCAB_SAMPLES)]
 
 TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
 
@@ -65,7 +84,7 @@ CAT_CORE_WORDS = list(dict.fromkeys(BASE_CORE + sorted(list(autoPoolWords))))
 
 storyWords = re.findall(TOKEN_REGEX, rawStories[:4000000])
 cleanStoryWords = [w for w in storyWords if w in CAT_CORE_WORDS or (w.isalpha() and len(w) > 1 and not w.endswith("n't"))]
-qaWords = re.findall(TOKEN_REGEX, " ".join(allQaTasks[:8000]))
+qaWords = re.findall(TOKEN_REGEX, " ".join(allQaTasks))
 
 counts = Counter(cleanStoryWords + qaWords)
 for w in CAT_CORE_WORDS: counts.pop(w, None)
@@ -166,13 +185,7 @@ if BENCHMARK_MODE:
 # =====================================================================
 # STAGE 1: PRE-TRAINING ON TINYSTORIES
 # =====================================================================
-PRETRAIN_STEPS = 10000
-PRETRAIN_BATCH = 32
-PRETRAIN_LR    = 0.002
-PRETRAIN_MINLR = 0.0002
-WARMUP_STEPS   = 500
-
-optPretrain = torch.optim.AdamW(rawModel.parameters(), lr=PRETRAIN_LR, weight_decay=0.01)
+optPretrain = torch.optim.AdamW(rawModel.parameters(), lr=PRETRAIN_LR, weight_decay=WEIGHT_DECAY)
 
 def getPretrainLr(step):
     if step < WARMUP_STEPS: return PRETRAIN_LR * (step + 1) / WARMUP_STEPS
@@ -197,7 +210,7 @@ for step in range(PRETRAIN_STEPS + 1):
     
     optPretrain.zero_grad(set_to_none=True)
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), 1.0)
+    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
     optPretrain.step()
     
     if step % 500 == 0:
@@ -208,12 +221,7 @@ for step in range(PRETRAIN_STEPS + 1):
 # =====================================================================
 # STAGE 2: LOGIC SFT (SUPERVISED FINE-TUNING)
 # =====================================================================
-SFT_STEPS = 20000
-SFT_BATCH = 24
-SFT_LR    = 0.0006   # Gentler LR to avoid destroying pre-trained language weights
-SFT_MINLR = 0.00004
-
-optSft = torch.optim.AdamW(rawModel.parameters(), lr=SFT_LR, weight_decay=0.01)
+optSft = torch.optim.AdamW(rawModel.parameters(), lr=SFT_LR, weight_decay=WEIGHT_DECAY)
 
 def getSftLr(step):
     prog = step / max(1, SFT_STEPS)
@@ -228,7 +236,7 @@ def getQaBatch(batchSize):
         x = toks + [padId] * (BLOCK_SIZE - len(toks))
         y = [-100] * BLOCK_SIZE
         
-        # Loss falls 100% on target answer tokens
+        # Target tokens follow [a]
         ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
         if ansStart != -1:
             for idx in range(ansStart, len(toks) - 1): 
@@ -256,7 +264,7 @@ for step in range(SFT_STEPS + 1):
     
     optSft.zero_grad(set_to_none=True)
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), 1.0)
+    torch.nn.utils.clip_grad_norm_(rawModel.parameters(), GRAD_CLIP)
     optSft.step()
     
     if step % 500 == 0:

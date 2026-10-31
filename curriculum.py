@@ -116,12 +116,11 @@ def generateAtomicSample(cfg, targetCategory=None):
     premiseTmpl = random.choice(cat.get("premise", cat.get("premises", [""])))
     queries     = cat["queries"]
 
-    # 50/50 balance for polar questions; uniform 50/50 for entity queries
-    hasYes = any(q.get("a", "").strip().startswith("yes") for q in queries)
-    hasNo  = any(q.get("a", "").strip().startswith("no") for q in queries)
+    hasYes = any("yes" in str(q.get("a", "")) for q in queries)
+    hasNo  = any("no" in str(q.get("a", "")) for q in queries)
     if hasYes and hasNo:
         wantYes = random.random() < 0.50
-        filtered = [q for q in queries if q.get("a", "").strip().startswith("yes") == wantYes]
+        filtered = [q for q in queries if ("yes" in str(q.get("a", ""))) == wantYes]
         queryObj = random.choice(filtered) if filtered else random.choice(queries)
     else:
         queryObj = random.choice(queries)
