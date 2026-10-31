@@ -25,7 +25,6 @@
     .main-col { flex: 2.3; display: flex; flex-direction: column; gap: 10px; }
     .side-col { flex: 1.25; display: flex; flex-direction: column; gap: 8px; }
 
-    /* Left Column Elements */
     #log {
       height: 480px;
       background: #000;
@@ -69,7 +68,6 @@
     .btn-stop { background: #ff0055; color: #fff; }
     #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; }
 
-    /* Token in Log (Hoverable) */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
@@ -87,7 +85,6 @@
       border-bottom: 1px solid #ff66cc;
     }
 
-    /* Right Column Badges & Cards */
     .badge {
       color: #ff66cc;
       font-size: 11px;
@@ -107,44 +104,64 @@
     .text-pink { color: #ff00aa; }
     .text-green { color: #39ff14; }
 
-    /* Free Heap Progress Bar */
-    .heap-bar-wrap {
+    /* CYBER SCANNER LOADING BAR */
+    .scanner-track {
       width: 100%;
-      height: 3px;
-      background: #1a1a1a;
+      height: 5px;
+      background: #111;
+      border: 1px solid #222;
       margin-top: 6px;
-      border-radius: 2px;
+      border-radius: 3px;
+      position: relative;
       overflow: hidden;
     }
-    .heap-bar-fill {
-      width: 65%;
+    .scanner-thumb {
+      position: absolute;
+      left: 0;
+      top: 0;
       height: 100%;
-      background: linear-gradient(90deg, #ff66cc, #00e5ff);
-      transition: width 0.3s ease;
+      width: 0%;
+      border-radius: 2px;
+      background: #39ff14;
+      transition: width 0.2s ease;
+    }
+    @keyframes cyberSweep {
+      0%   { left: 0%; width: 26%; background: #ff00aa; }
+      50%  { left: 74%; width: 26%; background: #00e5ff; }
+      100% { left: 0%; width: 26%; background: #39ff14; }
+    }
+    .scanner-sweeping {
+      animation: cyberSweep 1.3s ease-in-out infinite !important;
+      box-shadow: 0 0 10px #00e5ff, 0 0 5px #ff00aa;
     }
 
-    /* KV Prefill Chips */
+    /* PREFILL PILLS */
     .chip {
       display: inline-block;
       padding: 2px 7px;
       margin: 2px 3px;
       border-radius: 3px;
       font-size: 11px;
-      background: #000;
-      color: #39ff14;
-      border: 1px solid #1f661f;
+      transition: all 0.2s ease;
+    }
+    .chip-pending {
+      background: #0a0a0a;
+      color: #555;
+      border: 1px solid #262626;
     }
     .chip-active {
-      border-color: #ff66cc;
+      background: rgba(255, 0, 170, 0.15);
+      border: 1px solid #ff00aa;
       color: #fff;
-      box-shadow: 0 0 5px rgba(255,0,127,0.5);
+      box-shadow: 0 0 6px rgba(255, 0, 170, 0.7);
     }
     .chip-done {
-      background: rgba(57, 255, 20, 0.1);
-      border-color: #39ff14;
+      background: rgba(57, 255, 20, 0.12);
+      border: 1px solid #39ff14;
+      color: #39ff14;
+      box-shadow: 0 0 4px rgba(57, 255, 20, 0.4);
     }
 
-    /* 80-D Synaptic Cortex Grid */
     .cortex-container {
       background: #000;
       border: 1px solid #222;
@@ -172,7 +189,6 @@
       margin-top: 3px;
     }
 
-    /* Attention Popover */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -228,7 +244,7 @@
       <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
       
       <div class="input-row">
-        <input type="text" id="prompt" value="bob">
+        <input type="text" id="prompt" value="[q] where is alice ? [c] alice went to the kitchen . [a]">
         <button class="btn btn-exec" id="btn-exec" onclick="gen()">Execute</button>
         <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
@@ -238,8 +254,8 @@
     <div class="side-col">
       <div class="badge">[ FUN FACTS ]</div>
       <div class="metric">
-        Meow breed: <span class="text-cyan">8-Layer Transformer</span><br>
-        Miaou ages: <span class="text-cyan">316 KB (INT8 Flash)</span><br>
+        Architecture: <span class="text-cyan">6-Layer Transformer (MQA)</span><br>
+        Weights: <span class="text-cyan">INT8 Flash XIP Stream</span><br>
         Engine Speed: <span class="text-cyan" id="tps-meter">0.00</span> TPS
       </div>
 
@@ -247,8 +263,8 @@
       <div class="metric">
         <b>Pipeline Status:</b> <span id="m_stat" class="text-pink">Idle / Ready</span><br>
         <b>Token Latency:</b> <span id="m_lat" class="text-cyan">0</span> ms<br>
-        <b>Meow Free Heap:</b> <span id="m_ram" class="text-cyan">94400</span> bytes
-        <div class="heap-bar-wrap"><div class="heap-bar-fill" id="heap_fill"></div></div>
+        <b>Engine Activity:</b> <span id="m_engine_status" class="text-cyan">Idle</span>
+        <div class="scanner-track"><div class="scanner-thumb" id="scanner_thumb"></div></div>
       </div>
       
       <div class="badge">[ PROMPT INGESTION (KV PREFILL) ]</div>
@@ -346,6 +362,19 @@
       document.getElementById('btn-exec').style.display = running ? 'none' : 'block';
       document.getElementById('btn-stop').style.display = running ? 'block' : 'none';
       document.getElementById('prompt').disabled = running;
+      
+      const thumb = document.getElementById('scanner_thumb');
+      const scannerStatus = document.getElementById('m_engine_status');
+      if (running) {
+        thumb.classList.add('scanner-sweeping');
+        scannerStatus.innerText = "Processing...";
+        scannerStatus.className = "text-pink";
+      } else {
+        thumb.classList.remove('scanner-sweeping');
+        thumb.style.width = "0%";
+        scannerStatus.innerText = "Idle";
+        scannerStatus.className = "text-cyan";
+      }
     }
 
     function abortGen() {
@@ -355,7 +384,6 @@
       setStat("Stopped", "#ff66cc");
     }
 
-    // Hover word inspection (activations & attention sparkline)
     function inspectToken(idx, ev) {
       const item = tokenHistory[idx];
       if (!item) return;
@@ -363,7 +391,6 @@
       renderVector(item.v);
       renderRanks(item.ranks);
 
-      // Highlight predecessor tokens based on attention
       if (item.attn && item.attn.length > 0) {
         item.attn.forEach((weight, tIdx) => {
           const pastTokEl = document.getElementById('term-tok-' + tIdx);
@@ -373,7 +400,6 @@
           }
         });
 
-        // Show attention popover mini-graph
         const pop = document.getElementById('attn-popover');
         document.getElementById('pop-title').innerText = `Token #${idx+1}: "${item.word}"`;
         const barsBox = document.getElementById('pop-bars');
@@ -421,7 +447,7 @@
 
       const streamSpan = document.getElementById(streamSpanId);
       const prefContainer = document.getElementById('m_prefill');
-      prefContainer.innerHTML = '';
+      prefContainer.innerHTML = 'Ingesting prompt...';
 
       setStat("Prompt Ingestion (KV Prefill)...", "#ff00aa");
 
@@ -446,21 +472,37 @@
             lastActiveTelemetry = data;
             if (data.v) renderVector(data.v);
             if (data.ms) document.getElementById('m_lat').innerText = data.ms;
-            if (data.ram) {
-              document.getElementById('m_ram').innerText = data.ram;
-              const pct = Math.min(100, Math.max(10, (data.ram / 140000) * 100));
-              document.getElementById('heap_fill').style.width = pct + '%';
-            }
             if (data.ranks) renderRanks(data.ranks);
 
-            if (data.stage === 'error') {
+            if (data.stage === 'init') {
+              // Populate greyed-out pills for all tokens
+              prefContainer.innerHTML = '';
+              if (data.qca_tokens) {
+                data.qca_tokens.forEach((t, i) => {
+                  const chip = document.createElement('span');
+                  chip.className = 'chip chip-pending';
+                  chip.id = 'prefill-chip-' + i;
+                  chip.innerText = t;
+                  prefContainer.appendChild(chip);
+                });
+              }
+            } else if (data.stage === 'error') {
               setStat("Error: " + (data.msg || "Unknown"), "#ff0055");
               streamSpan.innerHTML += `<span style="color:#ff0055;"> [Error: ${data.msg}]</span>`;
             } else if (data.stage === 'prefill') {
-              // Real-time streaming of prompt ingestion
               const tokIndex = tokenHistory.length;
               tokenHistory.push({ word: data.tok, v: data.v, ranks: data.ranks, attn: data.attn });
 
+              setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
+
+              // Highlight the corresponding pill as ingested
+              const chipIdx = data.cur - 1;
+              const chip = document.getElementById('prefill-chip-' + chipIdx);
+              if (chip) {
+                chip.className = 'chip chip-done';
+              }
+
+              // Append ingested token into the prompt log with hover inspect
               const tokSpan = document.createElement('span');
               tokSpan.className = 'term-tok';
               tokSpan.id = 'term-tok-' + tokIndex;
@@ -470,16 +512,7 @@
               streamSpan.appendChild(tokSpan);
               log.scrollTop = log.scrollHeight;
 
-              setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
-
-              // Prefill chip update
-              const chip = document.createElement('span');
-              chip.className = 'chip chip-done';
-              chip.innerText = data.tok;
-              prefContainer.appendChild(chip);
-
             } else if (data.stage === 'gen') {
-              // Real-time streaming of generated tokens
               const tokIndex = tokenHistory.length;
               tokenHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
 

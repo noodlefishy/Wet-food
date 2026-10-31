@@ -1,6 +1,6 @@
 # meow.py - Host (Master) node for distributed transformer
-import network, socket, struct, math, gc, time, machine, random, _thread, ure as re # pyright: ignore[reportMissingImports]
-from array import array; from machine import Pin # pyright: ignore[reportMissingImports]
+import network, socket, struct, math, gc, time, machine, random, _thread, ure as re
+from array import array; from machine import Pin
 machine.freq(240_000_000)
 led = Pin("LED", Pin.OUT); led.off()
 
@@ -9,11 +9,10 @@ BLOCK_SIZE = 64
 NUM_HEADS = 6
 HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 20
 VOCAB_SIZE = 1024
-BUF = bytearray(480 * 4)           # 4 * EMBED_DIM = 480 floats for MLP
 ROW_B = 4 + EMBED_DIM
 L0_OFF = VOCAB_SIZE * ROW_B
 SINK_SIZE = 4
-WINDOW_SIZE = 20                   # 20 window + 4 sinks = 24 tokens (69.1 KB SRAM)
+WINDOW_SIZE = 20
 LAYERS = 3
 
 try: import vocab; VOCAB = vocab.VOCAB
@@ -23,13 +22,27 @@ WORD_TO_ID = {w: i for i, w in enumerate(VOCAB)}
 try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
 except: WIFI_SSID = ""; WIFI_PASS = ""
 
-def read_vec(f, c): return struct.unpack(f'{c}f', f.read(c * 4))
+# =====================================================================
+# ZERO-ALLOCATION STATIC BUFFERS
+# =====================================================================
+BUF_nx    = [0.0] * EMBED_DIM
+BUF_qkv   = [0.0] * (3 * EMBED_DIM)
+BUF_ao    = [0.0] * EMBED_DIM
+BUF_proj  = [0.0] * EMBED_DIM
+BUF_mlp1  = [0.0] * (4 * EMBED_DIM)
+BUF_mlp2  = [0.0] * EMBED_DIM
+BUF_ln_w  = [0.0] * EMBED_DIM
+BUF_ln_b  = [0.0] * EMBED_DIM
+BUF_attn  = [0.0] * BLOCK_SIZE
+ROW_BUF   = bytearray(4 + 4 * EMBED_DIM)
+BIAS_BUF  = bytearray(64 * 4)
 
-def read_emb(f, idx):
+def read_emb(f, idx, out):
     f.seek(idx * ROW_B)
     s = struct.unpack('f', f.read(4))[0]
     row = struct.unpack(f'{EMBED_DIM}b', f.read(EMBED_DIM))
-    return [v * s for v in row]
+    for i in range(EMBED_DIM):
+        out[i] = row[i] * s
 
 def unquote(s):
     res = s.replace('+', ' ')
@@ -52,22 +65,41 @@ def recv_all(sock, n):
     return data
 
 @micropython.native
-def stream_linear(f, r, c, x):
-    out, bv = [0.0]*r, memoryview(BUF)[:c]
+def stream_linear_into(f, r, c, x, out):
+    row_bytes = 4 + c
+    mv = memoryview(ROW_BUF)[:row_bytes]
     for i in range(r):
-        scale = struct.unpack('f', f.read(4))[0]
-        f.readinto(bv); row = struct.unpack(f'{c}b', bv)
-        out[i] = sum(row[j]*x[j] for j in range(c)) * scale
+        f.readinto(mv)
+        scale = struct.unpack_from('f', mv, 0)[0]
+        s = 0.0
+        for j in range(c):
+            v = mv[4 + j]
+            s += (v if v < 128 else v - 256) * x[j]
+        out[i] = s * scale
     bi = 0
+    mv_b = memoryview(BIAS_BUF)
     while bi < r:
-        s = min(64, r - bi); f.readinto(memoryview(BUF)[:s*4]); b = struct.unpack(f'{s}f', memoryview(BUF)[:s*4])
-        for i in range(s): out[bi+i] += b[i]
+        s = min(64, r - bi)
+        f.readinto(mv_b[:s * 4])
+        b = struct.unpack(f'{s}f', mv_b[:s * 4])
+        for i in range(s):
+            out[bi + i] += b[i]
         bi += s
-    return out
 
-def layer_norm(x, w, b):
-    m = sum(x)/len(x); v = sum((i-m)**2 for i in x)/len(x); s = math.sqrt(v+1e-5)
-    return [((x[i]-m)/s)*w[i]+b[i] for i in range(len(x))]
+def layer_norm_into(x, w, b, out):
+    n = len(x)
+    m = sum(x) / n
+    v = sum((x[i] - m) ** 2 for i in range(n)) / n
+    s = math.sqrt(v + 1e-5)
+    for i in range(n):
+        out[i] = ((x[i] - m) / s) * w[i] + b[i]
+
+def read_vec_into(f, c, target):
+    mv = memoryview(BIAS_BUF)[:c * 4]
+    f.readinto(mv)
+    vals = struct.unpack(f'{c}f', mv)
+    for i in range(c):
+        target[i] = vals[i]
 
 half_head = HEAD_DIM // 2
 inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(half_head)]
@@ -83,15 +115,15 @@ def sample_top5(ranks):
     return ranks[4]
 
 f_w = open("pico1 weights.model", "rb")
-kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]  # 3 Layers on Meow
+kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]
+cur_x = [0.0] * EMBED_DIM
 
 def run_layer(f, idx, x, pos):
-    nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    # QKV projection: 3 * EMBED_DIM = 240 rows
-    qkv = stream_linear(f, 3 * EMBED_DIM, EMBED_DIM, nx)
-    q = qkv[:EMBED_DIM]
-    k = qkv[EMBED_DIM : 2 * EMBED_DIM]
-    v = qkv[2 * EMBED_DIM :]
+    read_vec_into(f, EMBED_DIM, BUF_ln_w)
+    read_vec_into(f, EMBED_DIM, BUF_ln_b)
+    layer_norm_into(x, BUF_ln_w, BUF_ln_b, BUF_nx)
+
+    stream_linear_into(f, 3 * EMBED_DIM, EMBED_DIM, BUF_nx, BUF_qkv)
     
     c_tab = cos_tab[min(pos, BLOCK_SIZE - 1)]
     s_tab = sin_tab[min(pos, BLOCK_SIZE - 1)]
@@ -99,49 +131,105 @@ def run_layer(f, idx, x, pos):
         ho = h * HEAD_DIM
         for i in range(half_head):
             i2 = ho + i * 2
-            q0, q1 = q[i2], q[i2 + 1]
-            q[i2]     = q0 * c_tab[i] - q1 * s_tab[i]
-            q[i2 + 1] = q0 * s_tab[i] + q1 * c_tab[i]
-            k0, k1 = k[i2], k[i2 + 1]
-            k[i2]     = k0 * c_tab[i] - k1 * s_tab[i]
-            k[i2 + 1] = k0 * s_tab[i] + k1 * c_tab[i]
+            q0, q1 = BUF_qkv[i2], BUF_qkv[i2 + 1]
+            BUF_qkv[i2]     = q0 * c_tab[i] - q1 * s_tab[i]
+            BUF_qkv[i2 + 1] = q0 * s_tab[i] + q1 * c_tab[i]
+            k0, k1 = BUF_qkv[EMBED_DIM + i2], BUF_qkv[EMBED_DIM + i2 + 1]
+            BUF_qkv[EMBED_DIM + i2]     = k0 * c_tab[i] - k1 * s_tab[i]
+            BUF_qkv[EMBED_DIM + i2 + 1] = k0 * s_tab[i] + k1 * c_tab[i]
 
-    # Append 80-dim key and value vectors
-    kv[idx]['k'].append(array('f', k))
-    kv[idx]['v'].append(array('f', v))
+    kv[idx]['k'].append(array('f', BUF_qkv[EMBED_DIM : 2 * EMBED_DIM]))
+    kv[idx]['v'].append(array('f', BUF_qkv[2 * EMBED_DIM : 3 * EMBED_DIM]))
     
-    # Sliding window KV cache with Attention Sinks
     if len(kv[idx]['k']) > SINK_SIZE + WINDOW_SIZE:
         kv[idx]['k'].pop(SINK_SIZE)
         kv[idx]['v'].pop(SINK_SIZE)
         
-    ao = [0.0] * EMBED_DIM
-    sc = 1.0 / math.sqrt(HEAD_DIM)
+    for i in range(EMBED_DIM): BUF_ao[i] = 0.0
     seq_len = len(kv[idx]['k'])
-    avg_attn = [0.0] * seq_len
+    for t in range(seq_len): BUF_attn[t] = 0.0
+    sc = 1.0 / math.sqrt(HEAD_DIM)
     
     for h in range(NUM_HEADS):
         ho = h * HEAD_DIM
-        qh = q[ho : ho + HEAD_DIM]
-        scs = [sum(qh[i] * kv[idx]['k'][t][ho + i] for i in range(HEAD_DIM)) * sc for t in range(seq_len)]
-        ms = max(scs)
-        wts = [math.exp(s - ms) for s in scs]
-        s_wts = sum(wts)
-        wts = [e / s_wts for e in wts]
+        ms = -1e9
         for t in range(seq_len):
-            avg_attn[t] += wts[t] / NUM_HEADS
+            k_t = kv[idx]['k'][t]
+            dot = 0.0
             for i in range(HEAD_DIM):
-                ao[ho + i] += wts[t] * kv[idx]['v'][t][ho + i]
+                dot += BUF_qkv[ho + i] * k_t[ho + i]
+            score = dot * sc
+            BUF_mlp1[t] = score
+            if score > ms: ms = score
             
-    proj = stream_linear(f, EMBED_DIM, EMBED_DIM, ao)
-    x = [x[i] + proj[i] for i in range(EMBED_DIM)]
-    nx = layer_norm(x, read_vec(f, EMBED_DIM), read_vec(f, EMBED_DIM))
-    h1 = stream_linear(f, 4 * EMBED_DIM, EMBED_DIM, nx)
-    h2 = stream_linear(f, EMBED_DIM, 4 * EMBED_DIM, [max(0.0, val) for val in h1])
-    return [x[i] + h2[i] for i in range(EMBED_DIM)], avg_attn
+        sum_exp = 0.0
+        for t in range(seq_len):
+            ew = math.exp(BUF_mlp1[t] - ms)
+            BUF_mlp1[t] = ew
+            sum_exp += ew
+            
+        inv_sum = 1.0 / sum_exp
+        for t in range(seq_len):
+            w = BUF_mlp1[t] * inv_sum
+            BUF_attn[t] += w / NUM_HEADS
+            v_t = kv[idx]['v'][t]
+            for i in range(HEAD_DIM):
+                BUF_ao[ho + i] += w * v_t[ho + i]
+            
+    stream_linear_into(f, EMBED_DIM, EMBED_DIM, BUF_ao, BUF_proj)
+    for i in range(EMBED_DIM): x[i] += BUF_proj[i]
+    
+    read_vec_into(f, EMBED_DIM, BUF_ln_w)
+    read_vec_into(f, EMBED_DIM, BUF_ln_b)
+    layer_norm_into(x, BUF_ln_w, BUF_ln_b, BUF_nx)
+    
+    stream_linear_into(f, 4 * EMBED_DIM, EMBED_DIM, BUF_nx, BUF_mlp1)
+    for j in range(4 * EMBED_DIM):
+        if BUF_mlp1[j] < 0.0: BUF_mlp1[j] = 0.0
+        
+    stream_linear_into(f, EMBED_DIM, 4 * EMBED_DIM, BUF_mlp1, BUF_mlp2)
+    for i in range(EMBED_DIM): x[i] += BUF_mlp2[i]
+    
+    return BUF_attn[:seq_len]
+
+def canonicalize_to_qca(raw):
+    p = raw.strip()
+    is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(
+        p.lower().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question")
+    ) or ("?" in p)
+    
+    if not is_logic:
+        return p, False
+
+    if "[q]" in p and "[c]" in p:
+        q_pos = p.find("[q]")
+        c_pos = p.find("[c]")
+        if q_pos < c_pos:
+            if not p.endswith("[a]"): p = p.rstrip("?.: ") + " [a]"
+            return p, True
+        else:
+            c_part = p[c_pos + 3 : q_pos].strip().rstrip(". ")
+            rem = p[q_pos + 3 :].strip()
+            q_part = rem.split("[a]")[0].strip().rstrip("?.: ")
+            return f"[q] {q_part} ? [c] {c_part} . [a]", True
+
+    if "?" in p:
+        parts = p.split("?")
+        q_words = ("who", "what", "where", "is", "are", "does", "did", "why", "how")
+        first = parts[0].strip()
+        second = parts[1].replace("[a]", "").strip().rstrip(". ")
+        if any(first.lower().startswith(w) for w in q_words):
+            if second: return f"[q] {first} ? [c] {second} . [a]", True
+            else: return f"[q] {first} ? [a]", True
+        else:
+            return f"[q] {second} ? [c] {first} . [a]", True
+
+    if not p.startswith("[q]"): p = f"[q] {p}"
+    if not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
+    return p, True
 
 print("\n" + "="*50)
-print("[MEOW] Initializing Dual-Core Engine (3L RoPE + Attention Telemetry)...")
+print("[MEOW] Initializing Zero-Allocation Dual-Core Transformer Engine...")
 
 try: network.hostname('meow')
 except: pass
@@ -172,15 +260,14 @@ web_sock.bind(('0.0.0.0', 80)); web_sock.listen(2)
 beacon_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 beacon_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-# =====================================================================
-# DUAL-CORE INTER-CORE FIFO PIPELINE
-# =====================================================================
-job_queue = []          # [prompt_string]
-telemetry_fifo = []     # [json_line_string, ...]
+job_queue = []
+telemetry_fifo = []
 client_active = [False]
 
+def send_chunk(cl, payload_bytes):
+    cl.sendall(f"{len(payload_bytes):X}\r\n".encode() + payload_bytes + b"\r\n")
+
 def core1_http_daemon():
-    """Core 1 handles Web HTTP server & async streaming without halting Core 0 math."""
     while True:
         try:
             cl, _ = web_sock.accept()
@@ -189,22 +276,30 @@ def core1_http_daemon():
             
             if "GET /gen?p=" in req:
                 p_raw = req.split("p=")[1].split(" ")[0].split("&")[0]
-                prompt = unquote(p_raw).lower()
-                cl.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n")
+                user_prompt = unquote(p_raw)
+                qca_prompt, is_logic = canonicalize_to_qca(user_prompt)
                 
-                # Signal Core 0 to ingest job
+                cl.sendall(
+                    b"HTTP/1.1 200 OK\r\n"
+                    b"Content-Type: application/x-ndjson\r\n"
+                    b"Transfer-Encoding: chunked\r\n"
+                    b"Cache-Control: no-cache, no-transform\r\n"
+                    b"X-Content-Type-Options: nosniff\r\n"
+                    b"Connection: close\r\n\r\n"
+                )
+                
                 client_active[0] = True
                 telemetry_fifo.clear()
-                job_queue.append(prompt)
+                job_queue.append((user_prompt, qca_prompt, is_logic))
                 
-                # Stream telemetry lines from Core 0 to browser
                 while client_active[0]:
                     if telemetry_fifo:
                         line = telemetry_fifo.pop(0)
                         if line == "DONE": break
-                        cl.sendall(line.encode())
+                        send_chunk(cl, line.encode())
                     else:
                         time.sleep_ms(6)
+                send_chunk(cl, b"")
                 cl.close()
             elif "GET / " in req or "GET /index.html" in req:
                 try:
@@ -226,12 +321,12 @@ def core1_http_daemon():
 
 try:
     _thread.start_new_thread(core1_http_daemon, ())
-    print("[MEOW] Core 1 HTTP daemon initialized successfully.")
+    print("[MEOW] Core 1 HTTP daemon initialized.")
 except Exception as e:
     print("[MEOW] Core 1 fallback warning:", e)
 
 # =====================================================================
-# CORE 0: NEURAL INFERENCE ENGINE & MIAOU LINK
+# CORE 0: INFERENCE LOOP
 # =====================================================================
 pb = None
 last_beacon = 0
@@ -246,21 +341,22 @@ while True:
         ai_sock.settimeout(0.5)
         try:
             pb, addr = ai_sock.accept()
-            pb.settimeout(10.0)
+            pb.settimeout(12.0)
             print(f"[MEOW] -> Miaou paired from {addr}! System Ready.")
             led.on(); time.sleep(0.1); led.off()
         except: pass
         continue
 
-    # Core 0: check if Core 1 queued a prompt
     if job_queue:
         if pb is None:
-            telemetry_fifo.append('{"stage":"error","msg":"Miaou worker not connected"}\n')
+            telemetry_fifo.append('{"stage":"error","msg":"Miaou worker disconnected"}\n')
             telemetry_fifo.append("DONE")
             job_queue.pop(0)
             continue
 
-        p = job_queue.pop(0)
+        raw_prompt, qca_prompt, is_logic = job_queue.pop(0)
+        gc.collect()
+
         CHUNKS = [
             ("once upon a time", "once_upon_a_time"),
             ("who went to the",  "who_went_to_the"),
@@ -274,40 +370,25 @@ while True:
             ("how many",         "how_many"),
             ("one day",          "one_day")
         ]
-        p_clean = p.lower()
+        
+        p_clean = qca_prompt.lower()
         for phrase, chunk_tok in CHUNKS:
             p_clean = p_clean.replace(phrase, f" {chunk_tok} ")
         for char in [".", "?", "!", ",", ":"]:
             p_clean = p_clean.replace(char, f" {char} ")
         p_clean = p_clean.replace("'s", " 's ")
 
-        is_logic = any(t in p_clean for t in ("[c]", "[q]", "[a]")) or any(p_clean.strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question"))
-        if is_logic:
-            if "[q]" in p_clean and "[c]" in p_clean:
-                if not p_clean.endswith("[a]"): p_clean = p_clean.rstrip("?.: ") + " [a]"
-            elif "[c]" in p_clean and "[q]" in p_clean:
-                c_part = p_clean.split("[q]")[0].replace("[c]", "").strip().rstrip(". ")
-                q_part = p_clean.split("[q]")[1].split("[a]")[0].strip().rstrip("?.: ")
-                p_clean = f"[q] {q_part} ? [c] {c_part} . [a]"
-            elif "?" in p_clean:
-                parts = p_clean.split("?")
-                if any(parts[0].strip().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how")):
-                    p_clean = f"[q] {parts[0].strip()} ? [c] {parts[1].replace('[a]','').strip().rstrip('. ')} . [a]"
-                else:
-                    p_clean = f"[q] {parts[1].replace('[a]','').strip()} ? [c] {parts[0].strip().rstrip('. ')} . [a]"
-            else:
-                if not p_clean.startswith("[q]"): p_clean = f"[q] {p_clean}"
-                if not p_clean.endswith("[a]"): p_clean = p_clean.rstrip("?.: ") + " ? [a]"
-            
-        tks = [WORD_TO_ID.get(w, 0) for w in p_clean.split() if w]
+        words = [w for w in p_clean.split() if w]
+        tks = [WORD_TO_ID.get(w, 0) for w in words]
         if not tks:
+            telemetry_fifo.append("DONE")
             continue
 
         for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
         
-        # Reset signal to Miaou
+        # Reset signal to Miaou (mode 2)
         try:
-            pb.sendall(struct.pack(f'{EMBED_DIM}f', *([-999.0] + [0.0]*(EMBED_DIM-1))))
+            pb.sendall(b'\x02' + struct.pack(f'{EMBED_DIM}f', *([0.0] * EMBED_DIM)))
             ack = recv_all(pb, 2)
             if ack != b"OK":
                 pb = None
@@ -316,80 +397,93 @@ while True:
                 continue
         except Exception:
             pb = None
-            telemetry_fifo.append('{"stage":"error","msg":"Miaou reset socket error"}\n')
+            telemetry_fifo.append('{"stage":"error","msg":"Miaou socket error"}\n')
             telemetry_fifo.append("DONE")
             continue
+        
+        # Telemetry: Send full QCA tokens immediately for prefill pills display
+        tokens_json = "[" + ",".join([f'"{VOCAB[t]}"' for t in tks]) + "]"
+        telemetry_fifo.append(f'{{"stage":"init","user_prompt":"{raw_prompt}","qca_tokens":{tokens_json}}}\n')
         
         t_start = time.ticks_ms()
         cur = tks[0]
         ct_ranks = [0, 0, 0, 0, 0]
         aborted = False
         
-        # Phase 1: Prefill prompt tokens into KV cache with RoPE & Attention Capture
+        # Phase 1: Prefill prompt tokens
         for stp in range(len(tks)):
             if not client_active[0]: aborted = True; break
             led.on()
             tid = tks[stp]
-            x = read_emb(f_w, tid)
+            read_emb(f_w, tid, cur_x)
             
             last_attn = []
             f_w.seek(L0_OFF)
             for l in range(LAYERS):
-                x, last_attn = run_layer(f_w, l, x, stp)
+                last_attn = run_layer(f_w, l, cur_x, stp)
+            
+            is_last = (stp == len(tks) - 1)
+            mode_byte = b'\x01' if is_last else b'\x00'
             
             try:
-                pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
-                rep = recv_all(pb, 10)
-                if not rep:
-                    pb = None
-                    aborted = True
-                    telemetry_fifo.append('{"stage":"error","msg":"Miaou worker dropped"}\n')
-                    break
+                pb.sendall(mode_byte + struct.pack(f'{EMBED_DIM}f', *cur_x))
+                if is_last:
+                    rep = recv_all(pb, 10)
+                    if not rep:
+                        pb = None; aborted = True
+                        telemetry_fifo.append('{"stage":"error","msg":"Miaou dropped during head"}\n')
+                        break
+                    ct_ranks = struct.unpack('5H', rep)
+                    cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
+                else:
+                    rep = recv_all(pb, 2)
+                    if rep != b"OK":
+                        pb = None; aborted = True
+                        telemetry_fifo.append('{"stage":"error","msg":"Miaou sync lost"}\n')
+                        break
             except Exception:
-                pb = None
-                aborted = True
-                telemetry_fifo.append('{"stage":"error","msg":"Miaou link lost"}\n')
+                pb = None; aborted = True
+                telemetry_fifo.append('{"stage":"error","msg":"Miaou connection lost"}\n')
                 break
-            
-            ct_ranks = struct.unpack('5H', rep)
-            cur = ct_ranks[0] if is_logic else sample_top5(ct_ranks)
             
             lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
             ranks = [VOCAB[t] for t in ct_ranks]
             ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
-            v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
+            v_str = "[" + ",".join([f"{v:.2f}" for v in cur_x[:80]]) + "]"
             attn_str = "[" + ",".join([f"{a:.2f}" for a in last_attn]) + "]"
             
-            telemetry_fifo.append(f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n')
+            telemetry_fifo.append(
+                f'{{"stage":"prefill","cur":{stp+1},"tot":{len(tks)},"tok":"{VOCAB[tid]}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n'
+            )
             led.off()
 
-        # Phase 2: Generation loop
+        # Phase 2: Autoregressive Generation
         if not aborted:
-            for gen_stp in range(50):
+            for gen_stp in range(40):
                 if not client_active[0]: break
                 led.on()
                 word = VOCAB[cur]
                 lat = time.ticks_diff(time.ticks_ms(), t_start); t_start = time.ticks_ms()
-                v_str = "[" + ",".join([f"{v:.2f}" for v in x]) + "]"
+                v_str = "[" + ",".join([f"{v:.2f}" for v in cur_x[:80]]) + "]"
                 ranks = [VOCAB[t] for t in ct_ranks]
                 ranks_json = f'["{ranks[0]}","{ranks[1]}","{ranks[2]}","{ranks[3]}","{ranks[4]}"]'
                 attn_str = "[" + ",".join([f"{a:.2f}" for a in last_attn]) + "]"
 
-                word_display = VOCAB[cur].replace("_", " ")
-                telemetry_fifo.append(f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n')
+                telemetry_fifo.append(
+                    f'{{"stage":"gen","w":"{word}","ms":{lat},"ram":{gc.mem_free()},"v":{v_str},"ranks":{ranks_json},"attn":{attn_str}}}\n'
+                )
                 
                 if word in ("<eos>", "<pad>"): led.off(); break
                 
                 pos = len(tks) + gen_stp
-                tid = cur
-                x = read_emb(f_w, tid)
+                read_emb(f_w, cur, cur_x)
                 
                 f_w.seek(L0_OFF)
                 for l in range(3):
-                    x, last_attn = run_layer(f_w, l, x, pos)
+                    last_attn = run_layer(f_w, l, cur_x, pos)
                 
                 try:
-                    pb.sendall(struct.pack(f'{EMBED_DIM}f', *x))
+                    pb.sendall(b'\x01' + struct.pack(f'{EMBED_DIM}f', *cur_x))
                     rep = recv_all(pb, 10)
                     if not rep: break
                 except Exception: break
