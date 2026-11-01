@@ -115,11 +115,7 @@
     }
 
     .drawer-panel { max-height: 155px; overflow-y: auto; }
-    .repo-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
+    .repo-grid { display: flex; flex-wrap: wrap; gap: 4px; }
     .repo-chip {
       background: #000;
       color: #39ff14;
@@ -141,36 +137,14 @@
       color: #fff;
       box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
     }
-    .chip-del {
-      color: #ff0055;
-      font-weight: bold;
-      cursor: pointer;
-      padding-left: 2px;
-    }
+    .chip-del { color: #ff0055; font-weight: bold; cursor: pointer; padding-left: 2px; }
     .chip-del:hover { color: #fff; }
 
-    /* DYNAMIC QUESTION MAKER FORM */
-    .maker-layout {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      font-size: 11px;
-    }
-    .maker-row {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .maker-field {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .maker-field label {
-      color: #888;
-      font-size: 10px;
-    }
+    /* DYNAMIC QUESTION MAKER */
+    .maker-layout { display: flex; flex-direction: column; gap: 5px; font-size: 11px; }
+    .maker-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .maker-field { display: inline-flex; align-items: center; gap: 3px; }
+    .maker-field label { color: #888; font-size: 10px; }
     select {
       background: #000;
       color: #39ff14;
@@ -212,12 +186,9 @@
       cursor: pointer;
       border-radius: 2px;
     }
-    .maker-action-btn:hover {
-      background: #ff66cc;
-      color: #000;
-    }
+    .maker-action-btn:hover { background: #ff66cc; color: #000; }
 
-    /* TYPEWRITER TOKENS & GHOST SLOTS */
+    /* TYPEWRITER TOKENS */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
@@ -230,7 +201,6 @@
       border-bottom: 1px dotted #333;
       user-select: none;
       margin-right: 3px;
-      transition: all 0.25s ease;
     }
     .tok-revealed {
       color: #39ff14 !important;
@@ -238,14 +208,11 @@
       animation: tokPop 0.22s ease-out;
     }
     @keyframes tokPop {
-      0% { opacity: 0; transform: translateY(-2px) scale(1.15); color: #ff00aa; text-shadow: 0 0 10px #ff00aa; }
+      0% { opacity: 0; transform: translateY(-2px) scale(1.15); color: #ff00aa; }
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #39ff14; }
     }
 
-    /* ALL GENERATED RESPONSES IN CYAN */
-    .tok-ai,
-    span.tok-ai,
-    span.term-tok.tok-ai {
+    .tok-ai {
       color: #00e5ff !important;
       font-weight: bold !important;
       text-shadow: 0 0 8px #00e5ff, 0 0 16px rgba(0, 229, 255, 0.65) !important;
@@ -253,20 +220,10 @@
       animation: tokPopAi 0.24s ease-out forwards !important;
     }
     @keyframes tokPopAi {
-      0% { 
-        opacity: 0; 
-        transform: translateY(-2px) scale(1.2); 
-        color: #ffffff; 
-        text-shadow: 0 0 16px #00e5ff; 
-      }
-      100% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1.0); 
-        color: #00e5ff; 
-      }
+      0% { opacity: 0; transform: translateY(-2px) scale(1.2); color: #fff; text-shadow: 0 0 16px #00e5ff; }
+      100% { opacity: 1; transform: translateY(0) scale(1.0); color: #00e5ff; }
     }
 
-    /* ACCENT [a] DIVIDER */
     .tok-tag-a {
       color: #ff66cc !important;
       font-weight: bold !important;
@@ -275,7 +232,7 @@
       animation: tokPopPink 0.22s ease-out forwards !important;
     }
     @keyframes tokPopPink {
-      0% { opacity: 0; transform: translateY(-2px) scale(1.2); color: #fff; text-shadow: 0 0 14px #ff66cc; }
+      0% { opacity: 0; transform: translateY(-2px) scale(1.2); color: #fff; }
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #ff66cc; }
     }
 
@@ -308,7 +265,7 @@
     .text-pink { color: #ff00aa; }
     .text-green { color: #39ff14; }
 
-    /* SCANNER BAR */
+    /* SCANNER TRACK */
     .scanner-track {
       width: 100%;
       height: 5px;
@@ -339,7 +296,6 @@
       box-shadow: 0 0 10px #00e5ff, 0 0 5px #ff00aa;
     }
 
-    /* PREFILL PILLS */
     .chip {
       display: inline-block;
       padding: 2px 7px;
@@ -393,7 +349,7 @@
       margin-top: 3px;
     }
 
-    /* ATTENTION POPOVER - CENTERED FLOATING ABOVE CURSOR */
+    /* ATTENTION POPOVER */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -466,16 +422,25 @@
   
   <div class="container">
     <div class="main-col">
+      <!-- LAYER INSPECTION SLIDER -->
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px; background:#050505; border:1px solid #222; padding:6px 10px; border-radius:2px;">
+        <span style="color:#ff66cc; font-weight:bold; font-size:11px;">[ LAYER ]:</span>
+        <input type="range" id="layer-slider" min="0" max="5" value="5" step="1" autocomplete="off" style="flex:1; accent-color:#ff66cc; cursor:pointer;" oninput="onLayerSliderChange(this.value)">
+        <span id="layer-label" style="color:#00e5ff; font-weight:bold; font-size:11px; min-width:125px;">Layer 5 (L5 Logic)</span>
+        <span style="color:#555; font-size:9px;">[Keys: [ / ] or &uarr;/&darr;]</span>
+      </div>
+
       <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
       
       <div class="input-row">
         <input type="text" id="prompt" value="[c] alice went to the kitchen . [q] where is alice ? [a]">
+        <button class="btn" id="btn-toggle-format" onclick="togglePromptFormat()" style="background:#111; border:1px solid #39ff14; color:#39ff14; font-size:11px; padding:8px 10px;" title="Toggle between CQA and QCA prompt structure">[ QCA ]</button>
         <button class="btn btn-exec" id="btn-exec" onclick="gen()">Execute</button>
         <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
         <span id="timer">0.0s</span>
       </div>
 
-      <!-- DRAWER: REPOSITORY & QUESTION MAKER -->
+      <!-- CYBER DRAWER: REPOSITORY & QUESTION MAKER -->
       <div class="drawer-card">
         <div class="drawer-nav">
           <div class="tab-group">
@@ -510,11 +475,7 @@
             </div>
             
             <div class="maker-format-box" id="mk-format-str">Format: ---</div>
-            
-            <div class="maker-row" id="mk-dynamic-fields">
-              <!-- Dynamically populated only with placeholders matching template -->
-            </div>
-
+            <div class="maker-row" id="mk-dynamic-fields"></div>
             <div class="maker-preview" id="mk-preview">Preview: ---</div>
 
             <div class="maker-row" style="justify-content: flex-end; gap: 8px;">
@@ -550,28 +511,48 @@
         1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---
       </div>
 
-      <div class="badge">[ 80-D SYNAPTIC CORTEX ]</div>
+      <div class="badge" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>[ CORTEX &amp; ATTENTION ]</span>
+        <div style="display:flex; gap:4px;">
+          <button id="btn-pin-overlay" onclick="togglePersistentOverlay()" style="background:#111; border:1px solid #333; color:#777; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;" title="Shortcut: 'O'">
+            [ OVERLAY: OFF ]
+          </button>
+          <button id="btn-toggle-view" onclick="toggleCortexView()" style="background:#111; border:1px solid #00e5ff; color:#00e5ff; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;">
+            [ SWAP TO ATTN ]
+          </button>
+        </div>
+      </div>
       <div class="metric">
         <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:2px;">
-          <span style="color:#aaa;">Thought Vector (Layer 2 &rarr; 3):</span>
+          <span id="cortex-view-title" style="color:#aaa;">Thought Vector (L2 &rarr; L3):</span>
           <span>Energy: <b id="v_energy" class="text-cyan">0.00</b></span>
         </div>
         <div id="v_preview" style="color:#777; font-size:10px; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
           [ 0.00, 0.00, 0.00, 0.00 ... ]
         </div>
-        <div class="cortex-container">
+
+        <!-- VIEW A: CORTEX GRID -->
+        <div id="view-cortex-grid" class="cortex-container">
           <div id="cortex-grid" class="cortex-grid"></div>
+          <div class="cortex-legend">
+            <span style="color:#ff0055;">&#9632; Negative</span>
+            <span>Hover cell for value</span>
+            <span style="color:#39ff14;">&#9632; Positive</span>
+          </div>
         </div>
-        <div class="cortex-legend">
-          <span style="color:#ff0055;">&#9632; Negative</span>
-          <span>Hover cell for value</span>
-          <span style="color:#39ff14;">&#9632; Positive</span>
+
+        <!-- VIEW B: ALL 6 LAYERS SIMULTANEOUS ATTENTION -->
+        <div id="view-all-attn" style="display:none; background:#000; border:1px solid #222; padding:6px; margin:5px 0 3px 0; max-height:160px; overflow-y:auto;">
+          <div id="all-layers-container" style="display:flex; flex-direction:column; gap:5px; font-size:9px;">
+            <div style="color:#666; text-align:center; padding:10px 0;">Hover any token or run a prompt to view all 6 layers.</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    let currentFormatMode = 'QCA';
     let abortController = null;
     let activeVector = null;
     let tokenTimes = [];
@@ -580,7 +561,20 @@
     let qcaToUserMap = [];
     let userPromptHasA = false;
 
-    // DIRECT WORLD STATE ENTITY POOLS & CATEGORIES (CANONICAL TASKS 01 - 20)
+    let currentSelectedLayer = 5;
+    let cortexViewMode = 'grid'; // 'grid' or 'attn'
+    let lastInspectedItem = null;
+    let persistentOverlay = false;
+
+    const LAYER_LABELS = [
+      "Layer 0 (Embed)", 
+      "Layer 1 (Syntax)", 
+      "Layer 2 (Meow Out)", 
+      "Layer 3 (Miaou In)", 
+      "Layer 4 (Reason)", 
+      "Layer 5 (L5 Logic)"
+    ];
+
     const WORLD_CFG = {
       "pools": {
         "actor": [
@@ -842,7 +836,6 @@
 
     const FEMALE_ACTORS = new Set(["alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"]);
 
-    // REPOSITORY FUNCTIONS
     const PRESET_TASK_RUNS = [
       { id: "01", group: "01-05", label: "T01: Movement", prompt: "[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]" },
       { id: "02", group: "01-05", label: "T02: Item Carry", prompt: "[c] alice found the ball in the garden . then alice went to the kitchen . [q] where is the ball now ? [a]" },
@@ -942,7 +935,6 @@
       document.getElementById('repo-filters').style.display = (tab === 'repo') ? 'flex' : 'none';
     }
 
-    // DYNAMIC QUESTION MAKER CONTROLLER (DRIVEN DIRECTLY BY WORLD_CFG)
     function initMaker() {
       const catSelect = document.getElementById('mk-category');
       catSelect.innerHTML = '';
@@ -959,7 +951,6 @@
       const catIdx = parseInt(document.getElementById('mk-category').value, 10);
       const cat = WORLD_CFG.categories[catIdx];
 
-      // Populate Premise variant select
       const premSelect = document.getElementById('mk-premise');
       premSelect.innerHTML = '';
       cat.premise.forEach((p, idx) => {
@@ -969,7 +960,6 @@
         premSelect.appendChild(opt);
       });
 
-      // Populate Query variant select
       const qSelect = document.getElementById('mk-query');
       qSelect.innerHTML = '';
       cat.queries.forEach((qObj, idx) => {
@@ -995,20 +985,16 @@
       const pTmpl = cat.premise[premIdx] || cat.premise[0];
       const qTmpl = cat.queries[qIdx].q || cat.queries[0].q;
 
-      // Display exact format banner
       document.getElementById('mk-format-str').innerText = `Format: "${pTmpl}" | [Q: "${qTmpl}"]`;
 
-      // Extract unique placeholders required across both premise and query
       const required = Array.from(new Set([...extractPlaceholders(pTmpl), ...extractPlaceholders(qTmpl)]));
-      
       const fieldsContainer = document.getElementById('mk-dynamic-fields');
       fieldsContainer.innerHTML = '';
 
-      // Entity assignment with distinct offset defaults
       let actorOff = 0, locOff = 0, itemOff = 0, colOff = 0;
 
       required.forEach(ph => {
-        if (ph === 'agent1_pronoun') return; // Calculated automatically
+        if (ph === 'agent1_pronoun') return;
 
         let pool = [];
         let defaultIdx = 0;
@@ -1051,6 +1037,50 @@
 
       updateMakerPreview();
     }
+    function togglePromptFormat() {
+      const input = document.getElementById('prompt');
+      let val = input.value.trim();
+      
+      const cPos = val.indexOf('[c]');
+      const qPos = val.indexOf('[q]');
+      
+      if (cPos !== -1 && qPos !== -1) {
+        if (cPos < qPos) {
+          const contextPart = val.substring(cPos + 3, qPos).trim();
+          const rem = val.substring(qPos + 3);
+          const qPart = rem.split('[a]')[0].trim();
+          val = `[q] ${qPart} [c] ${contextPart} [a]`;
+          currentFormatMode = 'QCA';
+        } else {
+          // Currently QCA ([q] ... [c] ...) -> Convert to CQA ([c] ... [q] ...)
+          const qPart = val.substring(qPos + 3, cPos).trim();
+          const rem = val.substring(cPos + 3);
+          const contextPart = rem.split('[a]')[0].trim();
+          val = `[c] ${contextPart} [q] ${qPart} [a]`;
+          currentFormatMode = 'CQA';
+        }
+      } else {
+        if (val.startsWith('[c]')) {
+          val = val.replace('[c]', '[q]').replace('[q]', '[c]');
+          currentFormatMode = 'QCA';
+        } else {
+          val = `[c] ${val} [q] where is alice ? [a]`;
+          currentFormatMode = 'CQA';
+        }
+      }
+
+      input.value = val;
+      updateFormatButtonLabel();
+    }
+
+    function updateFormatButtonLabel() {
+      const btn = document.getElementById('btn-toggle-format');
+      if (btn) {
+        btn.innerText = `[ ${currentFormatMode} ]`;
+        btn.style.color = currentFormatMode === 'QCA' ? '#39ff14' : '#ff66cc';
+        btn.style.borderColor = currentFormatMode === 'QCA' ? '#39ff14' : '#ff66cc';
+      }
+    }
 
     function buildMakerPromptString() {
       const catIdx = parseInt(document.getElementById('mk-category').value, 10);
@@ -1068,7 +1098,6 @@
         if (el) bindings[ph] = el.value;
       });
 
-      // Special rule for coreference pronouns
       if (bindings['agent1_name']) {
         bindings['agent1_pronoun'] = FEMALE_ACTORS.has(bindings['agent1_name']) ? 'she' : 'he';
       }
@@ -1215,31 +1244,270 @@
       setStat("Stopped", "#ff66cc");
     }
 
-    // Centered hover inspection: highlights strictly within the current run
+    // Helper to get active item or automatically fallback to [a] / final token
+    function getTargetInspectionItem() {
+      if (lastInspectedItem) return lastInspectedItem;
+      if (!currentRunHistory || currentRunHistory.length === 0) return null;
+
+      // Search backwards for the [a] tag token
+      for (let i = currentRunHistory.length - 1; i >= 0; i--) {
+        if (currentRunHistory[i].word.trim().toLowerCase() === '[a]') {
+          return currentRunHistory[i];
+        }
+      }
+      // Otherwise return the final token in the history
+      return currentRunHistory[currentRunHistory.length - 1];
+    }
+
+    function updateLayerUI(val) {
+      currentSelectedLayer = Math.max(0, Math.min(5, parseInt(val, 10)));
+      const slider = document.getElementById('layer-slider');
+      if (slider) slider.value = currentSelectedLayer;
+      
+      const label = document.getElementById('layer-label');
+      if (label) label.innerText = LAYER_LABELS[currentSelectedLayer];
+
+      localStorage.setItem('pico_selected_layer', currentSelectedLayer);
+
+      const target = getTargetInspectionItem();
+      if (target) {
+        highlightActiveLayer(target);
+        if (cortexViewMode === 'attn') {
+          renderAllLayersAttention(target);
+        }
+      }
+    }
+
+    function onLayerSliderChange(val) {
+      updateLayerUI(val);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const inInput = (document.activeElement && document.activeElement.tagName === 'INPUT');
+      
+      if (!inInput && (e.key === 'ArrowDown' || e.key === 'ArrowLeft')) {
+        e.preventDefault();
+        updateLayerUI(currentSelectedLayer - 1);
+      } else if (!inInput && (e.key === 'ArrowUp' || e.key === 'ArrowRight')) {
+        e.preventDefault();
+        updateLayerUI(currentSelectedLayer + 1);
+      }
+    });
+
+    function togglePersistentOverlay() {
+      persistentOverlay = !persistentOverlay;
+      const btn = document.getElementById('btn-pin-overlay');
+      if (persistentOverlay) {
+        btn.innerText = '[ OVERLAY: ON ]';
+        btn.style.color = '#39ff14';
+        btn.style.borderColor = '#39ff14';
+        const target = getTargetInspectionItem();
+        if (target) highlightActiveLayer(target);
+      } else {
+        btn.innerText = '[ OVERLAY: OFF ]';
+        btn.style.color = '#777';
+        btn.style.borderColor = '#333';
+        uninspectToken();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      if (e.key === 'o' || e.key === 'O') {
+        togglePersistentOverlay();
+      }
+    });
+
+    function toggleCortexView() {
+      const gridView = document.getElementById('view-cortex-grid');
+      const attnView = document.getElementById('view-all-attn');
+      const btn = document.getElementById('btn-toggle-view');
+      const title = document.getElementById('cortex-view-title');
+
+      if (cortexViewMode === 'grid') {
+        cortexViewMode = 'attn';
+        gridView.style.display = 'none';
+        attnView.style.display = 'block';
+        btn.innerText = '[ SWAP TO CORTEX ]';
+        btn.style.color = '#ff66cc';
+        btn.style.borderColor = '#ff66cc';
+        title.innerText = 'All 6 Attention Layers (L0-L5):';
+        const target = getTargetInspectionItem();
+        if (target) renderAllLayersAttention(target);
+      } else {
+        cortexViewMode = 'grid';
+        gridView.style.display = 'block';
+        attnView.style.display = 'none';
+        btn.innerText = '[ SWAP TO ATTN ]';
+        btn.style.color = '#00e5ff';
+        btn.style.borderColor = '#00e5ff';
+        title.innerText = 'Thought Vector (L2 \u2192 L3):';
+      }
+    }
+
+    function renderAllLayersAttention(item) {
+      const container = document.getElementById('all-layers-container');
+      if (!container || !item || !item.attnLayers) return;
+
+      container.innerHTML = '';
+
+      const tokens = (currentRunHistory && currentRunHistory.length > 0)
+        ? currentRunHistory.map(h => h.word)
+        : [];
+
+      const numTokens = item.attnLayers[0] ? item.attnLayers[0].length : 0;
+      if (numTokens === 0) return;
+
+      const matrixWrapper = document.createElement('div');
+      matrixWrapper.style.display = 'flex';
+      matrixWrapper.style.flexDirection = 'column';
+      matrixWrapper.style.gap = '2px';
+      matrixWrapper.style.fontFamily = "'Fira Code', monospace";
+
+      for (let lIdx = 0; lIdx < 6; lIdx++) {
+        const layerWeights = item.attnLayers[lIdx] || [];
+        const isMeow = lIdx < 3;
+        const baseColor = isMeow ? '255, 102, 204' : '0, 229, 255';
+        const isSelected = (lIdx === currentSelectedLayer);
+
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '6px';
+        row.style.cursor = 'pointer';
+        row.title = `Click to inspect Layer ${lIdx}`;
+        row.onclick = () => updateLayerUI(lIdx);
+
+        const lbl = document.createElement('span');
+        lbl.style.width = '62px';
+        lbl.style.fontSize = '9px';
+        lbl.style.fontWeight = isSelected ? 'bold' : 'normal';
+        lbl.style.color = isSelected ? '#39ff14' : (isMeow ? '#ff66cc' : '#00e5ff');
+        lbl.innerText = `L${lIdx} ${isMeow ? 'MEOW' : 'MIAOU'}`;
+
+        const strip = document.createElement('div');
+        strip.style.flex = '1';
+        strip.style.display = 'flex';
+        strip.style.height = '12px';
+        strip.style.background = '#0a0a0a';
+        strip.style.border = isSelected ? '1px solid #39ff14' : '1px solid #1a1a1a';
+        strip.style.borderRadius = '1px';
+        strip.style.overflow = 'hidden';
+
+        layerWeights.forEach((w, tIdx) => {
+          const cell = document.createElement('div');
+          cell.style.flex = '1';
+          cell.style.minWidth = '2px';
+          cell.style.height = '100%';
+
+          if (w > 0.25) {
+            cell.style.background = '#ffffff';
+            cell.style.boxShadow = `0 0 6px rgba(${baseColor}, 0.8)`;
+          } else {
+            const alpha = Math.min(1.0, w * 3.5);
+            cell.style.background = `rgba(${baseColor}, ${alpha})`;
+          }
+
+          const tokWord = tokens[tIdx] || `#${tIdx}`;
+          cell.title = `L${lIdx} -> "${tokWord}" (${(w * 100).toFixed(1)}%)`;
+          strip.appendChild(cell);
+        });
+
+        row.appendChild(lbl);
+        row.appendChild(strip);
+        matrixWrapper.appendChild(row);
+      }
+
+      // Mean Attention Curve across all 6 layers
+      const macroRow = document.createElement('div');
+      macroRow.style.display = 'flex';
+      macroRow.style.alignItems = 'center';
+      macroRow.style.gap = '6px';
+      macroRow.style.marginTop = '4px';
+      macroRow.style.borderTop = '1px dashed #222';
+      macroRow.style.paddingTop = '4px';
+
+      const macroLbl = document.createElement('span');
+      macroLbl.style.width = '62px';
+      macroLbl.style.fontSize = '9px';
+      macroLbl.style.color = '#39ff14';
+      macroLbl.style.fontWeight = 'bold';
+      macroLbl.innerText = 'OVERALL:';
+
+      const macroStrip = document.createElement('div');
+      macroStrip.style.flex = '1';
+      macroStrip.style.display = 'flex';
+      macroStrip.style.alignItems = 'flex-end';
+      macroStrip.style.gap = '1px';
+      macroStrip.style.height = '16px';
+      macroStrip.style.background = '#050505';
+
+      for (let tIdx = 0; tIdx < numTokens; tIdx++) {
+        let sumW = 0;
+        for (let lIdx = 0; lIdx < 6; lIdx++) {
+          sumW += (item.attnLayers[lIdx] && item.attnLayers[lIdx][tIdx]) ? item.attnLayers[lIdx][tIdx] : 0;
+        }
+        const meanW = sumW / 6.0;
+        const barH = Math.max(1, Math.min(15, Math.round(meanW * 28)));
+
+        const bar = document.createElement('div');
+        bar.style.flex = '1';
+        bar.style.minWidth = '2px';
+        bar.style.height = `${barH}px`;
+        bar.style.background = meanW > 0.15 ? '#39ff14' : '#1a4d1a';
+        
+        const tokWord = tokens[tIdx] || `#${tIdx}`;
+        bar.title = `Mean Network Focus -> "${tokWord}" (${(meanW * 100).toFixed(1)}%)`;
+        macroStrip.appendChild(bar);
+      }
+
+      macroRow.appendChild(macroLbl);
+      macroRow.appendChild(macroStrip);
+      matrixWrapper.appendChild(macroRow);
+
+      container.appendChild(matrixWrapper);
+    }
+
+    function highlightActiveLayer(item) {
+      if (!item) return;
+      uninspectToken();
+      const activeAttn = (item.attnLayers && item.attnLayers[currentSelectedLayer]) ? item.attnLayers[currentSelectedLayer] : item.attn;
+      if (!activeAttn) return;
+
+      activeAttn.forEach((weight, tIdx) => {
+        const userSlotIdx = (qcaToUserMap && tIdx < qcaToUserMap.length) ? qcaToUserMap[tIdx] : tIdx;
+        const pastTokEl = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`) || document.getElementById(`${currentRunId}-tok-${tIdx}`);
+        if (pastTokEl) {
+          pastTokEl.classList.add('tok-attended');
+          pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.8));
+        }
+      });
+    }
+
     function inspectToken(history, idx, runId, ev) {
       const item = history[idx];
       if (!item) return;
 
+      lastInspectedItem = item;
+
       renderVector(item.v);
       renderRanks(item.ranks);
+      if (cortexViewMode === 'attn') {
+        renderAllLayersAttention(item);
+      }
+      
+      highlightActiveLayer(item);
 
-      if (item.attn && item.attn.length > 0) {
-        item.attn.forEach((weight, tIdx) => {
-          const userSlotIdx = (qcaToUserMap && tIdx < qcaToUserMap.length) ? qcaToUserMap[tIdx] : tIdx;
-          const pastTokEl = document.getElementById(`${runId}-tok-${userSlotIdx}`) || document.getElementById(`${runId}-tok-${tIdx}`);
-          if (pastTokEl) {
-            pastTokEl.classList.add('tok-attended');
-            pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.8));
-          }
-        });
+      const activeAttn = (item.attnLayers && item.attnLayers[currentSelectedLayer]) ? item.attnLayers[currentSelectedLayer] : item.attn;
 
+      if (activeAttn && activeAttn.length > 0 && ev) {
         const pop = document.getElementById('attn-popover');
         document.getElementById('pop-title').innerText = `Token #${idx+1}: "${item.word}"`;
         const barsBox = document.getElementById('pop-bars');
-        barsBox.innerHTML = item.attn.map(w => 
+        barsBox.innerHTML = activeAttn.map(w => 
           `<div class="attn-col" style="height:${Math.max(3, Math.min(26, w * 32))}px;"></div>`
         ).join('');
-        document.getElementById('pop-footer').innerText = `Layer 2 Self-Attention (${item.attn.length} tokens)`;
+        document.getElementById('pop-footer').innerText = `Layer ${currentSelectedLayer} Self-Attention (${activeAttn.length} tokens)`;
         
         const targetX = Math.max(90, Math.min(window.innerWidth - 90, ev.clientX));
         const targetY = Math.max(40, ev.clientY - 12);
@@ -1250,10 +1518,12 @@
     }
 
     function uninspectToken() {
-      document.querySelectorAll('.tok-attended').forEach(el => {
-        el.classList.remove('tok-attended');
-        el.style.removeProperty('--attn-strength');
-      });
+      if (!persistentOverlay) {
+        document.querySelectorAll('.tok-attended').forEach(el => {
+          el.classList.remove('tok-attended');
+          el.style.removeProperty('--attn-strength');
+        });
+      }
       const pop = document.getElementById('attn-popover');
       if (pop) pop.style.display = 'none';
     }
@@ -1294,6 +1564,7 @@
       currentRunHistory = [];
       qcaToUserMap = [];
       userPromptHasA = false;
+      lastInspectedItem = null;
 
       const log = document.getElementById('log');
       const promptLineId = `${currentRunId}-prompt-line`;
@@ -1304,7 +1575,6 @@
 
       const prefContainer = document.getElementById('m_prefill');
       prefContainer.innerHTML = 'Ingesting prompt...';
-
       setStat("Prompt Ingestion (KV Prefill)...", "#ff00aa");
 
       try {
@@ -1351,7 +1621,7 @@
                   span.className = 'term-tok tok-ghost';
                   span.id = `${currentRunId}-tok-${idx}`;
                   span.innerText = word + ' ';
-                  currentRunHistory.push({ word: word, v: null, ranks: null, attn: null });
+                  currentRunHistory.push({ word: word, v: null, ranks: null, attn: null, attnLayers: null });
                   span.onmouseenter = (e) => inspectToken(currentRunHistory, idx, currentRunId, e);
                   span.onmouseleave = uninspectToken;
                   promptLine.appendChild(span);
@@ -1362,12 +1632,10 @@
             } else if (data.stage === 'prefill') {
               setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
 
-              // 1. Light up corresponding QCA chip in KV tray
               const qcaIdx = data.cur - 1;
               const chip = document.getElementById(`${currentRunId}-chip-${qcaIdx}`);
               if (chip) chip.className = 'chip chip-done';
 
-              // 2. Typewriter: Reveal the prompt slot
               const userSlotIdx = (qcaToUserMap && qcaIdx < qcaToUserMap.length) ? qcaToUserMap[qcaIdx] : qcaIdx;
               const slotSpan = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`);
               if (slotSpan) {
@@ -1383,6 +1651,7 @@
                 currentRunHistory[userSlotIdx].v = data.v;
                 currentRunHistory[userSlotIdx].ranks = data.ranks;
                 currentRunHistory[userSlotIdx].attn = data.attn;
+                currentRunHistory[userSlotIdx].attnLayers = data.attn_layers || (data.attn ? [data.attn] : null);
               }
               log.scrollTop = log.scrollHeight;
 
@@ -1393,7 +1662,6 @@
 
               const genStream = document.getElementById(genStreamId);
 
-              // Auto-render [a] in pink if omitted
               if (!userPromptHasA && !document.getElementById(`${currentRunId}-tag-a`)) {
                 const aSpan = document.createElement('span');
                 aSpan.className = 'term-tok tok-tag-a';
@@ -1406,11 +1674,16 @@
               setStat("Streaming Answer...", "#00e5ff");
 
               const tokIndex = currentRunHistory.length;
-              currentRunHistory.push({ word: data.w, v: data.v, ranks: data.ranks, attn: data.attn });
+              const tokenRecord = { 
+                word: data.w, 
+                v: data.v, 
+                ranks: data.ranks, 
+                attn: data.attn,
+                attnLayers: data.attn_layers || (data.attn ? [data.attn] : null)
+              };
+              currentRunHistory.push(tokenRecord);
 
               const tokSpan = document.createElement('span');
-              
-              // ALL GENERATED AI TOKENS ARE PURE CYBER CYAN
               tokSpan.className = 'term-tok tok-ai';
               tokSpan.id = `${currentRunId}-tok-${tokIndex}`;
               tokSpan.innerText = data.w + ' ';
@@ -1439,6 +1712,17 @@
         setControls(false);
         Stopwatch.stop();
         setStat("Ready", "#39ff14");
+
+        const target = getTargetInspectionItem();
+        if (target) {
+          lastInspectedItem = target;
+          if (cortexViewMode === 'attn') {
+            renderAllLayersAttention(target);
+          }
+          if (persistentOverlay) {
+            highlightActiveLayer(target);
+          }
+        }
       }
     }
 
@@ -1446,6 +1730,10 @@
       initGrid(); 
       renderRepo('all');
       initMaker();
+
+      const savedLayer = localStorage.getItem('pico_selected_layer') || 5;
+      updateLayerUI(savedLayer);
+      updateFormatButtonLabel();
     };
   </script>
 </body>

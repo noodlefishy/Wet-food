@@ -8,7 +8,7 @@ sys.path.insert(0, projectRoot)
 
 from benchmarks.fastEvaluator import (
     model, VOCAB, WORD_TO_ID, BLOCK_SIZE, padId, device, 
-    NUM_HEADS, HEAD_DIM, EMBED_DIM, cosC, sinC, applyRope
+    NUM_HEADS, HEAD_DIM, EMBED_DIM, cosC, sinC, applyRope, NUM_LAYERS
 )
 
 model.eval()
@@ -60,7 +60,30 @@ def canonicalize_to_qca(raw):
     if not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
     return p, True
 
-activation_cache = {}
+activation_cache = {
+    "thought_vector": None,
+    "layers_attn": [None] * NUM_LAYERS  # Stores attention matrices for Layers 0..5
+}
+def make_attn_hook(l_idx):
+    def hook(module, inp, out):
+        x = inp[0]
+        B, T, C = x.shape
+        qkv = module.qkvProj(x)
+        q, k, _ = qkv.chunk(3, dim=-1)
+        q = q.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+        k = k.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+        q = applyRope(q, cosC, sinC)
+        k = applyRope(k, cosC, sinC)
+        
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(HEAD_DIM)
+        mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
+        scores = scores.masked_fill(mask, float('-inf'))
+        attn_matrix = F.softmax(scores, dim=-1)
+        
+        # Average across all 4 attention heads
+        avg_head_attn = attn_matrix[0].mean(dim=0)
+        activation_cache["layers_attn"][l_idx] = avg_head_attn.detach().cpu()
+    return hook
 
 def layer2_block_hook(module, inp, out):
     activation_cache["thought_vector"] = out[0].detach()
@@ -84,7 +107,8 @@ def layer2_attention_hook(module, inp, out):
     activation_cache["real_attn_matrix"] = avg_head_attn.detach().cpu()
 
 model.layers[2].register_forward_hook(layer2_block_hook)
-model.layers[2].sa.register_forward_hook(layer2_attention_hook)
+for idx in range(NUM_LAYERS):
+    model.layers[idx].sa.register_forward_hook(make_attn_hook(idx))
 
 class SimulatorHandler(BaseHTTPRequestHandler):
     def setup(self):
@@ -124,6 +148,16 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 chunk = (json.dumps(obj) + "\n").encode("utf-8")
                 self.wfile.write(f"{len(chunk):X}\r\n".encode("utf-8") + chunk + b"\r\n")
                 self.wfile.flush()
+            def extract_all_layers_attn(pos, max_len):
+                all_l = []
+                for l_idx in range(NUM_LAYERS):
+                    mat = activation_cache["layers_attn"][l_idx]
+                    if mat is not None and pos < mat.shape[0]:
+                        row = mat[pos, :max_len].tolist()
+                        all_l.append([round(w, 3) for w in row])
+                    else:
+                        all_l.append([0.0] * max_len)
+                return all_l
 
             canonical_tks = tokenize(qca_prompt)
             user_tks = tokenize(raw_prompt)
@@ -182,7 +216,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "ram": 140000,
                     "v": v_slice,
                     "ranks": ranks,
-                    "attn": attn_weights
+                    "attn_layers": extract_all_layers_attn(stp, stp + 1)
                 })
                 # Smooth typewriter pacing during prefill
                 time.sleep(0.08)
@@ -247,7 +281,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "ram": 140000,
                     "v": v_slice,
                     "ranks": ranks,
-                    "attn": attn_weights
+                    "attn_layers": extract_all_layers_attn(pos, len(curr_tokens))  # All 6 layers
                 })
 
                 curr_tokens.append(pred_id)
