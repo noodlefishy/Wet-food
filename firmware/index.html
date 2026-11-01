@@ -587,7 +587,7 @@
       </div>
 
       <div class="input-row">
-        <input type="text" id="prompt" value="[c] alice went to the kitchen . [q] where is alice ? [a]">
+        <input type="text" id="prompt" value="[q] where is alice ? [c] alice went to the kitchen . [a]">
         <button class="btn" id="btn-toggle-format" onclick="togglePromptFormat()" style="background:#111; border:1px solid #39ff14; color:#39ff14; font-size:11px; padding:8px 10px;" title="Toggle between CQA and QCA prompt structure">[ QCA ]</button>
         <button class="btn btn-exec" id="btn-exec" onclick="gen()">Execute</button>
         <button class="btn btn-stop" id="btn-stop" onclick="abortGen()" style="display:none;">Stop</button>
@@ -758,7 +758,7 @@
       }
     });
 
-    let currentFormatMode = 'CQA';
+    let currentFormatMode = 'QCA';
     let abortController = null;
     let activeVector = null;
     let tokenTimes = [];
@@ -2160,14 +2160,14 @@
       const savedLayer = localStorage.getItem('pico_selected_layer') || 5;
       updateLayerUI(savedLayer);
 
-      // Detect actual format of startup prompt value
+      // Default strictly to QCA on boot
       const initPrompt = document.getElementById('prompt').value.trim();
       const cP = initPrompt.indexOf('[c]');
       const qP = initPrompt.indexOf('[q]');
       if (cP !== -1 && qP !== -1) {
-        currentFormatMode = (cP < qP) ? 'CQA' : 'QCA';
+        currentFormatMode = (qP < cP) ? 'QCA' : 'CQA';
       } else {
-        currentFormatMode = 'CQA';
+        currentFormatMode = 'QCA';
       }
 
       updateFormatButtonLabel();
