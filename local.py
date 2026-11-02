@@ -92,6 +92,47 @@ model.layers[2].register_forward_hook(layer2_block_hook)
 for idx in range(NUM_LAYERS):
     model.layers[idx].sa.register_forward_hook(make_attn_hook(idx))
 
+
+def compute_attention_rollout(layers_attn_list, seq_len):
+    """
+    Peak-Preserving Attribution (2D Matrix):
+    Extracts the maximum attention spike across all layers for every token pair (i, j),
+    preserving sharp reasoning gates without residual blur.
+    """
+    valid_layers = [l for l in layers_attn_list if l is not None]
+    if not valid_layers or seq_len <= 0:
+        return torch.zeros((seq_len, seq_len))
+
+    dev = valid_layers[0].device
+    
+    # Each cached layer tensor is (NUM_HEADS, T, T).
+    # Average across heads first: (T, T), then slice [:seq_len, :seq_len]
+    averaged_layers = []
+    for l in valid_layers:
+        if l.ndim == 3:
+            # l is (NUM_HEADS, T, T) -> mean over heads -> (T, T)
+            avg_mat = l.mean(dim=0)[:seq_len, :seq_len].to(dev)
+        else:
+            # l is already (T, T)
+            avg_mat = l[:seq_len, :seq_len].to(dev)
+        averaged_layers.append(avg_mat)
+
+    # 1. Stack all 6 layers: shape (NUM_LAYERS, seq_len, seq_len)
+    stacked = torch.stack(averaged_layers, dim=0)
+
+    # 2. Element-wise maximum across all layers: shape (seq_len, seq_len)
+    peak_matrix, _ = stacked.max(dim=0)
+
+    # 3. Apply causal mask (tokens cannot attend to future tokens)
+    causal_mask = torch.tril(torch.ones((seq_len, seq_len), device=dev))
+    peak_matrix = peak_matrix * causal_mask
+
+    # 4. Normalize each row so it sums to 1.0
+    row_sums = peak_matrix.sum(dim=-1, keepdim=True).clamp(min=1e-9)
+    norm_peaks = peak_matrix / row_sums
+
+    return norm_peaks.detach().cpu()
+
 class SimulatorHandler(BaseHTTPRequestHandler):
     def setup(self):
         super().setup()
@@ -203,6 +244,10 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 top_indices = torch.topk(lg, 5).indices.tolist()
                 ranks = [VOCAB[idx] for idx in top_indices]
 
+                curr_len = stp + 1
+                R_mat = compute_attention_rollout(activation_cache["layers_attn"], curr_len)
+                rollout_row = (R_mat[-1, :curr_len] if R_mat.ndim == 2 else R_mat).tolist()
+
                 if not send_chunk({
                     "stage": "prefill",
                     "cur": stp + 1,
@@ -212,7 +257,8 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "ram": 140000,
                     "v": v_slice,
                     "ranks": ranks,
-                    "attn_layers": extract_all_layers_attn(stp, stp + 1)
+                    "attn_layers": extract_all_layers_attn(stp, stp + 1),
+                    "rollout": rollout_row
                 }):
                     return
                 time.sleep(0.08)
@@ -261,6 +307,10 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 top_indices = torch.topk(lg, 5).indices.tolist()
                 ranks = [VOCAB[idx] for idx in top_indices]
 
+                curr_len = len(curr_tokens)
+                R_mat = compute_attention_rollout(activation_cache["layers_attn"], curr_len)
+                rollout_row = (R_mat[-1, :curr_len] if R_mat.ndim == 2 else R_mat).tolist()
+
                 if not send_chunk({
                     "stage": "gen",
                     "w": word,
@@ -268,7 +318,8 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "ram": 140000,
                     "v": v_slice,
                     "ranks": ranks,
-                    "attn_layers": extract_all_layers_attn(pos, len(curr_tokens))
+                    "attn_layers": extract_all_layers_attn(pos, len(curr_tokens)),
+                    "rollout": rollout_row
                 }):
                     return
 

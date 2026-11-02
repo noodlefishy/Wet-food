@@ -21,6 +21,7 @@
       margin-bottom: 8px;
     }
 
+    /* TWO-COLUMN FLEX CONTAINER */
     .container {
       display: flex;
       gap: 14px;
@@ -42,6 +43,7 @@
       min-width: 0;
     }
 
+    /* TERMINAL LOG */
     #log {
       height: 310px;
       background: #000;
@@ -54,7 +56,9 @@
       border-radius: 2px;
       position: relative;
     }
+    .log-line { margin-bottom: 4px; word-break: break-word; }
 
+    /* CONTROLS STRIP: SAMPLING SLIDERS & HEAD SELECTOR */
     .controls-strip {
       display: flex;
       gap: 12px;
@@ -106,6 +110,7 @@
       background: rgba(255, 102, 204, 0.12);
     }
 
+    /* INPUT ROW */
     .input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
     input[type="text"] {
       flex: 1;
@@ -138,6 +143,7 @@
     .btn-stop { background: #ff0055; color: #fff; }
     #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; flex-shrink: 0; }
 
+    /* CYBER DRAWER (REPOSITORY & QUESTION MAKER) */
     .drawer-card {
       background: #050505;
       border: 1px solid #222;
@@ -211,6 +217,7 @@
     .chip-del { color: #ff0055; font-weight: bold; cursor: pointer; padding-left: 2px; }
     .chip-del:hover { color: #fff; }
 
+    /* DYNAMIC QUESTION MAKER */
     .maker-layout {
       display: flex;
       flex-direction: column;
@@ -288,6 +295,7 @@
     }
     .maker-action-btn:hover { background: #ff66cc; color: #000; }
 
+    /* TOKEN STYLING */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
@@ -313,9 +321,7 @@
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #39ff14; }
     }
 
-    .tok-ai,
-    span.tok-ai,
-    span.term-tok.tok-ai {
+    .tok-ai {
       color: #00e5ff !important;
       font-weight: bold !important;
       text-shadow: 0 0 8px #00e5ff, 0 0 16px rgba(0, 229, 255, 0.65) !important;
@@ -323,17 +329,8 @@
       animation: tokPopAi 0.24s ease-out forwards !important;
     }
     @keyframes tokPopAi {
-      0% { 
-        opacity: 0; 
-        transform: translateY(-2px) scale(1.2); 
-        color: #ffffff; 
-        text-shadow: 0 0 16px #00e5ff; 
-      }
-      100% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1.0); 
-        color: #00e5ff; 
-      }
+      0% { opacity: 0; transform: translateY(-2px) scale(1.2); color: #ffffff; text-shadow: 0 0 16px #00e5ff; }
+      100% { opacity: 1; transform: translateY(0) scale(1.0); color: #00e5ff; }
     }
 
     .tok-tag-a {
@@ -358,6 +355,7 @@
       border-bottom: 1px solid #ff66cc;
     }
 
+    /* RIGHT COLUMN & COLLAPSIBLES */
     .collapse-header {
       cursor: pointer;
       user-select: none;
@@ -387,6 +385,7 @@
     .text-pink { color: #ff00aa; }
     .text-green { color: #39ff14; }
 
+    /* SCANNER TRACK */
     .scanner-track {
       width: 100%;
       height: 5px;
@@ -437,6 +436,7 @@
       box-shadow: 0 0 4px rgba(57, 255, 20, 0.4);
     }
 
+    /* 96-D CORTEX GRID (16x6) */
     .cortex-container {
       background: #000;
       border: 1px solid #222;
@@ -469,6 +469,109 @@
       margin-top: 3px;
     }
 
+    /* ATTENTION MATRIX CSS CLASSES (REPLACES INLINE STYLES) */
+    .matrix-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-family: inherit;
+    }
+    .matrix-dir-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      margin-bottom: 2px;
+      font-weight: bold;
+    }
+    .attn-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .attn-lbl {
+      width: 62px;
+      font-size: 9px;
+    }
+    .attn-strip {
+      flex: 1;
+      display: flex;
+      height: 12px;
+      background: #0a0a0a;
+      border-radius: 1px;
+      overflow: hidden;
+      border: 1px solid #1a1a1a;
+    }
+    .attn-strip.selected { border-color: #39ff14; }
+    .attn-cell {
+      flex: 1;
+      min-width: 2px;
+      height: 100%;
+    }
+    
+    .head-divider {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      padding-top: 4px;
+      border-top: 1px dashed #333;
+      font-size: 8px;
+      color: #888;
+    }
+    .h-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .h-lbl {
+      width: 62px;
+      font-size: 9px;
+    }
+    .h-strip {
+      flex: 1;
+      display: flex;
+      height: 10px;
+      background: #080808;
+      border-radius: 1px;
+      overflow: hidden;
+      border: 1px solid #141414;
+    }
+
+    .macro-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      border-top: 1px dashed #222;
+      padding-top: 4px;
+      cursor: pointer;
+    }
+    .macro-lbl {
+      width: 62px;
+      font-size: 9px;
+      font-weight: bold;
+    }
+    .macro-strip {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 1px;
+      height: 16px;
+      background: #050505;
+      border-radius: 1px;
+      border: 1px solid transparent;
+    }
+    .macro-strip.active {
+      border-color: #00e5ff;
+      box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+    }
+    .macro-bar {
+      flex: 1;
+      min-width: 2px;
+    }
+
+    /* ATTENTION POPOVER */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -540,10 +643,11 @@
   <div class="main-title">[ MEOW AND MIAOU : DISTRIBUTED NEURAL ENGINE ]</div>
   
   <div class="container">
+    <!-- LEFT MAIN COLUMN -->
     <div class="main-col">
       <div style="display:flex; align-items:center; gap:10px; background:#050505; border:1px solid #222; padding:6px 10px; border-radius:2px; width:100%;">
         <span style="color:#ff66cc; font-weight:bold; font-size:11px;">[ LAYER ]:</span>
-        <input type="range" id="layer-slider" min="0" max="5" value="5" step="1" autocomplete="off" style="flex:1; accent-color:#ff66cc; cursor:pointer;" oninput="onLayerSliderChange(this.value)">
+        <input type="range" id="layer-slider" min="0" max="6" value="6" step="1" autocomplete="off" style="flex:1; accent-color:#ff66cc; cursor:pointer;" oninput="onLayerSliderChange(this.value)">
         <span id="layer-label" style="color:#00e5ff; font-weight:bold; font-size:11px; min-width:125px;">Layer 5 (L5 Logic)</span>
         <span style="color:#555; font-size:9px;">[Keys: &uarr;/&darr; Layer, &larr;/&rarr; Head, 'R' or Click Token to Toggle Rev]</span>
       </div>
@@ -579,6 +683,7 @@
         <span id="timer">0.0s</span>
       </div>
 
+      <!-- CYBER DRAWER: REPOSITORY & QUESTION MAKER -->
       <div class="drawer-card">
         <div class="drawer-nav">
           <div class="tab-group">
@@ -626,6 +731,7 @@
       </div>
     </div>
     
+    <!-- RIGHT SIDEBAR COLUMN -->
     <div class="side-col">
       <div class="badge collapse-header" onclick="toggleCollapse('sec-facts', this)" data-title="[ FUN FACTS ]">
         <span>[+] [ FUN FACTS ]</span>
@@ -656,10 +762,11 @@
         1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---
       </div>
 
+      <!-- CORTEX & ATTENTION GRAPH -->
       <div class="badge" style="display:flex; justify-content:space-between; align-items:center;">
         <span>[ 6-LAYER ATTENTION GRAPH ]</span>
         <div style="display:flex; gap:4px;">
-          <button id="btn-toggle-reverse" onclick="toggleReverseAttention()" style="background:#111; border:1px solid #333; color:#777; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;" title="Toggle Reverse / Backward Attention (Shortcut: 'R', click token, or hold Shift)">
+          <button id="btn-toggle-reverse" onclick="toggleReverseAttention()" style="background:#111; border:1px solid #333; color:#777; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;" title="Toggle Reverse / Backward Attention (Shortcut: 'R', click token)">
             [ ATTN: BWD &larr; ]
           </button>
           <button id="btn-pin-overlay" onclick="togglePersistentOverlay()" style="background:#111; border:1px solid #333; color:#777; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;" title="Shortcut: 'O'">
@@ -698,451 +805,67 @@
   </div>
 
   <script>
-    function toggleCollapse(secId, headerEl) {
-      const el = document.getElementById(secId);
-      if (!el) return;
-      const isHidden = (el.style.display === 'none');
-      el.style.display = isHidden ? 'block' : 'none';
-      const baseTitle = headerEl.getAttribute('data-title') || headerEl.innerText.replace(/^\[[+-]\]\s*/, '');
-      headerEl.querySelector('span').innerText = (isHidden ? '[-] ' : '[+] ') + baseTitle;
-    }
-
-    let isReverseMode = false;
-    let activeHoverContext = null;
-
-    function releaseInputFocus() {
-      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
-        document.activeElement.blur();
-      }
-    }
-
-    function clearAttendedHighlights() {
-      document.querySelectorAll('.tok-attended').forEach(el => {
-        el.classList.remove('tok-attended');
-        el.style.removeProperty('--attn-strength');
-      });
-    }
-
-    function updateAttentionDirectionUI() {
-      const btn = document.getElementById('btn-toggle-reverse');
-      if (btn) {
-        if (isReverseMode) {
-          btn.innerText = '[ ATTN: REV \u2192 ]';
-          btn.style.color = '#00e5ff';
-          btn.style.borderColor = '#00e5ff';
-          btn.style.background = 'rgba(0, 229, 255, 0.12)';
-        } else {
-          btn.innerText = '[ ATTN: BWD \u2190 ]';
-          btn.style.color = '#777';
-          btn.style.borderColor = '#333';
-          btn.style.background = '#111';
-        }
-      }
-      const title = document.getElementById('cortex-view-title');
-      if (title && cortexViewMode === 'attn') {
-        title.innerHTML = isReverseMode 
-          ? 'All 6 Attention Layers <span style="color:#00e5ff; font-weight:bold;">[REVERSE &rarr;]</span>:'
-          : 'All 6 Attention Layers <span style="color:#ff66cc; font-weight:bold;">[BACKWARD &larr;]</span>:';
-      }
-    }
-    function reInspectActive() {
-      if (activeHoverContext) {
-        const { history, idx, runId, coords } = activeHoverContext;
-        clearAttendedHighlights();
-        inspectToken(history, idx, runId, coords);
-      } else {
-        const target = getTargetInspectionItem();
-        if (target) {
-          if (persistentOverlay) {
-            highlightActiveLayer(target);
-          }
-          if (cortexViewMode === 'attn') {
-            renderAllLayersAttention(target);
-          }
-        }
-      }
-    }
-
-    function toggleReverseAttention() {
-      isReverseMode = !isReverseMode;
-      updateAttentionDirectionUI();
-      reInspectActive();
-    }
-
-    // Tracks mouse coords without modifying reverse mode
-    window.addEventListener('mousemove', (e) => {
-      if (activeHoverContext) {
-        activeHoverContext.coords = { clientX: e.clientX, clientY: e.clientY };
-      }
-    });
-
-    let currentFormatMode = 'QCA';
-    let abortController = null;
-    let activeVector = null;
-    let tokenTimes = [];
-    let currentRunHistory = [];
-    let currentRunId = '';
-    let qcaToUserMap = [];
-    let userPromptHasA = false;
-
-    let currentSelectedLayer = 5;
-    let currentSelectedHead = 'all';
-    
-    let cortexViewMode = localStorage.getItem('pico_cortex_view') || 'attn';
-    let lastInspectedItem = null;
-    let persistentOverlay = false;
-
-    function applyCortexViewModeUI() {
-      const gridView = document.getElementById('view-cortex-grid');
-      const attnView = document.getElementById('view-all-attn');
-      const btn = document.getElementById('btn-toggle-view');
-      const title = document.getElementById('cortex-view-title');
-
-      if (cortexViewMode === 'attn') {
-        if (gridView) gridView.style.display = 'none';
-        if (attnView) attnView.style.display = 'block';
-        if (btn) {
-          btn.innerText = '[ SWAP TO CORTEX ]';
-          btn.style.color = '#ff66cc';
-          btn.style.borderColor = '#ff66cc';
-        }
-        if (title) {
-          title.innerHTML = isReverseMode 
-            ? 'All 6 Attention Layers <span style="color:#00e5ff; font-weight:bold;">[REVERSE &rarr;]</span>:'
-            : 'All 6 Attention Layers <span style="color:#ff66cc; font-weight:bold;">[BACKWARD &larr;]</span>:';
-        }
-      } else {
-        if (gridView) gridView.style.display = 'block';
-        if (attnView) attnView.style.display = 'none';
-        if (btn) {
-          btn.innerText = '[ SWAP TO ATTN ]';
-          btn.style.color = '#00e5ff';
-          btn.style.borderColor = '#00e5ff';
-        }
-        if (title) title.innerText = 'Thought Vector (L2 \u2192 L3):';
-      }
-      localStorage.setItem('pico_cortex_view', cortexViewMode);
-    }
-
-    function toggleCortexView() {
-      cortexViewMode = (cortexViewMode === 'attn') ? 'grid' : 'attn';
-      applyCortexViewModeUI();
-      const target = getTargetInspectionItem();
-      if (target && cortexViewMode === 'attn') {
-        renderAllLayersAttention(target);
-      }
-    }
-
-    function onParamChange() {
-      const slTemp = document.getElementById('sl-temp');
-      const slTopk = document.getElementById('sl-topk');
-      const t = slTemp ? parseFloat(slTemp.value).toFixed(2) : '0.00';
-      const k = slTopk ? slTopk.value : '1';
-      const vTemp = document.getElementById('val-temp');
-      const vTopk = document.getElementById('val-topk');
-      if (vTemp) vTemp.innerText = t;
-      if (vTopk) vTopk.innerText = k;
-    }
-
-    function selectHead(head, btn) {
-      currentSelectedHead = head;
-      document.querySelectorAll('.head-pill').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      const target = getTargetInspectionItem();
-      if (target) {
-        highlightActiveLayer(target);
-        if (cortexViewMode === 'attn') {
-          renderAllLayersAttention(target);
-        }
-      }
-    }
-
-    function selectHeadByValue(headVal) {
-      const btn = Array.from(document.querySelectorAll('.head-pill')).find(b => {
-        return headVal === 'all' ? b.innerText.includes('ALL') : b.innerText.includes(`H${headVal}`);
-      });
-      selectHead(headVal, btn);
-    }
-
-    function getLayerHeadAttention(item, layerIdx) {
-      if (!item || !item.attnLayers || !item.attnLayers[layerIdx]) return item ? item.attn : null;
-      const lData = item.attnLayers[layerIdx];
-      if (lData && typeof lData === 'object' && !Array.isArray(lData)) {
-        if (currentSelectedHead === 'all') return lData.all;
-        return (lData.heads && lData.heads[currentSelectedHead]) ? lData.heads[currentSelectedHead] : lData.all;
-      }
-      return lData;
-    }
+    /* ==========================================================================
+       1. GLOBAL STATE & CONFIGURATION
+       ========================================================================== */
+    const State = {
+      layer: 6,
+      head: 'all',          // 'all', 0, 1, 2, 3
+      reverseMode: false,
+      cortexView: localStorage.getItem('pico_cortex_view') || 'attn',
+      persistentOverlay: false,
+      formatMode: 'QCA',
+      activeHover: null,    // { history, idx, runId, coords }
+      lastInspected: null,
+      activeVector: null,
+      runHistory: [],
+      currentRunId: '',
+      qcaToUserMap: [],
+      userPromptHasA: false,
+      tokenTimes: [],
+      abortCtrl: null
+    };
 
     const LAYER_LABELS = [
-      "Layer 0 (Embed)", 
-      "Layer 1 (Syntax)", 
-      "Layer 2 (Meow Out)", 
-      "Layer 3 (Miaou In)", 
-      "Layer 4 (Reason)", 
-      "Layer 5 (L5 Logic)"
+      "Layer 0 (Embed)", "Layer 1 (Syntax)", "Layer 2 (Meow Out)",
+      "Layer 3 (Miaou In)", "Layer 4 (Reason)", "Layer 5 (L5 Logic)",
+      "Rollout (All 6 Layers)"
     ];
+
+    const HEAD_PALETTE = ['#00e5ff', '#39ff14', '#ffaa00', '#ff00aa'];
+    const FEMALE_ACTORS = new Set(["alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"]);
 
     const WORLD_CFG = {
       "pools": {
-        "actor": [
-          "alice", "bob", "felix", "luna", "charlie", "daisy", "leo", "milo",
-          "oliver", "bella", "max", "lucy", "simba", "chloe", "rocky", "lily",
-          "jack", "sophie", "toby", "mia", "sam", "ruby", "oscar", "zoe", "buster"
-        ],
-        "location": [
-          "garden", "kitchen", "park", "room", "bedroom", "attic", "basement",
-          "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony"
-        ],
-        "item": [
-          "ball", "box", "book", "cup", "key", "toy", "stick", "blanket",
-          "apple", "hat", "bottle", "bowl", "plate", "pencil", "coin"
-        ],
-        "colour": [
-          "red", "blue", "yellow", "green", "white", "black", "orange", "pink"
-        ],
-        "container": [
-          "box", "bag", "basket", "drawer"
-        ]
+        "actor": ["alice", "bob", "felix", "luna", "charlie", "daisy", "leo", "milo", "oliver", "bella", "max", "lucy", "simba", "chloe", "rocky", "lily", "jack", "sophie", "toby", "mia", "sam", "ruby", "oscar", "zoe", "buster"],
+        "location": ["garden", "kitchen", "park", "room", "bedroom", "attic", "basement", "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony"],
+        "item": ["ball", "box", "book", "cup", "key", "toy", "stick", "blanket", "apple", "hat", "bottle", "bowl", "plate", "pencil", "coin"],
+        "colour": ["red", "blue", "yellow", "green", "white", "black", "orange", "pink"],
+        "container": ["box", "bag", "basket", "drawer"]
       },
       "categories": [
-        {
-          "name": "01: Single Supporting Fact",
-          "premise": [
-            "{actor1} went to the {location1} . {actor2} went to the {location2}",
-            "{actor2} went to the {location2} . {actor1} went to the {location1}"
-          ],
-          "queries": [
-            { "q": "where is {actor1}", "a": "{location1} ." },
-            { "q": "where is {actor2}", "a": "{location2} ." },
-            { "q": "who went to the {location1}", "a": "{actor1} ." },
-            { "q": "who went to the {location2}", "a": "{actor2} ." }
-          ]
-        },
-        {
-          "name": "02: Two Supporting Facts",
-          "premise": [
-            "{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}"
-          ],
-          "queries": [
-            { "q": "where is the {item1} now", "a": "{location2} ." },
-            { "q": "where was the {item1} first", "a": "{location1} ." },
-            { "q": "where is {actor1} now", "a": "{location2} ." },
-            { "q": "who has the {item1}", "a": "{actor1} ." },
-            { "q": "who is in the {location1}", "a": "nobody ." }
-          ]
-        },
-        {
-          "name": "03: Three Supporting Facts",
-          "premise": [
-            "{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}"
-          ],
-          "queries": [
-            { "q": "where is the {item1} now", "a": "{location2} ." },
-            { "q": "where is {actor1} now", "a": "{location3} ." },
-            { "q": "who has the {item1} now", "a": "nobody ." }
-          ]
-        },
-        {
-          "name": "04: Two Argument Relations",
-          "premise": [
-            "the {location1} is north of the {location2} . the {location2} is north of the {location3}",
-            "the {location2} is north of the {location3} . the {location1} is north of the {location2}"
-          ],
-          "queries": [
-            { "q": "what is north of the {location2}", "a": "{location1} ." },
-            { "q": "what is south of the {location2}", "a": "{location3} ." },
-            { "q": "what is north of the {location3}", "a": "{location1} ." },
-            { "q": "what is south of the {location1}", "a": "{location3} ." }
-          ]
-        },
-        {
-          "name": "05: Three Argument Relations",
-          "premise": [
-            "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}"
-          ],
-          "queries": [
-            { "q": "who gave the {item1} to {actor2}", "a": "{actor1} ." },
-            { "q": "who has the {item1} now", "a": "{actor3} ." },
-            { "q": "who had the {item1} first", "a": "{actor1} ." }
-          ]
-        },
-        {
-          "name": "06: Yes/No Truth Verification",
-          "premise": [
-            "{actor1} went to the {location1} . {actor2} went to the {location2}",
-            "{actor2} went to the {location2} . {actor1} went to the {location1}"
-          ],
-          "queries": [
-            { "q": "is {actor1} in the {location1}", "a": "yes ." },
-            { "q": "is {actor2} in the {location2}", "a": "yes ." },
-            { "q": "is {actor1} in the {location2}", "a": "no ." },
-            { "q": "is {actor2} in the {location1}", "a": "no ." }
-          ]
-        },
-        {
-          "name": "07: Counting",
-          "premise": [
-            "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
-            "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
-          ],
-          "queries": [
-            { "q": "how many items does {actor1} have", "a": "two ." },
-            { "q": "how many items does {actor2} have", "a": "one ." }
-          ]
-        },
-        {
-          "name": "08: Lists and Sets",
-          "premise": [
-            "{actor1} has the {item1} and the {item2} . {actor2} has the {item3}",
-            "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"
-          ],
-          "queries": [
-            { "q": "what does {actor1} have", "a": "{item1} and {item2} ." },
-            { "q": "what does {actor2} have", "a": "{item3} ." }
-          ]
-        },
-        {
-          "name": "09: Simple Negation",
-          "premise": [
-            "{actor1} is not in the {location1} . {actor1} is in the {location2}",
-            "{actor1} is in the {location2} . {actor1} is not in the {location1}"
-          ],
-          "queries": [
-            { "q": "where is {actor1}", "a": "{location2} ." },
-            { "q": "is {actor1} in the {location1}", "a": "no ." },
-            { "q": "is {actor1} in the {location2}", "a": "yes ." }
-          ]
-        },
-        {
-          "name": "10: Indefinite Knowledge",
-          "premise": [
-            "{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}",
-            "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"
-          ],
-          "queries": [
-            { "q": "where is {actor1}", "a": "{location2} ." },
-            { "q": "is {actor1} in the {location1}", "a": "no ." },
-            { "q": "is {actor1} in the {location2}", "a": "yes ." }
-          ]
-        },
-        {
-          "name": "11: Basic Coreference",
-          "premise": [
-            "{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}"
-          ],
-          "queries": [
-            { "q": "where is {agent1_name} now", "a": "{location2} ." },
-            { "q": "where was {agent1_name} first", "a": "{location1} ." }
-          ]
-        },
-        {
-          "name": "12: Conjunction",
-          "premise": [
-            "{actor1} and {actor2} went to the {location1} . {actor3} went to the {location2}",
-            "{actor3} went to the {location2} . {actor1} and {actor2} went to the {location1}"
-          ],
-          "queries": [
-            { "q": "where is {actor1}", "a": "{location1} ." },
-            { "q": "where is {actor2}", "a": "{location1} ." },
-            { "q": "where is {actor3}", "a": "{location2} ." },
-            { "q": "who is in the {location1}", "a": "{actor1} and {actor2} ." },
-            { "q": "who is in the {location2}", "a": "{actor3} ." }
-          ]
-        },
-        {
-          "name": "13: Compound Coreference",
-          "premise": [
-            "{actor1} and {actor2} were in the {location1} . then they went to the {location2}"
-          ],
-          "queries": [
-            { "q": "where is {actor1}", "a": "{location2} ." },
-            { "q": "where is {actor2}", "a": "{location2} ." },
-            { "q": "who is in the {location1}", "a": "nobody ." },
-            { "q": "who is in the {location2}", "a": "{actor1} and {actor2} ." }
-          ]
-        },
-        {
-          "name": "14: Time Reasoning",
-          "premise": [
-            "first {actor1} was in the {location1} . then {actor1} was in the {location2}"
-          ],
-          "queries": [
-            { "q": "where was {actor1} before the {location2}", "a": "{location1} ." },
-            { "q": "where was {actor1} after the {location1}", "a": "{location2} ." }
-          ]
-        },
-        {
-          "name": "15: Basic Deduction",
-          "premise": [
-            "cats like the {item1} . {actor1} is a cat",
-            "{actor1} is a cat . cats like the {item1}"
-          ],
-          "queries": [
-            { "q": "what does {actor1} like", "a": "{item1} ." }
-          ]
-        },
-        {
-          "name": "16: Basic Induction",
-          "premise": [
-            "the {item1} is {colour1} . the {item2} is {colour2} . {actor1} has the {item1}",
-            "the {item2} is {colour2} . the {item1} is {colour1} . {actor1} has the {item1}"
-          ],
-          "queries": [
-            { "q": "what colour is the {item1}", "a": "{colour1} ." },
-            { "q": "what colour is the {item2}", "a": "{colour2} ." }
-          ]
-        },
-        {
-          "name": "17: Positional Reasoning",
-          "premise": [
-            "the {item1} is to the left of the {item2} . the {item2} is to the left of the {item3}",
-            "the {item2} is to the left of the {item3} . the {item1} is to the left of the {item2}"
-          ],
-          "queries": [
-            { "q": "what is to the left of the {item2}", "a": "{item1} ." },
-            { "q": "is the {item1} to the left of the {item3}", "a": "yes ." },
-            { "q": "is the {item3} to the left of the {item1}", "a": "no ." }
-          ]
-        },
-        {
-          "name": "18: Size Reasoning",
-          "premise": [
-            "the {item1} is bigger than the {item2} . the {item2} is bigger than the {item3}",
-            "the {item2} is bigger than the {item3} . the {item1} is bigger than the {item2}"
-          ],
-          "queries": [
-            { "q": "what is bigger than the {item2}", "a": "{item1} ." },
-            { "q": "is the {item1} bigger than the {item3}", "a": "yes ." },
-            { "q": "is the {item3} bigger than the {item1}", "a": "no ." }
-          ]
-        },
-        {
-          "name": "19: Micro Navigation",
-          "premise": [
-            "the {location1} leads to the {location2} . the {location2} leads to the {location3}",
-            "the {location2} leads to the {location3} . the {location1} leads to the {location2}"
-          ],
-          "queries": [
-            { "q": "where can you go from the {location1}", "a": "{location2} ." },
-            { "q": "can you go from the {location1} to the {location3}", "a": "yes ." }
-          ]
-        },
-        {
-          "name": "20: Agent Motivations",
-          "premise": [
-            "{actor1} is hungry . {actor1} went to the kitchen . {actor2} is tired . {actor2} went to the room",
-            "{actor2} is tired . {actor2} went to the room . {actor1} is hungry . {actor1} went to the kitchen"
-          ],
-          "queries": [
-            { "q": "why did {actor1} go to the kitchen", "a": "hungry ." },
-            { "q": "who is hungry", "a": "{actor1} ." }
-          ]
-        }
+        { "name": "01: Single Supporting Fact", "premise": ["{actor1} went to the {location1} . {actor2} went to the {location2}", "{actor2} went to the {location2} . {actor1} went to the {location1}"], "queries": [{ "q": "where is {actor1}", "a": "{location1} ." }, { "q": "where is {actor2}", "a": "{location2} ." }, { "q": "who went to the {location1}", "a": "{actor1} ." }, { "q": "who went to the {location2}", "a": "{actor2} ." }] },
+        { "name": "02: Two Supporting Facts", "premise": ["{actor1} found the {item1} in the {location1} . then {actor1} went to the {location2}"], "queries": [{ "q": "where is the {item1} now", "a": "{location2} ." }, { "q": "where was the {item1} first", "a": "{location1} ." }, { "q": "where is {actor1} now", "a": "{location2} ." }, { "q": "who has the {item1}", "a": "{actor1} ." }, { "q": "who is in the {location1}", "a": "nobody ." }] },
+        { "name": "03: Three Supporting Facts", "premise": ["{actor1} found the {item1} in the {location1} . {actor1} went to the {location2} . {actor1} left the {item1} in the {location2} . then {actor1} went to the {location3}"], "queries": [{ "q": "where is the {item1} now", "a": "{location2} ." }, { "q": "where is {actor1} now", "a": "{location3} ." }, { "q": "who has the {item1} now", "a": "nobody ." }] },
+        { "name": "04: Two Argument Relations", "premise": ["the {location1} is north of the {location2} . the {location2} is north of the {location3}", "the {location2} is north of the {location3} . the {location1} is north of the {location2}"], "queries": [{ "q": "what is north of the {location2}", "a": "{location1} ." }, { "q": "what is south of the {location2}", "a": "{location3} ." }, { "q": "what is north of the {location3}", "a": "{location1} ." }, { "q": "what is south of the {location1}", "a": "{location3} ." }] },
+        { "name": "05: Three Argument Relations", "premise": ["{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}"], "queries": [{ "q": "who gave the {item1} to {actor2}", "a": "{actor1} ." }, { "q": "who has the {item1} now", "a": "{actor3} ." }, { "q": "who had the {item1} first", "a": "{actor1} ." }] },
+        { "name": "06: Yes/No Truth Verification", "premise": ["{actor1} went to the {location1} . {actor2} went to the {location2}", "{actor2} went to the {location2} . {actor1} went to the {location1}"], "queries": [{ "q": "is {actor1} in the {location1}", "a": "yes ." }, { "q": "is {actor2} in the {location2}", "a": "yes ." }, { "q": "is {actor1} in the {location2}", "a": "no ." }, { "q": "is {actor2} in the {location1}", "a": "no ." }] },
+        { "name": "07: Counting", "premise": ["{actor1} has the {item1} and the {item2} . {actor2} has the {item3}", "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"], "queries": [{ "q": "how many items does {actor1} have", "a": "two ." }, { "q": "how many items does {actor2} have", "a": "one ." }] },
+        { "name": "08: Lists and Sets", "premise": ["{actor1} has the {item1} and the {item2} . {actor2} has the {item3}", "{actor2} has the {item3} . {actor1} has the {item1} and the {item2}"], "queries": [{ "q": "what does {actor1} have", "a": "{item1} and {item2} ." }, { "q": "what does {actor2} have", "a": "{item3} ." }] },
+        { "name": "09: Simple Negation", "premise": ["{actor1} is not in the {location1} . {actor1} is in the {location2}", "{actor1} is in the {location2} . {actor1} is not in the {location1}"], "queries": [{ "q": "where is {actor1}", "a": "{location2} ." }, { "q": "is {actor1} in the {location1}", "a": "no ." }, { "q": "is {actor1} in the {location2}", "a": "yes ." }] },
+        { "name": "10: Indefinite Knowledge", "premise": ["{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}", "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"], "queries": [{ "q": "where is {actor1}", "a": "{location2} ." }, { "q": "is {actor1} in the {location1}", "a": "no ." }, { "q": "is {actor1} in the {location2}", "a": "yes ." }] },
+        { "name": "11: Basic Coreference", "premise": ["{agent1_name} was in the {location1} . then {agent1_pronoun} went to the {location2}"], "queries": [{ "q": "where is {agent1_name} now", "a": "{location2} ." }, { "q": "where was {agent1_name} first", "a": "{location1} ." }] },
+        { "name": "12: Conjunction", "premise": ["{actor1} and {actor2} went to the {location1} . {actor3} went to the {location2}", "{actor3} went to the {location2} . {actor1} and {actor2} went to the {location1}"], "queries": [{ "q": "where is {actor1}", "a": "{location1} ." }, { "q": "where is {actor2}", "a": "{location1} ." }, { "q": "where is {actor3}", "a": "{location2} ." }, { "q": "who is in the {location1}", "a": "{actor1} and {actor2} ." }, { "q": "who is in the {location2}", "a": "{actor3} ." }] },
+        { "name": "13: Compound Coreference", "premise": ["{actor1} and {actor2} were in the {location1} . then they went to the {location2}"], "queries": [{ "q": "where is {actor1}", "a": "{location2} ." }, { "q": "where is {actor2}", "a": "{location2} ." }, { "q": "who is in the {location1}", "a": "nobody ." }, { "q": "who is in the {location2}", "a": "{actor1} and {actor2} ." }] },
+        { "name": "14: Time Reasoning", "premise": ["first {actor1} was in the {location1} . then {actor1} was in the {location2}"], "queries": [{ "q": "where was {actor1} before the {location2}", "a": "{location1} ." }, { "q": "where was {actor1} after the {location1}", "a": "{location2} ." }] },
+        { "name": "15: Basic Deduction", "premise": ["cats like the {item1} . {actor1} is a cat", "{actor1} is a cat . cats like the {item1}"], "queries": [{ "q": "what does {actor1} like", "a": "{item1} ." }] },
+        { "name": "16: Basic Induction", "premise": ["the {item1} is {colour1} . the {item2} is {colour2} . {actor1} has the {item1}", "the {item2} is {colour2} . the {item1} is {colour1} . {actor1} has the {item1}"], "queries": [{ "q": "what colour is the {item1}", "a": "{colour1} ." }, { "q": "what colour is the {item2}", "a": "{colour2} ." }] },
+        { "name": "17: Positional Reasoning", "premise": ["the {item1} is to the left of the {item2} . the {item2} is to the left of the {item3}", "the {item2} is to the left of the {item3} . the {item1} is to the left of the {item2}"], "queries": [{ "q": "what is to the left of the {item2}", "a": "{item1} ." }, { "q": "is the {item1} to the left of the {item3}", "a": "yes ." }, { "q": "is the {item3} to the left of the {item1}", "a": "no ." }] },
+        { "name": "18: Size Reasoning", "premise": ["the {item1} is bigger than the {item2} . the {item2} is bigger than the {item3}", "the {item2} is bigger than the {item3} . the {item1} is bigger than the {item2}"], "queries": [{ "q": "what is bigger than the {item2}", "a": "{item1} ." }, { "q": "is the {item1} bigger than the {item3}", "a": "yes ." }, { "q": "is the {item3} bigger than the {item1}", "a": "no ." }] },
+        { "name": "19: Micro Navigation", "premise": ["the {location1} leads to the {location2} . the {location2} leads to the {location3}", "the {location2} leads to the {location3} . the {location1} leads to the {location2}"], "queries": [{ "q": "where can you go from the {location1}", "a": "{location2} ." }, { "q": "can you go from the {location1} to the {location3}", "a": "yes ." }] },
+        { "name": "20: Agent Motivations", "premise": ["{actor1} is hungry . {actor1} went to the kitchen . {actor2} is tired . {actor2} went to the room", "{actor2} is tired . {actor2} went to the room . {actor1} is hungry . {actor1} went to the kitchen"], "queries": [{ "q": "why did {actor1} go to the kitchen", "a": "hungry ." }, { "q": "who is hungry", "a": "{actor1} ." }] }
       ]
     };
-
-    const FEMALE_ACTORS = new Set(["alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"]);
 
     const PRESET_TASK_RUNS = [
       { id: "01", group: "01-05", label: "T01: Movement", prompt: "[c] alice went to the kitchen . bob went to the garden . [q] where is alice ? [a]" },
@@ -1167,6 +890,686 @@
       { id: "20", group: "16-20", label: "T20: Agent Motivation", prompt: "[c] alice is hungry . alice went to the kitchen . bob is tired . bob went to the bedroom . [q] why did alice go to the kitchen ? [a]" }
     ];
 
+    /* ==========================================================================
+       2. UI UTILITIES & EVENT HELPERS
+       ========================================================================== */
+    function toggleCollapse(secId, headerEl) {
+      const el = document.getElementById(secId);
+      if (!el) return;
+      const isHidden = (el.style.display === 'none');
+      el.style.display = isHidden ? 'block' : 'none';
+      const baseTitle = headerEl.getAttribute('data-title') || headerEl.innerText.replace(/^\[[+-]\]\s*/, '');
+      headerEl.querySelector('span').innerText = (isHidden ? '[-] ' : '[+] ') + baseTitle;
+    }
+
+    function releaseInputFocus() {
+      const el = document.activeElement;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) el.blur();
+    }
+
+    function clearAttendedHighlights() {
+      document.querySelectorAll('.tok-attended').forEach(el => {
+        el.classList.remove('tok-attended');
+        el.style.removeProperty('--attn-strength');
+      });
+    }
+
+    function updateAttentionDirectionUI() {
+      const btn = document.getElementById('btn-toggle-reverse');
+      if (btn) {
+        if (State.reverseMode) {
+          btn.innerText = '[ ATTN: REV \u2192 ]';
+          btn.style.color = '#00e5ff';
+          btn.style.borderColor = '#00e5ff';
+          btn.style.background = 'rgba(0, 229, 255, 0.12)';
+        } else {
+          btn.innerText = '[ ATTN: BWD \u2190 ]';
+          btn.style.color = '#777';
+          btn.style.borderColor = '#333';
+          btn.style.background = '#111';
+        }
+      }
+      const title = document.getElementById('cortex-view-title');
+      if (title && State.cortexView === 'attn') {
+        title.innerHTML = State.reverseMode 
+          ? 'All 6 Attention Layers <span style="color:#00e5ff; font-weight:bold;">[REVERSE &rarr;]</span>:'
+          : 'All 6 Attention Layers <span style="color:#ff66cc; font-weight:bold;">[BACKWARD &larr;]</span>:';
+      }
+    }
+
+    function toggleReverseAttention() {
+      State.reverseMode = !State.reverseMode;
+      updateAttentionDirectionUI();
+      reInspectActive();
+    }
+
+    function reInspectActive() {
+      if (State.activeHover) {
+        const { history, idx, runId, coords } = State.activeHover;
+        clearAttendedHighlights();
+        inspectToken(history, idx, runId, coords);
+      } else {
+        const target = getTargetInspectionItem();
+        if (target) {
+          if (State.persistentOverlay) highlightActiveLayer(target);
+          if (State.cortexView === 'attn') renderAllLayersAttention(target);
+        }
+      }
+    }
+
+    /* HOTKEY DISPATCHER */
+    window.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      const inInput = (activeTag === 'INPUT' || activeTag === 'TEXTAREA');
+
+      if (e.key === 'r' || e.key === 'R') {
+        if (State.activeHover || !inInput) {
+          e.preventDefault();
+          if (inInput && document.activeElement) document.activeElement.blur();
+          toggleReverseAttention();
+          return;
+        }
+      }
+
+      if (inInput || activeTag === 'SELECT') return;
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        updateLayerUI(State.layer + 1);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        updateLayerUI(State.layer - 1);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const headCycle = ['all', 0, 1, 2, 3];
+        const curIdx = headCycle.indexOf(State.head);
+        const shift = e.key === 'ArrowRight' ? 1 : -1;
+        const nextHead = headCycle[(curIdx + shift + headCycle.length) % headCycle.length];
+        selectHeadByValue(nextHead);
+      } else if (e.key === 'o' || e.key === 'O') {
+        togglePersistentOverlay();
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (State.activeHover) {
+        State.activeHover.coords = { clientX: e.clientX, clientY: e.clientY };
+      }
+    });
+
+    /* ==========================================================================
+       3. CONTROLS, HEADS, & LAYER SELECTION
+       ========================================================================== */
+    function onParamChange() {
+      const slTemp = document.getElementById('sl-temp');
+      const slTopk = document.getElementById('sl-topk');
+      const t = slTemp ? parseFloat(slTemp.value).toFixed(2) : '0.00';
+      const k = slTopk ? slTopk.value : '1';
+      document.getElementById('val-temp').innerText = t;
+      document.getElementById('val-topk').innerText = k;
+    }
+
+    function selectHead(head, btn) {
+      State.head = head;
+      document.querySelectorAll('.head-pill').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const target = getTargetInspectionItem();
+      if (target) {
+        highlightActiveLayer(target);
+        if (State.cortexView === 'attn') renderAllLayersAttention(target);
+      }
+    }
+
+    function selectHeadByValue(headVal) {
+      const btn = Array.from(document.querySelectorAll('.head-pill')).find(b => {
+        return headVal === 'all' ? b.innerText.includes('ALL') : b.innerText.includes(`H${headVal}`);
+      });
+      selectHead(headVal, btn);
+    }
+
+    function updateLayerUI(val) {
+      State.layer = Math.max(0, Math.min(6, parseInt(val, 10)));
+      const slider = document.getElementById('layer-slider');
+      if (slider) slider.value = State.layer;
+      
+      const label = document.getElementById('layer-label');
+      if (label) label.innerText = LAYER_LABELS[State.layer];
+
+      localStorage.setItem('pico_selected_layer', State.layer);
+
+      const target = getTargetInspectionItem();
+      if (target) {
+        highlightActiveLayer(target);
+        if (State.cortexView === 'attn') renderAllLayersAttention(target);
+      }
+    }
+
+    function onLayerSliderChange(val) {
+      updateLayerUI(val);
+    }
+
+    function togglePersistentOverlay() {
+      State.persistentOverlay = !State.persistentOverlay;
+      const btn = document.getElementById('btn-pin-overlay');
+      if (State.persistentOverlay) {
+        btn.innerText = '[ OVERLAY: ON ]';
+        btn.style.color = '#39ff14';
+        btn.style.borderColor = '#39ff14';
+        const target = getTargetInspectionItem();
+        if (target) highlightActiveLayer(target);
+      } else {
+        btn.innerText = '[ OVERLAY: OFF ]';
+        btn.style.color = '#777';
+        btn.style.borderColor = '#333';
+        uninspectToken();
+      }
+    }
+
+    function applyCortexViewModeUI() {
+      const gridView = document.getElementById('view-cortex-grid');
+      const attnView = document.getElementById('view-all-attn');
+      const btn = document.getElementById('btn-toggle-view');
+      const title = document.getElementById('cortex-view-title');
+
+      if (State.cortexView === 'attn') {
+        if (gridView) gridView.style.display = 'none';
+        if (attnView) attnView.style.display = 'block';
+        if (btn) {
+          btn.innerText = '[ SWAP TO CORTEX ]';
+          btn.style.color = '#ff66cc';
+          btn.style.borderColor = '#ff66cc';
+        }
+        if (title) {
+          title.innerHTML = State.reverseMode 
+            ? 'All 6 Attention Layers <span style="color:#00e5ff; font-weight:bold;">[REVERSE &rarr;]</span>:'
+            : 'All 6 Attention Layers <span style="color:#ff66cc; font-weight:bold;">[BACKWARD &larr;]</span>:';
+        }
+      } else {
+        if (gridView) gridView.style.display = 'block';
+        if (attnView) attnView.style.display = 'none';
+        if (btn) {
+          btn.innerText = '[ SWAP TO ATTN ]';
+          btn.style.color = '#00e5ff';
+          btn.style.borderColor = '#00e5ff';
+        }
+        if (title) title.innerText = 'Thought Vector (L2 \u2192 L3):';
+      }
+      localStorage.setItem('pico_cortex_view', State.cortexView);
+    }
+
+    function toggleCortexView() {
+      State.cortexView = (State.cortexView === 'attn') ? 'grid' : 'attn';
+      applyCortexViewModeUI();
+      const target = getTargetInspectionItem();
+      if (target && State.cortexView === 'attn') {
+        renderAllLayersAttention(target);
+      }
+    }
+
+    /* ==========================================================================
+       4. ATTENTION EXTRACTION & 6-LAYER GRAPH RENDERING
+       ========================================================================== */
+    function getLayerHeadAttention(item, layerIdx) {
+      if (!item) return null;
+      if (layerIdx === 6) {
+        return item.rollout || null;
+      }
+      if (!item.attnLayers || !item.attnLayers[layerIdx]) return item.attn || null;
+      const lData = item.attnLayers[layerIdx];
+      if (lData && typeof lData === 'object' && !Array.isArray(lData)) {
+        if (State.head === 'all') return lData.all;
+        return (lData.heads && lData.heads[State.head]) ? lData.heads[State.head] : lData.all;
+      }
+      return lData;
+    }
+
+    function renderAllLayersAttention(item) {
+      const container = document.getElementById('all-layers-container');
+      if (!container || !item || !item.attnLayers) return;
+
+      container.replaceChildren();
+
+      const tokens = (State.runHistory && State.runHistory.length > 0)
+        ? State.runHistory.map(h => h.word)
+        : [];
+
+      const targetIdx = (State.runHistory && State.runHistory.length > 0)
+        ? State.runHistory.indexOf(item)
+        : -1;
+      const reverseMode = State.reverseMode && targetIdx !== -1;
+
+      const numTokens = reverseMode 
+        ? State.runHistory.length 
+        : ((item.attnLayers[0] && item.attnLayers[0].all)
+            ? item.attnLayers[0].all.length
+            : (item.attnLayers[0] ? item.attnLayers[0].length : 0));
+
+      if (numTokens === 0) return;
+
+      const matrixWrapper = document.createElement('div');
+      matrixWrapper.className = 'matrix-wrap';
+
+      const dirHeader = document.createElement('div');
+      dirHeader.className = 'matrix-dir-header';
+      if (reverseMode) {
+        dirHeader.innerHTML = `<span style="color:#00e5ff;">[ REVERSE: Downstream Tokens &rarr; "${item.word}" (#${targetIdx+1}) ]</span><span style="color:#888;">(Press 'R' for Backward)</span>`;
+      } else {
+        dirHeader.innerHTML = `<span style="color:#ff66cc;">[ BACKWARD: "${item.word}" (#${targetIdx+1}) &rarr; Past Tokens ]</span><span style="color:#888;">(Press 'R' for Reverse)</span>`;
+      }
+      matrixWrapper.appendChild(dirHeader);
+
+      for (let lIdx = 0; lIdx <= 6; lIdx++) {
+        let layerWeights = [];
+        if (!reverseMode) {
+          layerWeights = getLayerHeadAttention(item, lIdx) || [];
+        } else {
+          for (let d = 0; d < numTokens; d++) {
+            if (d < targetIdx) {
+              layerWeights.push(0.0);
+            } else {
+              const dAttn = getLayerHeadAttention(State.runHistory[d], lIdx);
+              layerWeights.push((dAttn && targetIdx < dAttn.length) ? dAttn[targetIdx] : 0.0);
+            }
+          }
+        }
+
+        const isRollout = (lIdx === 6);
+        const isMeow = lIdx < 3;
+        const baseColor = isRollout 
+          ? '255, 170, 0' 
+          : (reverseMode ? (isMeow ? '0, 229, 255' : '57, 255, 20') : (isMeow ? '255, 102, 204' : '0, 229, 255'));
+        const isSelected = (lIdx === State.layer);
+
+        const row = document.createElement('div');
+        row.className = 'attn-row';
+        row.title = isRollout ? 'Click to inspect Attention Rollout (All 6 Layers)' : `Click to inspect Layer ${lIdx}`;
+        row.onclick = () => updateLayerUI(lIdx);
+
+        const lbl = document.createElement('span');
+        lbl.className = 'attn-lbl';
+        lbl.style.fontWeight = isSelected ? 'bold' : 'normal';
+        lbl.style.color = isSelected ? '#39ff14' : (isRollout ? '#ffaa00' : (isMeow ? (reverseMode ? '#00e5ff' : '#ff66cc') : (reverseMode ? '#39ff14' : '#00e5ff')));
+        lbl.innerText = isRollout ? 'ROLLOUT' : `L${lIdx} ${isMeow ? 'MEOW' : 'MIAOU'}`;
+
+        const strip = document.createElement('div');
+        strip.className = 'attn-strip' + (isSelected ? ' selected' : '');
+
+        layerWeights.forEach((w, tIdx) => {
+          const cell = document.createElement('div');
+          cell.className = 'attn-cell';
+
+          if (w > 0.25) {
+            cell.style.background = '#ffffff';
+            cell.style.boxShadow = `0 0 6px rgba(${baseColor}, 0.8)`;
+          } else {
+            const alpha = Math.min(1.0, w * 3.5);
+            cell.style.background = `rgba(${baseColor}, ${alpha})`;
+          }
+
+          const tokWord = tokens[tIdx] || `#${tIdx}`;
+          cell.title = reverseMode 
+            ? `L${lIdx}: "${tokWord}" attended ${(w * 100).toFixed(1)}% onto "${item.word}"`
+            : `L${lIdx}: "${item.word}" attended ${(w * 100).toFixed(1)}% onto "${tokWord}"`;
+          strip.appendChild(cell);
+        });
+
+        row.append(lbl, strip);
+        matrixWrapper.appendChild(row);
+      }
+
+      /* 4-HEAD BREAKDOWN FOR ACTIVE LAYER (H0 - H3) */
+      const headDivider = document.createElement('div');
+      headDivider.className = 'head-divider';
+      headDivider.innerHTML = `<span>[ L${State.layer} HEAD BREAKDOWN (H0 - H3) ]</span><span style="color:#ff66cc;">CLICK ROW TO SELECT HEAD</span>`;
+      matrixWrapper.appendChild(headDivider);
+
+      for (let hIdx = 0; hIdx < 4; hIdx++) {
+        let hWeights = [];
+        if (!reverseMode) {
+          const activeLayerData = item.attnLayers ? item.attnLayers[State.layer] : null;
+          if (activeLayerData && activeLayerData.heads && activeLayerData.heads[hIdx]) {
+            hWeights = activeLayerData.heads[hIdx];
+          } else if (Array.isArray(activeLayerData)) {
+            hWeights = activeLayerData;
+          }
+        } else {
+          for (let d = 0; d < numTokens; d++) {
+            if (d < targetIdx) {
+              hWeights.push(0.0);
+            } else {
+              const dLayerData = State.runHistory[d].attnLayers ? State.runHistory[d].attnLayers[State.layer] : null;
+              let hw = (dLayerData && dLayerData.heads && dLayerData.heads[hIdx]) ? dLayerData.heads[hIdx] : (Array.isArray(dLayerData) ? dLayerData : []);
+              hWeights.push((hw && targetIdx < hw.length) ? hw[targetIdx] : 0.0);
+            }
+          }
+        }
+
+        const isHeadSelected = (State.head === hIdx);
+        const hRow = document.createElement('div');
+        hRow.className = 'h-row';
+        hRow.title = `Select Head ${hIdx} for Layer ${State.layer}`;
+        hRow.onclick = () => selectHeadByValue(hIdx);
+
+        const hLbl = document.createElement('span');
+        hLbl.className = 'h-lbl';
+        hLbl.style.fontWeight = isHeadSelected ? 'bold' : 'normal';
+        hLbl.style.color = isHeadSelected ? '#fff' : HEAD_PALETTE[hIdx];
+        hLbl.innerText = `L${State.layer}.H${hIdx}`;
+
+        const hStrip = document.createElement('div');
+        hStrip.className = 'h-strip';
+        if (isHeadSelected) hStrip.style.borderColor = HEAD_PALETTE[hIdx];
+
+        hWeights.forEach((w, tIdx) => {
+          const cell = document.createElement('div');
+          cell.className = 'attn-cell';
+          const alpha = Math.min(1.0, w * 3.5);
+          cell.style.background = w > 0.3 ? '#ffffff' : (alpha > 0.05 ? HEAD_PALETTE[hIdx] : 'transparent');
+          cell.style.opacity = alpha > 0 ? Math.max(0.2, alpha) : 0;
+          const tokWord = tokens[tIdx] || `#${tIdx}`;
+          cell.title = reverseMode
+            ? `L${State.layer}.H${hIdx}: "${tokWord}" attended ${(w * 100).toFixed(1)}% onto "${item.word}"`
+            : `L${State.layer}.H${hIdx} -> "${tokWord}" (${(w * 100).toFixed(1)}%)`;
+          hStrip.appendChild(cell);
+        });
+
+        hRow.append(hLbl, hStrip);
+        matrixWrapper.appendChild(hRow);
+      }
+
+      /* OVERALL MACRO ROW */
+      const isAllSelected = (State.head === 'all');
+      const macroRow = document.createElement('div');
+      macroRow.className = 'macro-row';
+      macroRow.title = 'Click to select [ALL] heads across the whole network';
+      macroRow.onclick = () => selectHeadByValue('all');
+
+      const macroLbl = document.createElement('span');
+      macroLbl.className = 'macro-lbl';
+      macroLbl.style.color = isAllSelected ? '#00e5ff' : '#39ff14';
+      macroLbl.innerText = 'OVERALL:';
+
+      const macroStrip = document.createElement('div');
+      macroStrip.className = 'macro-strip' + (isAllSelected ? ' active' : '');
+
+      for (let tIdx = 0; tIdx < numTokens; tIdx++) {
+        let sumW = 0;
+        for (let lIdx = 0; lIdx < 6; lIdx++) {
+          if (!reverseMode) {
+            const lData = item.attnLayers[lIdx];
+            const arr = (lData && lData.all) ? lData.all : (Array.isArray(lData) ? lData : []);
+            sumW += (arr && arr[tIdx]) ? arr[tIdx] : 0;
+          } else {
+            if (tIdx >= targetIdx) {
+              const dAttn = getLayerHeadAttention(State.runHistory[tIdx], lIdx);
+              sumW += (dAttn && targetIdx < dAttn.length) ? dAttn[targetIdx] : 0;
+            }
+          }
+        }
+        const meanW = sumW / 6.0;
+        const barH = Math.max(1, Math.min(15, Math.round(meanW * 28)));
+
+        const bar = document.createElement('div');
+        bar.className = 'macro-bar';
+        bar.style.height = `${barH}px`;
+        bar.style.background = meanW > 0.15 ? (reverseMode ? '#00e5ff' : '#39ff14') : (reverseMode ? '#0a3d4d' : '#1a4d1a');
+        
+        const tokWord = tokens[tIdx] || `#${tIdx}`;
+        bar.title = reverseMode
+          ? `Mean Focus: "${tokWord}" attended ${(meanW * 100).toFixed(1)}% onto "${item.word}"`
+          : `Mean Network Focus -> "${tokWord}" (${(meanW * 100).toFixed(1)}%)`;
+        macroStrip.appendChild(bar);
+      }
+
+      macroRow.append(macroLbl, macroStrip);
+      matrixWrapper.appendChild(macroRow);
+      container.appendChild(matrixWrapper);
+    }
+
+    function highlightActiveLayer(item, targetIdx = -1) {
+      if (!item && targetIdx === -1) return;
+      clearAttendedHighlights();
+
+      if (targetIdx === -1 && State.runHistory && State.runHistory.length > 0) {
+        targetIdx = State.runHistory.indexOf(item);
+      }
+
+      const reverseMode = State.reverseMode && targetIdx !== -1;
+
+      if (!reverseMode) {
+        const activeAttn = getLayerHeadAttention(item, State.layer);
+        if (!activeAttn) return;
+
+        activeAttn.forEach((weight, tIdx) => {
+          const userSlotIdx = (State.qcaToUserMap && tIdx < State.qcaToUserMap.length) ? State.qcaToUserMap[tIdx] : tIdx;
+          const pastTokEl = document.getElementById(`${State.currentRunId}-tok-${userSlotIdx}`) || document.getElementById(`${State.currentRunId}-tok-${tIdx}`);
+          if (pastTokEl) {
+            pastTokEl.classList.add('tok-attended');
+            pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.8));
+          }
+        });
+      } else {
+        State.runHistory.forEach((downstreamItem, dIdx) => {
+          if (dIdx <= targetIdx) return;
+          const downstreamAttn = getLayerHeadAttention(downstreamItem, State.layer);
+          if (downstreamAttn && targetIdx < downstreamAttn.length) {
+            const weight = downstreamAttn[targetIdx];
+            const el = document.getElementById(`${State.currentRunId}-tok-${dIdx}`);
+            if (el && weight > 0.05) {
+              el.classList.add('tok-attended');
+              el.style.setProperty('--attn-strength', Math.min(1.0, weight * 3.2));
+            }
+          }
+        });
+      }
+    }
+
+    function inspectToken(history, idx, runId, ev) {
+      const item = history[idx];
+      if (!item) return;
+
+      State.lastInspected = item;
+
+      let coords = null;
+      if (ev && ev.clientX !== undefined) {
+        coords = { clientX: ev.clientX, clientY: ev.clientY };
+      } else if (State.activeHover && State.activeHover.coords) {
+        coords = State.activeHover.coords;
+      } else {
+        const tokEl = document.getElementById(`${runId}-tok-${idx}`);
+        if (tokEl) {
+          const rect = tokEl.getBoundingClientRect();
+          coords = { clientX: rect.left + rect.width / 2, clientY: rect.top };
+        }
+      }
+
+      State.activeHover = { history, idx, runId, coords };
+
+      renderVector(item.v);
+      renderRanks(item.ranks);
+      if (State.cortexView === 'attn') renderAllLayersAttention(item);
+      highlightActiveLayer(item, idx);
+
+      const pop = document.getElementById('attn-popover');
+      if (State.reverseMode && coords) {
+        const downstreamWeights = [];
+        for (let d = idx + 1; d < history.length; d++) {
+          const dAttn = getLayerHeadAttention(history[d], State.layer);
+          downstreamWeights.push((dAttn && idx < dAttn.length) ? dAttn[idx] : 0);
+        }
+
+        document.getElementById('pop-title').innerText = `[REVERSE] Word #${idx+1}: "${item.word}"`;
+        document.getElementById('pop-title').style.color = '#00e5ff';
+        const barsBox = document.getElementById('pop-bars');
+        barsBox.innerHTML = downstreamWeights.map(w => 
+          `<div class="attn-col" style="background:#00e5ff; height:${Math.max(3, Math.min(26, w * 32))}px;"></div>`
+        ).join('');
+        const headStr = State.head === 'all' ? 'All Heads' : `Head ${State.head}`;
+        document.getElementById('pop-footer').innerText = `Downstream Attention onto "${item.word}" (${downstreamWeights.length} future tokens)`;
+
+        pop.style.left = Math.max(90, Math.min(window.innerWidth - 90, coords.clientX)) + 'px';
+        pop.style.top = Math.max(40, coords.clientY - 12) + 'px';
+        pop.style.display = 'block';
+      } else if (coords) {
+        const activeAttn = getLayerHeadAttention(item, State.layer);
+        if (activeAttn && activeAttn.length > 0) {
+          document.getElementById('pop-title').innerText = `Token #${idx+1}: "${item.word}"`;
+          document.getElementById('pop-title').style.color = '#ff66cc';
+          const barsBox = document.getElementById('pop-bars');
+          barsBox.innerHTML = activeAttn.map(w => 
+            `<div class="attn-col" style="background:#ff66cc; height:${Math.max(3, Math.min(26, w * 32))}px;"></div>`
+          ).join('');
+          const headStr = State.head === 'all' ? 'All Heads' : `Head ${State.head}`;
+          document.getElementById('pop-footer').innerText = `L${State.layer} [${headStr}] Backward Attention (${activeAttn.length} tokens)`;
+
+          pop.style.left = Math.max(90, Math.min(window.innerWidth - 90, coords.clientX)) + 'px';
+          pop.style.top = Math.max(40, coords.clientY - 12) + 'px';
+          pop.style.display = 'block';
+        }
+      }
+    }
+
+    function uninspectToken() {
+      State.activeHover = null;
+      if (!State.persistentOverlay) clearAttendedHighlights();
+      const pop = document.getElementById('attn-popover');
+      if (pop) pop.style.display = 'none';
+    }
+
+    function getTargetInspectionItem() {
+      if (State.lastInspected) return State.lastInspected;
+      if (!State.runHistory || State.runHistory.length === 0) return null;
+
+      for (let i = State.runHistory.length - 1; i >= 0; i--) {
+        if (State.runHistory[i].word && State.runHistory[i].word.trim().toLowerCase() === '[a]') {
+          return State.runHistory[i];
+        }
+      }
+      return State.runHistory[State.runHistory.length - 1];
+    }
+
+    /* ==========================================================================
+       5. 96-D CORTEX GRID & VECTOR VISUALIZER
+       ========================================================================== */
+    function initGrid() {
+      const grid = document.getElementById('cortex-grid');
+      grid.replaceChildren();
+      for (let i = 0; i < 96; i++) {
+        const node = document.createElement('div');
+        node.className = 'cortex-node';
+        node.id = 'node-' + i;
+        node.addEventListener('mouseenter', (e) => showNeuronPopover(i, e));
+        node.addEventListener('mousemove', (e) => moveNeuronPopover(e));
+        node.addEventListener('mouseleave', hideNeuronPopover);
+        grid.appendChild(node);
+      }
+    }
+
+    function showNeuronPopover(idx, e) {
+      const pop = document.getElementById('node-popover');
+      if (!pop) return;
+      const val = (State.activeVector && idx < State.activeVector.length) ? State.activeVector[idx] : 0.0;
+      const sign = val >= 0 ? '+' : '';
+      const color = val >= 0 ? '#39ff14' : '#ff0055';
+      pop.style.borderColor = color;
+      pop.style.boxShadow = `0 0 8px ${color}`;
+      pop.innerHTML = `<span style="color:#aaa;">Neuron #${idx}:</span> <b style="color:${color};">${sign}${val.toFixed(2)}</b>`;
+      moveNeuronPopover(e);
+      pop.style.display = 'block';
+    }
+
+    function moveNeuronPopover(e) {
+      const pop = document.getElementById('node-popover');
+      if (!pop) return;
+      pop.style.left = (e.clientX + 12) + 'px';
+      pop.style.top = (e.clientY - 26) + 'px';
+    }
+
+    function hideNeuronPopover() {
+      const pop = document.getElementById('node-popover');
+      if (pop) pop.style.display = 'none';
+    }
+
+    function renderVector(v) {
+      if (!v || v.length === 0) return;
+      State.activeVector = v;
+      let energy = 0;
+      for (let i = 0; i < 96; i++) {
+        const node = document.getElementById('node-' + i);
+        if (!node) continue;
+        const val = i < v.length ? v[i] : 0;
+        energy += Math.abs(val);
+        const mag = Math.min(1, Math.abs(val) / 3.0);
+        node.style.backgroundColor = val >= 0 
+          ? `rgba(57, 255, 20, ${0.12 + 0.88 * mag})` 
+          : `rgba(255, 0, 85, ${0.12 + 0.88 * mag})`;
+      }
+      document.getElementById('v_energy').innerText = (energy / 96).toFixed(2);
+      const prev = v.slice(0, 4).map(x => (x >= 0 ? ' ' : '') + x.toFixed(2)).join(', ');
+      document.getElementById('v_preview').innerText = `[ ${prev} ... ]`;
+    }
+
+    function renderRanks(ranks) {
+      if (!ranks || ranks.length === 0) return;
+      const el = document.getElementById('m_ranks');
+      if (el) {
+        el.innerHTML = ranks.map((r, i) => 
+          `${i+1}. <b style="color:${i===0 ? '#39ff14' : '#00e5ff'}">${r}</b>`
+        ).join('<br>');
+      }
+    }
+
+    function setStat(txt, color='#39ff14') {
+      const el = document.getElementById('m_stat');
+      el.innerText = txt;
+      el.style.color = color;
+    }
+
+    function setControls(running) {
+      document.getElementById('btn-exec').style.display = running ? 'none' : 'block';
+      document.getElementById('btn-stop').style.display = running ? 'block' : 'none';
+      document.getElementById('prompt').disabled = running;
+      
+      const thumb = document.getElementById('scanner_thumb');
+      const scannerStatus = document.getElementById('m_engine_status');
+      if (running) {
+        thumb.classList.add('scanner-sweeping');
+        scannerStatus.innerText = "Processing...";
+        scannerStatus.className = "text-pink";
+      } else {
+        thumb.classList.remove('scanner-sweeping');
+        thumb.style.width = "0%";
+        scannerStatus.innerText = "Idle";
+        scannerStatus.className = "text-cyan";
+      }
+    }
+
+    const Stopwatch = {
+      startTime: 0, elapsed: 0, interval: null, running: false,
+      start() {
+        this.startTime = performance.now(); this.elapsed = 0; this.running = true;
+        clearInterval(this.interval);
+        this.interval = setInterval(() => this.render(), 100);
+      },
+      stop() { this.running = false; clearInterval(this.interval); this.render(); },
+      render() {
+        const t = this.running ? (performance.now() - this.startTime) : this.elapsed;
+        document.getElementById('timer').innerText = (t / 1000).toFixed(1) + 's';
+      }
+    };
+
+    function abortGen() {
+      if (State.abortCtrl) { State.abortCtrl.abort(); State.abortCtrl = null; }
+      setControls(false);
+      Stopwatch.stop();
+      setStat("Stopped", "#ff66cc");
+    }
+
+    /* ==========================================================================
+       6. REPOSITORY & DYNAMIC QUESTION MAKER
+       ========================================================================== */
     function getCustomQuestions() {
       try { return JSON.parse(localStorage.getItem('pico_custom_questions') || '[]'); }
       catch(e) { return []; }
@@ -1178,7 +1581,7 @@
 
     function renderRepo(group = 'all') {
       const container = document.getElementById('repo-grid');
-      container.innerHTML = '';
+      container.replaceChildren();
       const customList = getCustomQuestions();
 
       if (group === 'custom') {
@@ -1187,32 +1590,46 @@
           return;
         }
         customList.forEach((item, idx) => {
-          const btn = document.createElement('div');
-          btn.className = 'repo-chip';
-          btn.title = item.prompt;
-          btn.innerHTML = `<span onclick="runPrompt('${item.prompt.replace(/'/g, "\\'")}')">[CUST] ${item.label}</span><span class="chip-del" onclick="deleteCustom(${idx})">[x]</span>`;
-          container.appendChild(btn);
+          const chip = document.createElement('div');
+          chip.className = 'repo-chip';
+          chip.title = item.prompt;
+          const lbl = document.createElement('span');
+          lbl.textContent = `[CUST] ${item.label}`;
+          lbl.onclick = () => runPrompt(item.prompt);
+          const del = document.createElement('span');
+          del.className = 'chip-del';
+          del.textContent = '[x]';
+          del.onclick = (e) => { e.stopPropagation(); deleteCustom(idx); };
+          chip.append(lbl, del);
+          container.appendChild(chip);
         });
         return;
       }
 
       PRESET_TASK_RUNS.forEach(item => {
         if (group !== 'all' && item.group !== group) return;
-        const btn = document.createElement('div');
-        btn.className = 'repo-chip';
-        btn.title = item.prompt;
-        btn.innerText = item.label;
-        btn.onclick = () => runPrompt(item.prompt);
-        container.appendChild(btn);
+        const chip = document.createElement('div');
+        chip.className = 'repo-chip';
+        chip.title = item.prompt;
+        chip.innerText = item.label;
+        chip.onclick = () => runPrompt(item.prompt);
+        container.appendChild(chip);
       });
 
       if (group === 'all') {
         customList.forEach((item, idx) => {
-          const btn = document.createElement('div');
-          btn.className = 'repo-chip';
-          btn.title = item.prompt;
-          btn.innerHTML = `<span onclick="runPrompt('${item.prompt.replace(/'/g, "\\'")}')">[CUST] ${item.label}</span><span class="chip-del" onclick="deleteCustom(${idx})">[x]</span>`;
-          container.appendChild(btn);
+          const chip = document.createElement('div');
+          chip.className = 'repo-chip';
+          chip.title = item.prompt;
+          const lbl = document.createElement('span');
+          lbl.textContent = `[CUST] ${item.label}`;
+          lbl.onclick = () => runPrompt(item.prompt);
+          const del = document.createElement('span');
+          del.className = 'chip-del';
+          del.textContent = '[x]';
+          del.onclick = (e) => { e.stopPropagation(); deleteCustom(idx); };
+          chip.append(lbl, del);
+          container.appendChild(chip);
         });
       }
     }
@@ -1245,7 +1662,7 @@
 
     function initMaker() {
       const catSelect = document.getElementById('mk-category');
-      catSelect.innerHTML = '';
+      catSelect.replaceChildren();
       WORLD_CFG.categories.forEach((cat, idx) => {
         const opt = document.createElement('option');
         opt.value = idx;
@@ -1260,7 +1677,7 @@
       const cat = WORLD_CFG.categories[catIdx];
 
       const premSelect = document.getElementById('mk-premise');
-      premSelect.innerHTML = '';
+      premSelect.replaceChildren();
       cat.premise.forEach((p, idx) => {
         const opt = document.createElement('option');
         opt.value = idx;
@@ -1271,7 +1688,7 @@
       });
 
       const qSelect = document.getElementById('mk-query');
-      qSelect.innerHTML = '';
+      qSelect.replaceChildren();
       cat.queries.forEach((qObj, idx) => {
         const opt = document.createElement('option');
         opt.value = idx;
@@ -1301,7 +1718,7 @@
 
       const required = Array.from(new Set([...extractPlaceholders(pTmpl), ...extractPlaceholders(qTmpl)]));
       const fieldsContainer = document.getElementById('mk-dynamic-fields');
-      fieldsContainer.innerHTML = '';
+      fieldsContainer.replaceChildren();
 
       let actorOff = 0, locOff = 0, itemOff = 0, colOff = 0;
 
@@ -1363,21 +1780,21 @@
           const rem = val.substring(qPos + 3);
           const qPart = rem.split('[a]')[0].trim();
           val = `[q] ${qPart} [c] ${contextPart} [a]`;
-          currentFormatMode = 'QCA';
+          State.formatMode = 'QCA';
         } else {
           const qPart = val.substring(qPos + 3, cPos).trim();
           const rem = val.substring(cPos + 3);
           const contextPart = rem.split('[a]')[0].trim();
           val = `[c] ${contextPart} [q] ${qPart} [a]`;
-          currentFormatMode = 'CQA';
+          State.formatMode = 'CQA';
         }
       } else {
         if (val.startsWith('[c]')) {
           val = val.replace('[c]', '[q]').replace('[q]', '[c]');
-          currentFormatMode = 'QCA';
+          State.formatMode = 'QCA';
         } else {
           val = `[c] ${val} [q] where is alice ? [a]`;
-          currentFormatMode = 'CQA';
+          State.formatMode = 'CQA';
         }
       }
 
@@ -1409,19 +1826,17 @@
       const pRendered = pTmpl.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => bindings[k] || k);
       const qRendered = qTmpl.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => bindings[k] || k);
 
-      if (currentFormatMode === 'QCA') {
-        return `[q] ${qRendered} ? [c] ${pRendered} . [a]`;
-      } else {
-        return `[c] ${pRendered} . [q] ${qRendered} ? [a]`;
-      }
+      return (State.formatMode === 'QCA')
+        ? `[q] ${qRendered} ? [c] ${pRendered} . [a]`
+        : `[c] ${pRendered} . [q] ${qRendered} ? [a]`;
     }
 
     function updateFormatButtonLabel() {
       const btn = document.getElementById('btn-toggle-format');
       if (btn) {
-        btn.innerText = `[ ${currentFormatMode} ]`;
-        btn.style.color = currentFormatMode === 'QCA' ? '#39ff14' : '#ff66cc';
-        btn.style.borderColor = currentFormatMode === 'QCA' ? '#39ff14' : '#ff66cc';
+        btn.innerText = `[ ${State.formatMode} ]`;
+        btn.style.color = State.formatMode === 'QCA' ? '#39ff14' : '#ff66cc';
+        btn.style.borderColor = State.formatMode === 'QCA' ? '#39ff14' : '#ff66cc';
       }
     }
 
@@ -1450,599 +1865,9 @@
       renderRepo('custom');
     }
 
-    const Stopwatch = {
-      startTime: 0, elapsed: 0, interval: null, running: false,
-      start() {
-        this.startTime = performance.now(); this.elapsed = 0; this.running = true;
-        clearInterval(this.interval);
-        this.interval = setInterval(() => this.render(), 100);
-      },
-      stop() { this.running = false; clearInterval(this.interval); this.render(); },
-      render() {
-        const t = this.running ? (performance.now() - this.startTime) : this.elapsed;
-        document.getElementById('timer').innerText = (t / 1000).toFixed(1) + 's';
-      }
-    };
-
-    function initGrid() {
-      const grid = document.getElementById('cortex-grid');
-      grid.innerHTML = '';
-      for (let i = 0; i < 96; i++) {
-        const node = document.createElement('div');
-        node.className = 'cortex-node';
-        node.id = 'node-' + i;
-        node.addEventListener('mouseenter', (e) => showNeuronPopover(i, e));
-        node.addEventListener('mousemove', (e) => moveNeuronPopover(e));
-        node.addEventListener('mouseleave', hideNeuronPopover);
-        grid.appendChild(node);
-      }
-    }
-
-    function showNeuronPopover(idx, e) {
-      const pop = document.getElementById('node-popover');
-      if (!pop) return;
-      const val = (activeVector && idx < activeVector.length) ? activeVector[idx] : 0.0;
-      const sign = val >= 0 ? '+' : '';
-      const color = val >= 0 ? '#39ff14' : '#ff0055';
-      pop.style.borderColor = color;
-      pop.style.boxShadow = `0 0 8px ${color}`;
-      pop.innerHTML = `<span style="color:#aaa;">Neuron #${idx}:</span> <b style="color:${color};">${sign}${val.toFixed(2)}</b>`;
-      moveNeuronPopover(e);
-      pop.style.display = 'block';
-    }
-
-    function moveNeuronPopover(e) {
-      const pop = document.getElementById('node-popover');
-      if (!pop) return;
-      pop.style.left = (e.clientX + 12) + 'px';
-      pop.style.top = (e.clientY - 26) + 'px';
-    }
-
-    function hideNeuronPopover() {
-      const pop = document.getElementById('node-popover');
-      if (pop) pop.style.display = 'none';
-    }
-
-    function renderVector(v) {
-      if (!v || v.length === 0) return;
-      activeVector = v;
-      let energy = 0;
-      for (let i = 0; i < 96; i++) {
-        const node = document.getElementById('node-' + i);
-        if (!node) continue;
-        const val = i < v.length ? v[i] : 0;
-        energy += Math.abs(val);
-        const mag = Math.min(1, Math.abs(val) / 3.0);
-        node.style.backgroundColor = val >= 0 
-          ? `rgba(57, 255, 20, ${0.12 + 0.88 * mag})` 
-          : `rgba(255, 0, 85, ${0.12 + 0.88 * mag})`;
-      }
-      const vEnergy = document.getElementById('v_energy');
-      if (vEnergy) vEnergy.innerText = (energy / 96).toFixed(2);
-      const prev = v.slice(0, 4).map(x => (x >= 0 ? ' ' : '') + x.toFixed(2)).join(', ');
-      const vPrev = document.getElementById('v_preview');
-      if (vPrev) vPrev.innerText = `[ ${prev} ... ]`;
-    }
-
-    function renderRanks(ranks) {
-      if (!ranks || ranks.length === 0) return;
-      const el = document.getElementById('m_ranks') || document.getElementById('sec-ranks');
-      if (el) {
-        el.innerHTML = ranks.map((r, i) => 
-          `${i+1}. <b style="color:${i===0 ? '#39ff14' : '#00e5ff'}">${r}</b>`
-        ).join('<br>');
-      }
-    }
-
-    function setStat(txt, color='#39ff14') {
-      const el = document.getElementById('m_stat');
-      el.innerText = txt;
-      el.style.color = color;
-    }
-
-    function setControls(running) {
-      document.getElementById('btn-exec').style.display = running ? 'none' : 'block';
-      document.getElementById('btn-stop').style.display = running ? 'block' : 'none';
-      document.getElementById('prompt').disabled = running;
-      
-      const thumb = document.getElementById('scanner_thumb');
-      const scannerStatus = document.getElementById('m_engine_status');
-      if (running) {
-        thumb.classList.add('scanner-sweeping');
-        scannerStatus.innerText = "Processing...";
-        scannerStatus.className = "text-pink";
-      } else {
-        thumb.classList.remove('scanner-sweeping');
-        thumb.style.width = "0%";
-        scannerStatus.innerText = "Idle";
-        scannerStatus.className = "text-cyan";
-      }
-    }
-
-    function abortGen() {
-      if (abortController) { abortController.abort(); abortController = null; }
-      setControls(false);
-      Stopwatch.stop();
-      setStat("Stopped", "#ff66cc");
-    }
-
-    function getTargetInspectionItem() {
-      if (lastInspectedItem) return lastInspectedItem;
-      if (!currentRunHistory || currentRunHistory.length === 0) return null;
-
-      for (let i = currentRunHistory.length - 1; i >= 0; i--) {
-        if (currentRunHistory[i].word && currentRunHistory[i].word.trim().toLowerCase() === '[a]') {
-          return currentRunHistory[i];
-        }
-      }
-      return currentRunHistory[currentRunHistory.length - 1];
-    }
-
-    function updateLayerUI(val) {
-      currentSelectedLayer = Math.max(0, Math.min(5, parseInt(val, 10)));
-      const slider = document.getElementById('layer-slider');
-      if (slider) slider.value = currentSelectedLayer;
-      
-      const label = document.getElementById('layer-label');
-      if (label) label.innerText = LAYER_LABELS[currentSelectedLayer];
-
-      localStorage.setItem('pico_selected_layer', currentSelectedLayer);
-
-      const target = getTargetInspectionItem();
-      if (target) {
-        highlightActiveLayer(target);
-        if (cortexViewMode === 'attn') {
-          renderAllLayersAttention(target);
-        }
-      }
-    }
-
-    function onLayerSliderChange(val) {
-      updateLayerUI(val);
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (e.repeat) return; // Prevent rapid flicker on key hold
-
-      const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      const inInput = (activeTag === 'INPUT' || activeTag === 'TEXTAREA');
-
-      // 'R' / 'r' toggles immediately if hovering a token or if not actively typing
-      if (e.key === 'r' || e.key === 'R') {
-        if (activeHoverContext || !inInput) {
-          e.preventDefault();
-          if (inInput && document.activeElement) document.activeElement.blur();
-          toggleReverseAttention();
-          return;
-        }
-      }
-
-      if (inInput || activeTag === 'SELECT') return;
-
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        updateLayerUI(currentSelectedLayer + 1);
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        updateLayerUI(currentSelectedLayer - 1);
-      }
-
-      const headCycle = ['all', 0, 1, 2, 3];
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        let curIdx = headCycle.indexOf(currentSelectedHead);
-        let nextHead = headCycle[(curIdx + 1) % headCycle.length];
-        selectHeadByValue(nextHead);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        let curIdx = headCycle.indexOf(currentSelectedHead);
-        let prevHead = headCycle[(curIdx - 1 + headCycle.length) % headCycle.length];
-        selectHeadByValue(prevHead);
-      } else if (e.key === 'o' || e.key === 'O') {
-        togglePersistentOverlay();
-      }
-    });
-
-    function togglePersistentOverlay() {
-      persistentOverlay = !persistentOverlay;
-      const btn = document.getElementById('btn-pin-overlay');
-      if (persistentOverlay) {
-        btn.innerText = '[ OVERLAY: ON ]';
-        btn.style.color = '#39ff14';
-        btn.style.borderColor = '#39ff14';
-        const target = getTargetInspectionItem();
-        if (target) highlightActiveLayer(target);
-      } else {
-        btn.innerText = '[ OVERLAY: OFF ]';
-        btn.style.color = '#777';
-        btn.style.borderColor = '#333';
-        uninspectToken();
-      }
-    }
-
-    function renderAllLayersAttention(item) {
-      const container = document.getElementById('all-layers-container');
-      if (!container || !item || !item.attnLayers) return;
-
-      container.innerHTML = '';
-
-      const tokens = (currentRunHistory && currentRunHistory.length > 0)
-        ? currentRunHistory.map(h => h.word)
-        : [];
-
-      const targetIdx = (currentRunHistory && currentRunHistory.length > 0)
-        ? currentRunHistory.indexOf(item)
-        : -1;
-      const reverseMode = isReverseMode && targetIdx !== -1;
-
-      const numTokens = reverseMode 
-        ? currentRunHistory.length 
-        : ((item.attnLayers[0] && item.attnLayers[0].all)
-            ? item.attnLayers[0].all.length
-            : (item.attnLayers[0] ? item.attnLayers[0].length : 0));
-
-      if (numTokens === 0) return;
-
-      const matrixWrapper = document.createElement('div');
-      matrixWrapper.style.display = 'flex';
-      matrixWrapper.style.flexDirection = 'column';
-      matrixWrapper.style.gap = '2px';
-      matrixWrapper.style.fontFamily = "'Fira Code', monospace";
-
-      const dirHeader = document.createElement('div');
-      dirHeader.style.display = 'flex';
-      dirHeader.style.justifyContent = 'space-between';
-      dirHeader.style.fontSize = '8px';
-      dirHeader.style.marginBottom = '2px';
-      dirHeader.style.fontWeight = 'bold';
-      if (reverseMode) {
-        dirHeader.innerHTML = `<span style="color:#00e5ff;">[ REVERSE: Downstream Tokens &rarr; "${item.word}" (#${targetIdx+1}) ]</span><span style="color:#888;">(Press 'R' for Backward)</span>`;
-      } else {
-        dirHeader.innerHTML = `<span style="color:#ff66cc;">[ BACKWARD: "${item.word}" (#${targetIdx+1}) &rarr; Past Tokens ]</span><span style="color:#888;">(Press 'R' for Reverse)</span>`;
-      }
-      matrixWrapper.appendChild(dirHeader);
-
-      for (let lIdx = 0; lIdx < 6; lIdx++) {
-        let layerWeights = [];
-        if (!reverseMode) {
-          layerWeights = getLayerHeadAttention(item, lIdx) || [];
-        } else {
-          for (let d = 0; d < numTokens; d++) {
-            if (d < targetIdx) {
-              layerWeights.push(0.0);
-            } else {
-              const dAttn = getLayerHeadAttention(currentRunHistory[d], lIdx);
-              layerWeights.push((dAttn && targetIdx < dAttn.length) ? dAttn[targetIdx] : 0.0);
-            }
-          }
-        }
-
-        const isMeow = lIdx < 3;
-        const baseColor = reverseMode ? (isMeow ? '0, 229, 255' : '57, 255, 20') : (isMeow ? '255, 102, 204' : '0, 229, 255');
-        const isSelected = (lIdx === currentSelectedLayer);
-
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.gap = '6px';
-        row.style.cursor = 'pointer';
-        row.title = `Click to inspect Layer ${lIdx}`;
-        row.onclick = () => updateLayerUI(lIdx);
-
-        const lbl = document.createElement('span');
-        lbl.style.width = '62px';
-        lbl.style.fontSize = '9px';
-        lbl.style.fontWeight = isSelected ? 'bold' : 'normal';
-        lbl.style.color = isSelected ? '#39ff14' : (isMeow ? (reverseMode ? '#00e5ff' : '#ff66cc') : (reverseMode ? '#39ff14' : '#00e5ff'));
-        lbl.innerText = `L${lIdx} ${isMeow ? 'MEOW' : 'MIAOU'}`;
-
-        const strip = document.createElement('div');
-        strip.style.flex = '1';
-        strip.style.display = 'flex';
-        strip.style.height = '12px';
-        strip.style.background = '#0a0a0a';
-        strip.style.border = isSelected ? '1px solid #39ff14' : '1px solid #1a1a1a';
-        strip.style.borderRadius = '1px';
-        strip.style.overflow = 'hidden';
-
-        layerWeights.forEach((w, tIdx) => {
-          const cell = document.createElement('div');
-          cell.style.flex = '1';
-          cell.style.minWidth = '2px';
-          cell.style.height = '100%';
-
-          if (w > 0.25) {
-            cell.style.background = '#ffffff';
-            cell.style.boxShadow = `0 0 6px rgba(${baseColor}, 0.8)`;
-          } else {
-            const alpha = Math.min(1.0, w * 3.5);
-            cell.style.background = `rgba(${baseColor}, ${alpha})`;
-          }
-
-          const tokWord = tokens[tIdx] || `#${tIdx}`;
-          if (reverseMode) {
-            cell.title = `L${lIdx}: "${tokWord}" attended ${(w * 100).toFixed(1)}% onto "${item.word}"`;
-          } else {
-            cell.title = `L${lIdx}: "${item.word}" attended ${(w * 100).toFixed(1)}% onto "${tokWord}"`;
-          }
-          strip.appendChild(cell);
-        });
-
-        row.appendChild(lbl);
-        row.appendChild(strip);
-        matrixWrapper.appendChild(row);
-      }
-
-      const headDivider = document.createElement('div');
-      headDivider.style.display = 'flex';
-      headDivider.style.justifyContent = 'space-between';
-      headDivider.style.marginTop = '6px';
-      headDivider.style.paddingTop = '4px';
-      headDivider.style.borderTop = '1px dashed #333';
-      headDivider.style.fontSize = '8px';
-      headDivider.style.color = '#888';
-      headDivider.innerHTML = `<span>[ L${currentSelectedLayer} HEAD BREAKDOWN (H0 - H3) ]</span><span style="color:#ff66cc;">CLICK ROW TO SELECT HEAD</span>`;
-      matrixWrapper.appendChild(headDivider);
-
-      const headPalette = ['#00e5ff', '#39ff14', '#ffaa00', '#ff00aa'];
-
-      for (let hIdx = 0; hIdx < 4; hIdx++) {
-        let hWeights = [];
-        if (!reverseMode) {
-          const activeLayerData = item.attnLayers ? item.attnLayers[currentSelectedLayer] : null;
-          if (activeLayerData && activeLayerData.heads && activeLayerData.heads[hIdx]) {
-            hWeights = activeLayerData.heads[hIdx];
-          } else if (Array.isArray(activeLayerData)) {
-            hWeights = activeLayerData;
-          }
-        } else {
-          for (let d = 0; d < numTokens; d++) {
-            if (d < targetIdx) {
-              hWeights.push(0.0);
-            } else {
-              const dLayerData = currentRunHistory[d].attnLayers ? currentRunHistory[d].attnLayers[currentSelectedLayer] : null;
-              let hw = (dLayerData && dLayerData.heads && dLayerData.heads[hIdx]) ? dLayerData.heads[hIdx] : (Array.isArray(dLayerData) ? dLayerData : []);
-              hWeights.push((hw && targetIdx < hw.length) ? hw[targetIdx] : 0.0);
-            }
-          }
-        }
-
-        const isHeadSelected = (currentSelectedHead === hIdx);
-        const hRow = document.createElement('div');
-        hRow.style.display = 'flex';
-        hRow.style.alignItems = 'center';
-        hRow.style.gap = '6px';
-        hRow.style.cursor = 'pointer';
-        hRow.title = `Select Head ${hIdx} for Layer ${currentSelectedLayer}`;
-        hRow.onclick = () => selectHeadByValue(hIdx);
-
-        const hLbl = document.createElement('span');
-        hLbl.style.width = '62px';
-        hLbl.style.fontSize = '9px';
-        hLbl.style.fontWeight = isHeadSelected ? 'bold' : 'normal';
-        hLbl.style.color = isHeadSelected ? '#fff' : headPalette[hIdx];
-        hLbl.innerText = `L${currentSelectedLayer}.H${hIdx}`;
-
-        const hStrip = document.createElement('div');
-        hStrip.style.flex = '1';
-        hStrip.style.display = 'flex';
-        hStrip.style.height = '10px';
-        hStrip.style.background = '#080808';
-        hStrip.style.border = isHeadSelected ? `1px solid ${headPalette[hIdx]}` : '1px solid #141414';
-        hStrip.style.borderRadius = '1px';
-        hStrip.style.overflow = 'hidden';
-
-        hWeights.forEach((w, tIdx) => {
-          const cell = document.createElement('div');
-          cell.style.flex = '1';
-          cell.style.minWidth = '2px';
-          cell.style.height = '100%';
-          const alpha = Math.min(1.0, w * 3.5);
-          cell.style.background = w > 0.3 ? '#ffffff' : (alpha > 0.05 ? headPalette[hIdx] : 'transparent');
-          cell.style.opacity = alpha > 0 ? Math.max(0.2, alpha) : 0;
-          const tokWord = tokens[tIdx] || `#${tIdx}`;
-          if (reverseMode) {
-            cell.title = `L${currentSelectedLayer}.H${hIdx}: "${tokWord}" attended ${(w * 100).toFixed(1)}% onto "${item.word}"`;
-          } else {
-            cell.title = `L${currentSelectedLayer}.H${hIdx} -> "${tokWord}" (${(w * 100).toFixed(1)}%)`;
-          }
-          hStrip.appendChild(cell);
-        });
-
-        hRow.appendChild(hLbl);
-        hRow.appendChild(hStrip);
-        matrixWrapper.appendChild(hRow);
-      }
-
-      const isAllSelected = (currentSelectedHead === 'all');
-
-      const macroRow = document.createElement('div');
-      macroRow.style.display = 'flex';
-      macroRow.style.alignItems = 'center';
-      macroRow.style.gap = '6px';
-      macroRow.style.marginTop = '4px';
-      macroRow.style.borderTop = '1px dashed #222';
-      macroRow.style.paddingTop = '4px';
-      macroRow.style.cursor = 'pointer';
-      macroRow.title = 'Click to select [ALL] heads across the whole network';
-      macroRow.onclick = () => {
-        const btn = Array.from(document.querySelectorAll('.head-pill')).find(b => b.innerText.includes('ALL'));
-        if (btn) selectHead('all', btn);
-      };
-
-      const macroLbl = document.createElement('span');
-      macroLbl.style.width = '62px';
-      macroLbl.style.fontSize = '9px';
-      macroLbl.style.color = isAllSelected ? '#00e5ff' : '#39ff14';
-      macroLbl.style.fontWeight = 'bold';
-      macroLbl.innerText = 'OVERALL:';
-
-      const macroStrip = document.createElement('div');
-      macroStrip.style.flex = '1';
-      macroStrip.style.display = 'flex';
-      macroStrip.style.alignItems = 'flex-end';
-      macroStrip.style.gap = '1px';
-      macroStrip.style.height = '16px';
-      macroStrip.style.background = '#050505';
-      macroStrip.style.border = isAllSelected ? '1px solid #00e5ff' : '1px solid transparent';
-      macroStrip.style.borderRadius = '1px';
-      macroStrip.style.boxShadow = isAllSelected ? '0 0 6px rgba(0, 229, 255, 0.4)' : 'none';
-
-      for (let tIdx = 0; tIdx < numTokens; tIdx++) {
-        let sumW = 0;
-        for (let lIdx = 0; lIdx < 6; lIdx++) {
-          if (!reverseMode) {
-            const lData = item.attnLayers[lIdx];
-            const arr = (lData && lData.all) ? lData.all : (Array.isArray(lData) ? lData : []);
-            sumW += (arr && arr[tIdx]) ? arr[tIdx] : 0;
-          } else {
-            if (tIdx >= targetIdx) {
-              const dAttn = getLayerHeadAttention(currentRunHistory[tIdx], lIdx);
-              sumW += (dAttn && targetIdx < dAttn.length) ? dAttn[targetIdx] : 0;
-            }
-          }
-        }
-        const meanW = sumW / 6.0;
-        const barH = Math.max(1, Math.min(15, Math.round(meanW * 28)));
-
-        const bar = document.createElement('div');
-        bar.style.flex = '1';
-        bar.style.minWidth = '2px';
-        bar.style.height = `${barH}px`;
-        bar.style.background = meanW > 0.15 ? (reverseMode ? '#00e5ff' : '#39ff14') : (reverseMode ? '#0a3d4d' : '#1a4d1a');
-        
-        const tokWord = tokens[tIdx] || `#${tIdx}`;
-        if (reverseMode) {
-          bar.title = `Mean Focus: "${tokWord}" attended ${(meanW * 100).toFixed(1)}% onto "${item.word}"`;
-        } else {
-          bar.title = `Mean Network Focus -> "${tokWord}" (${(meanW * 100).toFixed(1)}%)`;
-        }
-        macroStrip.appendChild(bar);
-      }
-
-      macroRow.appendChild(macroLbl);
-      macroRow.appendChild(macroStrip);
-      matrixWrapper.appendChild(macroRow);
-
-      container.appendChild(matrixWrapper);
-    }
-
-    function highlightActiveLayer(item, targetIdx = -1) {
-      if (!item && targetIdx === -1) return;
-      clearAttendedHighlights();
-
-      if (targetIdx === -1 && currentRunHistory && currentRunHistory.length > 0) {
-        targetIdx = currentRunHistory.indexOf(item);
-      }
-
-      const reverseMode = isReverseMode && targetIdx !== -1;
-
-      if (!reverseMode) {
-        const activeAttn = getLayerHeadAttention(item, currentSelectedLayer);
-        if (!activeAttn) return;
-
-        activeAttn.forEach((weight, tIdx) => {
-          const userSlotIdx = (qcaToUserMap && tIdx < qcaToUserMap.length) ? qcaToUserMap[tIdx] : tIdx;
-          const pastTokEl = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`) || document.getElementById(`${currentRunId}-tok-${tIdx}`);
-          if (pastTokEl) {
-            pastTokEl.classList.add('tok-attended');
-            pastTokEl.style.setProperty('--attn-strength', Math.min(1.0, weight * 2.8));
-          }
-        });
-      } else {
-        currentRunHistory.forEach((downstreamItem, dIdx) => {
-          if (dIdx <= targetIdx) return;
-          const downstreamAttn = getLayerHeadAttention(downstreamItem, currentSelectedLayer);
-          if (downstreamAttn && targetIdx < downstreamAttn.length) {
-            const weight = downstreamAttn[targetIdx];
-            const userSlotIdx = (qcaToUserMap && dIdx < qcaToUserMap.length) ? qcaToUserMap[dIdx] : dIdx;
-            const el = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`) || document.getElementById(`${currentRunId}-tok-${dIdx}`);
-            if (el && weight > 0.05) {
-              el.classList.add('tok-attended');
-              el.style.setProperty('--attn-strength', Math.min(1.0, weight * 3.2));
-            }
-          }
-        });
-      }
-    }
-
-    function inspectToken(history, idx, runId, ev) {
-      const item = history[idx];
-      if (!item) return;
-
-      lastInspectedItem = item;
-
-      let coords = null;
-      if (ev && ev.clientX !== undefined) {
-        coords = { clientX: ev.clientX, clientY: ev.clientY };
-      } else if (activeHoverContext && activeHoverContext.coords) {
-        coords = activeHoverContext.coords;
-      }
-
-      activeHoverContext = { history, idx, runId, coords };
-
-      renderVector(item.v);
-      renderRanks(item.ranks);
-      if (cortexViewMode === 'attn') {
-        renderAllLayersAttention(item);
-      }
-      
-      highlightActiveLayer(item, idx);
-
-      const reverseMode = isReverseMode;
-      const pop = document.getElementById('attn-popover');
-
-      if (reverseMode && coords) {
-        const downstreamWeights = [];
-        for (let d = idx + 1; d < history.length; d++) {
-          const dAttn = getLayerHeadAttention(history[d], currentSelectedLayer);
-          downstreamWeights.push((dAttn && idx < dAttn.length) ? dAttn[idx] : 0);
-        }
-
-        document.getElementById('pop-title').innerText = `[REVERSE] Word #${idx+1}: "${item.word}"`;
-        document.getElementById('pop-title').style.color = '#00e5ff';
-        const barsBox = document.getElementById('pop-bars');
-        barsBox.innerHTML = downstreamWeights.map(w => 
-          `<div class="attn-col" style="background:#00e5ff; height:${Math.max(3, Math.min(26, w * 32))}px;"></div>`
-        ).join('');
-        const headStr = currentSelectedHead === 'all' ? 'All Heads' : `Head ${currentSelectedHead}`;
-        document.getElementById('pop-footer').innerText = `Downstream Attention onto "${item.word}" (${downstreamWeights.length} future tokens)`;
-
-        const targetX = Math.max(90, Math.min(window.innerWidth - 90, coords.clientX));
-        const targetY = Math.max(40, coords.clientY - 12);
-        pop.style.left = targetX + 'px';
-        pop.style.top = targetY + 'px';
-        pop.style.display = 'block';
-      } else if (coords) {
-        const activeAttn = getLayerHeadAttention(item, currentSelectedLayer);
-        if (activeAttn && activeAttn.length > 0) {
-          document.getElementById('pop-title').innerText = `Token #${idx+1}: "${item.word}"`;
-          document.getElementById('pop-title').style.color = '#ff66cc';
-          const barsBox = document.getElementById('pop-bars');
-          barsBox.innerHTML = activeAttn.map(w => 
-            `<div class="attn-col" style="background:#ff66cc; height:${Math.max(3, Math.min(26, w * 32))}px;"></div>`
-          ).join('');
-          const headStr = currentSelectedHead === 'all' ? 'All Heads' : `Head ${currentSelectedHead}`;
-          document.getElementById('pop-footer').innerText = `L${currentSelectedLayer} [${headStr}] Backward Attention (${activeAttn.length} tokens)`;
-
-          const targetX = Math.max(90, Math.min(window.innerWidth - 90, coords.clientX));
-          const targetY = Math.max(40, coords.clientY - 12);
-          pop.style.left = targetX + 'px';
-          pop.style.top = targetY + 'px';
-          pop.style.display = 'block';
-        }
-      }
-    }
-
-    function uninspectToken() {
-      activeHoverContext = null;
-      if (!persistentOverlay) {
-        clearAttendedHighlights();
-      }
-      const pop = document.getElementById('attn-popover');
-      if (pop) pop.style.display = 'none';
-    }
-
+    /* ==========================================================================
+       7. STREAMING & AUTOREGRESSIVE GENERATION ENGINE
+       ========================================================================== */
     function computeQcaToUserMap(userTokens, qcaTokens) {
       const uLower = userTokens.map(w => w.toLowerCase());
       const cPosU = uLower.indexOf('[c]');
@@ -2070,30 +1895,38 @@
       const p = promptEl.value.trim();
       if (!p) return;
 
-      promptEl.blur(); 
+      promptEl.blur();
       abortGen();
-
-      abortGen();
-      abortController = new AbortController();
+      State.abortCtrl = new AbortController();
       setControls(true);
       Stopwatch.start();
-      tokenTimes = [];
+      State.tokenTimes = [];
 
-      currentRunId = 'run-' + Date.now();
-      currentRunHistory = [];
-      qcaToUserMap = [];
-      userPromptHasA = false;
-      lastInspectedItem = null;
+      State.currentRunId = 'run-' + Date.now();
+      State.runHistory = [];
+      State.qcaToUserMap = [];
+      State.userPromptHasA = false;
+      State.lastInspected = null;
 
       const log = document.getElementById('log');
-      const promptLineId = `${currentRunId}-prompt-line`;
-      const genStreamId   = `${currentRunId}-gen-stream`;
-      
-      log.innerHTML += `\n&gt; <span id="${promptLineId}"></span><span id="${genStreamId}"></span><span class="cursor" id="active-cursor"></span>`;
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.appendChild(document.createTextNode('> '));
+
+      const promptLine = document.createElement('span');
+      promptLine.id = `${State.currentRunId}-prompt-line`;
+      const genStream = document.createElement('span');
+      genStream.id = `${State.currentRunId}-gen-stream`;
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      cursor.id = 'active-cursor';
+
+      line.append(promptLine, genStream, cursor);
+      log.appendChild(line);
       log.scrollTop = log.scrollHeight;
 
       const prefContainer = document.getElementById('m_prefill');
-      prefContainer.innerHTML = 'Ingesting prompt...';
+      prefContainer.innerText = 'Ingesting prompt...';
       setStat("Prompt Ingestion (KV Prefill)...", "#ff00aa");
 
       try {
@@ -2101,7 +1934,7 @@
         const slTopk = document.getElementById('sl-topk');
         const tVal = slTemp ? slTemp.value : '0.00';
         const kVal = slTopk ? slTopk.value : '1';
-        const resp = await fetch(`/gen?p=${encodeURIComponent(p)}&t=${tVal}&k=${kVal}`, { signal: abortController.signal });
+        const resp = await fetch(`/gen?p=${encodeURIComponent(p)}&t=${tVal}&k=${kVal}`, { signal: State.abortCtrl.signal });
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
         let buf = '';
@@ -2113,48 +1946,41 @@
           const lines = buf.split('\n');
           buf = lines.pop();
 
-          for (const line of lines) {
-            if (!line.trim()) continue;
+          for (const rawLine of lines) {
+            if (!rawLine.trim()) continue;
             let data;
-            try { data = JSON.parse(line); } catch(e) { continue; }
+            try { data = JSON.parse(rawLine); } catch(e) { continue; }
 
             if (data.v) renderVector(data.v);
             if (data.ms) document.getElementById('m_lat').innerText = data.ms;
             if (data.ranks) renderRanks(data.ranks);
 
             if (data.stage === 'init') {
-              prefContainer.innerHTML = '';
+              prefContainer.replaceChildren();
               if (data.qca_tokens) {
                 data.qca_tokens.forEach((t, i) => {
                   const chip = document.createElement('span');
                   chip.className = 'chip chip-pending';
-                  chip.id = `${currentRunId}-chip-${i}`;
+                  chip.id = `${State.currentRunId}-chip-${i}`;
                   chip.innerText = t;
                   prefContainer.appendChild(chip);
                 });
               }
 
-              qcaToUserMap = computeQcaToUserMap(data.user_tokens, data.qca_tokens);
-              userPromptHasA = data.user_tokens.some(w => w.toLowerCase() === '[a]');
+              State.qcaToUserMap = computeQcaToUserMap(data.user_tokens, data.qca_tokens);
+              State.userPromptHasA = data.user_tokens.some(w => w.toLowerCase() === '[a]');
 
-              const promptLine = document.getElementById(promptLineId);
-              if (promptLine && data.user_tokens) {
+              if (data.user_tokens) {
                 data.user_tokens.forEach((word, idx) => {
                   const span = document.createElement('span');
                   span.className = 'term-tok tok-ghost';
-                  span.id = `${currentRunId}-tok-${idx}`;
+                  span.id = `${State.currentRunId}-tok-${idx}`;
                   span.innerText = word + ' ';
-                  currentRunHistory.push({ word: word, v: null, ranks: null, attn: null, attnLayers: null });
+                  State.runHistory.push({ word: word, v: null, ranks: null, attn: null, attnLayers: null });
                   span.onmouseenter = (e) => {
                     releaseInputFocus();
-                    inspectToken(currentRunHistory, idx, currentRunId, e);
+                    inspectToken(State.runHistory, idx, State.currentRunId, e);
                   };
-                  span.onmousemove = (e) => {
-                    if (activeHoverContext) {
-                      activeHoverContext.coords = { clientX: e.clientX, clientY: e.clientY };
-                    }
-                  };
-
                   span.onclick = (e) => {
                     e.stopPropagation();
                     toggleReverseAttention();
@@ -2169,91 +1995,79 @@
               setStat(`Prefill: ${data.cur}/${data.tot}`, "#00e5ff");
 
               const qcaIdx = data.cur - 1;
-              const chip = document.getElementById(`${currentRunId}-chip-${qcaIdx}`);
+              const chip = document.getElementById(`${State.currentRunId}-chip-${qcaIdx}`);
               if (chip) chip.className = 'chip chip-done';
 
-              const userSlotIdx = (qcaToUserMap && qcaIdx < qcaToUserMap.length) ? qcaToUserMap[qcaIdx] : qcaIdx;
-              const slotSpan = document.getElementById(`${currentRunId}-tok-${userSlotIdx}`);
+              const userSlotIdx = (State.qcaToUserMap && qcaIdx < State.qcaToUserMap.length) ? State.qcaToUserMap[qcaIdx] : qcaIdx;
+              const slotSpan = document.getElementById(`${State.currentRunId}-tok-${userSlotIdx}`);
               if (slotSpan) {
                 slotSpan.classList.remove('tok-ghost');
-                if (slotSpan.innerText.trim().toLowerCase() === '[a]') {
-                  slotSpan.className = 'term-tok tok-tag-a';
-                } else {
-                  slotSpan.className = 'term-tok tok-revealed';
-                }
+                slotSpan.className = (slotSpan.innerText.trim().toLowerCase() === '[a]')
+                  ? 'term-tok tok-tag-a'
+                  : 'term-tok tok-revealed';
               }
 
-              if (userSlotIdx < currentRunHistory.length) {
-                currentRunHistory[userSlotIdx].v = data.v;
-                currentRunHistory[userSlotIdx].ranks = data.ranks;
-                currentRunHistory[userSlotIdx].attn = data.attn;
-                currentRunHistory[userSlotIdx].attnLayers = data.attn_layers || (data.attn ? [data.attn] : null);
+              if (userSlotIdx < State.runHistory.length) {
+                State.runHistory[userSlotIdx].v = data.v;
+                State.runHistory[userSlotIdx].ranks = data.ranks;
+                State.runHistory[userSlotIdx].attn = data.attn;
+                State.runHistory[userSlotIdx].attnLayers = data.attn_layers || (data.attn ? [data.attn] : null);
               }
+              State.runHistory[userSlotIdx].rollout = data.rollout || null;
               log.scrollTop = log.scrollHeight;
 
             } else if (data.stage === 'gen') {
-              if (data.w === '<eos>' || data.w === '<pad>') {
-                return;
-              }
+              if (data.w === '<eos>' || data.w === '<pad>') return;
 
-              const genStream = document.getElementById(genStreamId);
-
-              if (!userPromptHasA && !document.getElementById(`${currentRunId}-tag-a`)) {
+              if (!State.userPromptHasA && !document.getElementById(`${State.currentRunId}-tag-a`)) {
                 const aSpan = document.createElement('span');
                 aSpan.className = 'term-tok tok-tag-a';
-                aSpan.id = `${currentRunId}-tag-a`;
+                aSpan.id = `${State.currentRunId}-tag-a`;
                 aSpan.innerText = '[a] ';
-                if (genStream) genStream.appendChild(aSpan);
-                userPromptHasA = true;
+                genStream.appendChild(aSpan);
+                State.userPromptHasA = true;
               }
 
               setStat("Streaming Answer...", "#00e5ff");
 
-              const tokIndex = currentRunHistory.length;
-              const tokenRecord = { 
+              const tokIndex = State.runHistory.length;
+              State.runHistory.push({ 
                 word: data.w, 
                 v: data.v, 
                 ranks: data.ranks, 
                 attn: data.attn,
-                attnLayers: data.attn_layers || (data.attn ? [data.attn] : null)
-              };
-              currentRunHistory.push(tokenRecord);
+                attnLayers: data.attn_layers || (data.attn ? [data.attn] : null),
+                rollout: data.rollout || null
+              });
 
               const tokSpan = document.createElement('span');
               tokSpan.className = 'term-tok tok-ai';
-              tokSpan.id = `${currentRunId}-tok-${tokIndex}`;
+              tokSpan.id = `${State.currentRunId}-tok-${tokIndex}`;
               tokSpan.innerText = data.w + ' ';
               tokSpan.onmouseenter = (e) => {
                 releaseInputFocus();
-                inspectToken(currentRunHistory, tokIndex, currentRunId, e);
-              };
-              tokSpan.onmousemove = (e) => {
-                if (activeHoverContext) {
-                  activeHoverContext.coords = { clientX: e.clientX, clientY: e.clientY };
-                }
+                inspectToken(State.runHistory, tokIndex, State.currentRunId, e);
               };
               tokSpan.onclick = (e) => {
                 e.stopPropagation();
                 toggleReverseAttention();
               };
               tokSpan.onmouseleave = uninspectToken;
-              if (genStream) genStream.appendChild(tokSpan);
+              genStream.appendChild(tokSpan);
               log.scrollTop = log.scrollHeight;
 
               const now = performance.now();
-              tokenTimes.push(now);
-              if (tokenTimes.length > 1) {
-                const dur = (tokenTimes[tokenTimes.length - 1] - tokenTimes[0]) / 1000;
-                const tps = (tokenTimes.length - 1) / (dur || 0.001);
+              State.tokenTimes.push(now);
+              if (State.tokenTimes.length > 1) {
+                const dur = (State.tokenTimes[State.tokenTimes.length - 1] - State.tokenTimes[0]) / 1000;
+                const tps = (State.tokenTimes.length - 1) / (dur || 0.001);
                 document.getElementById('tps-meter').innerText = tps.toFixed(2);
               }
             }
           }
         }
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error(err);
-        }
+        if (err.name !== 'AbortError') console.error(err);
       } finally {
         const cur = document.getElementById('active-cursor');
         if (cur) cur.remove();
@@ -2263,17 +2077,16 @@
 
         const target = getTargetInspectionItem();
         if (target) {
-          lastInspectedItem = target;
-          if (cortexViewMode === 'attn') {
-            renderAllLayersAttention(target);
-          }
-          if (persistentOverlay) {
-            highlightActiveLayer(target);
-          }
+          State.lastInspected = target;
+          if (State.cortexView === 'attn') renderAllLayersAttention(target);
+          if (State.persistentOverlay) highlightActiveLayer(target);
         }
       }
     }
 
+    /* ==========================================================================
+       8. INITIALIZATION ON PAGE LOAD
+       ========================================================================== */
     window.onload = () => { 
       initGrid(); 
       renderRepo('all');
@@ -2285,11 +2098,7 @@
       const initPrompt = document.getElementById('prompt').value.trim();
       const cP = initPrompt.indexOf('[c]');
       const qP = initPrompt.indexOf('[q]');
-      if (cP !== -1 && qP !== -1) {
-        currentFormatMode = (qP < cP) ? 'QCA' : 'CQA';
-      } else {
-        currentFormatMode = 'QCA';
-      }
+      State.formatMode = (cP !== -1 && qP !== -1) ? ((qP < cP) ? 'QCA' : 'CQA') : 'QCA';
 
       applyCortexViewModeUI();
       updateFormatButtonLabel();
