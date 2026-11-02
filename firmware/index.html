@@ -21,7 +21,6 @@
       margin-bottom: 8px;
     }
 
-    /* TWO-COLUMN FLEX CONTAINER */
     .container {
       display: flex;
       gap: 14px;
@@ -43,7 +42,6 @@
       min-width: 0;
     }
 
-    /* TERMINAL LOG */
     #log {
       height: 310px;
       background: #000;
@@ -57,7 +55,6 @@
       position: relative;
     }
 
-    /* CONTROLS STRIP: SAMPLING SLIDERS & HEAD SELECTOR */
     .controls-strip {
       display: flex;
       gap: 12px;
@@ -109,7 +106,6 @@
       background: rgba(255, 102, 204, 0.12);
     }
 
-    /* INPUT ROW */
     .input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
     input[type="text"] {
       flex: 1;
@@ -142,7 +138,6 @@
     .btn-stop { background: #ff0055; color: #fff; }
     #timer { color: #ff66cc; font-size: 12px; min-width: 48px; font-weight: bold; flex-shrink: 0; }
 
-    /* CYBER DRAWER (REPOSITORY & QUESTION MAKER) */
     .drawer-card {
       background: #050505;
       border: 1px solid #222;
@@ -216,7 +211,6 @@
     .chip-del { color: #ff0055; font-weight: bold; cursor: pointer; padding-left: 2px; }
     .chip-del:hover { color: #fff; }
 
-    /* DYNAMIC QUESTION MAKER */
     .maker-layout {
       display: flex;
       flex-direction: column;
@@ -294,13 +288,13 @@
     }
     .maker-action-btn:hover { background: #ff66cc; color: #000; }
 
-    /* TOKEN STYLING & GHOST SLOTS */
     .term-tok {
       cursor: pointer;
       padding: 1px 2px;
       border-radius: 2px;
       transition: background-color 0.1s ease, color 0.1s ease;
       display: inline-block;
+      user-select: none;
     }
     .tok-ghost {
       color: transparent !important;
@@ -319,7 +313,6 @@
       100% { opacity: 1; transform: translateY(0) scale(1.0); color: #39ff14; }
     }
 
-    /* ALL GENERATED RESPONSES IN CYAN */
     .tok-ai,
     span.tok-ai,
     span.term-tok.tok-ai {
@@ -343,7 +336,6 @@
       }
     }
 
-    /* ACCENT [a] DIVIDER */
     .tok-tag-a {
       color: #ff66cc !important;
       font-weight: bold !important;
@@ -366,7 +358,6 @@
       border-bottom: 1px solid #ff66cc;
     }
 
-    /* RIGHT COLUMN & COLLAPSIBLES */
     .collapse-header {
       cursor: pointer;
       user-select: none;
@@ -396,7 +387,6 @@
     .text-pink { color: #ff00aa; }
     .text-green { color: #39ff14; }
 
-    /* SCANNER TRACK */
     .scanner-track {
       width: 100%;
       height: 5px;
@@ -447,7 +437,6 @@
       box-shadow: 0 0 4px rgba(57, 255, 20, 0.4);
     }
 
-    /* 96-D CORTEX GRID (16x6) */
     .cortex-container {
       background: #000;
       border: 1px solid #222;
@@ -480,7 +469,6 @@
       margin-top: 3px;
     }
 
-    /* ATTENTION POPOVER */
     #attn-popover {
       position: fixed;
       background: rgba(0, 0, 0, 0.95);
@@ -552,19 +540,16 @@
   <div class="main-title">[ MEOW AND MIAOU : DISTRIBUTED NEURAL ENGINE ]</div>
   
   <div class="container">
-    <!-- LEFT MAIN COLUMN -->
     <div class="main-col">
-      <!-- LAYER INSPECTION SLIDER -->
       <div style="display:flex; align-items:center; gap:10px; background:#050505; border:1px solid #222; padding:6px 10px; border-radius:2px; width:100%;">
         <span style="color:#ff66cc; font-weight:bold; font-size:11px;">[ LAYER ]:</span>
         <input type="range" id="layer-slider" min="0" max="5" value="5" step="1" autocomplete="off" style="flex:1; accent-color:#ff66cc; cursor:pointer;" oninput="onLayerSliderChange(this.value)">
         <span id="layer-label" style="color:#00e5ff; font-weight:bold; font-size:11px; min-width:125px;">Layer 5 (L5 Logic)</span>
-        <span style="color:#555; font-size:9px;">[Keys: &uarr;/&darr; Layer, &larr;/&rarr; Head]</span>
+        <span style="color:#555; font-size:9px;">[Keys: &uarr;/&darr; Layer, &larr;/&rarr; Head, 'R' or Click Token to Toggle Rev]</span>
       </div>
 
-      <div id="log">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
+      <div id="log" onmouseenter="releaseInputFocus()">Meow (Pico WH) online.<br>Miaou (Pico W) connected over Wi-Fi<br>Waiting for a prompt...<br></div>
       
-      <!-- CONTROLS STRIP: SAMPLING SLIDERS & HEAD SELECTOR -->
       <div class="controls-strip">
         <div class="param-group">
           <label>TEMP:</label>
@@ -594,7 +579,6 @@
         <span id="timer">0.0s</span>
       </div>
 
-      <!-- CYBER DRAWER: REPOSITORY & QUESTION MAKER -->
       <div class="drawer-card">
         <div class="drawer-nav">
           <div class="tab-group">
@@ -611,12 +595,10 @@
           </div>
         </div>
 
-        <!-- REPOSITORY PANEL -->
         <div class="drawer-panel" id="panel-repo">
           <div class="repo-grid" id="repo-grid"></div>
         </div>
 
-        <!-- DYNAMIC QUESTION MAKER PANEL -->
         <div class="drawer-panel" id="panel-maker" style="display:none;">
           <div class="maker-layout">
             <div class="maker-row">
@@ -644,9 +626,7 @@
       </div>
     </div>
     
-    <!-- RIGHT SIDEBAR COLUMN -->
     <div class="side-col">
-      <!-- FUN FACTS (STARTS COLLAPSED) -->
       <div class="badge collapse-header" onclick="toggleCollapse('sec-facts', this)" data-title="[ FUN FACTS ]">
         <span>[+] [ FUN FACTS ]</span>
       </div>
@@ -656,7 +636,6 @@
         Engine Speed: <span class="text-cyan" id="tps-meter">0.00</span> TPS
       </div>
 
-      <!-- LIVE METRICS (STARTS COLLAPSED) -->
       <div class="badge collapse-header" onclick="toggleCollapse('sec-metrics', this)" data-title="[ LIVE METRICS ]">
         <span>[+] [ LIVE METRICS ]</span>
       </div>
@@ -667,11 +646,9 @@
         <div class="scanner-track"><div class="scanner-thumb" id="scanner_thumb"></div></div>
       </div>
       
-      <!-- PROMPT INGESTION PREFILL (STAYS COMPACT & VISIBLE) -->
       <div class="badge">[ PROMPT INGESTION (KV PREFILL) ]</div>
       <div class="metric" id="m_prefill" style="min-height: 38px;">Waiting for prompt...</div>
 
-      <!-- CANDIDATE RANKINGS (STARTS COLLAPSED) -->
       <div class="badge collapse-header" onclick="toggleCollapse('m_ranks', this)" data-title="[ WORD CANDIDATE RANKINGS (TOP 5) ]">
         <span>[+] [ WORD CANDIDATE RANKINGS (TOP 5) ]</span>
       </div>
@@ -679,29 +656,30 @@
         1. ---<br>2. ---<br>3. ---<br>4. ---<br>5. ---
       </div>
 
-      <!-- CORTEX & ATTENTION (MAXIMIZED VERTICAL SPACE) -->
       <div class="badge" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>[ 96-D CORTEX &amp; ATTENTION ]</span>
+        <span>[ 6-LAYER ATTENTION GRAPH ]</span>
         <div style="display:flex; gap:4px;">
+          <button id="btn-toggle-reverse" onclick="toggleReverseAttention()" style="background:#111; border:1px solid #333; color:#777; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;" title="Toggle Reverse / Backward Attention (Shortcut: 'R', click token, or hold Shift)">
+            [ ATTN: BWD &larr; ]
+          </button>
           <button id="btn-pin-overlay" onclick="togglePersistentOverlay()" style="background:#111; border:1px solid #333; color:#777; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;" title="Shortcut: 'O'">
             [ OVERLAY: OFF ]
           </button>
-          <button id="btn-toggle-view" onclick="toggleCortexView()" style="background:#111; border:1px solid #00e5ff; color:#00e5ff; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;">
-            [ SWAP TO ATTN ]
+          <button id="btn-toggle-view" onclick="toggleCortexView()" style="background:#111; border:1px solid #ff66cc; color:#ff66cc; font-size:9px; padding:1px 5px; cursor:pointer; font-family:inherit; border-radius:2px;">
+            [ SWAP TO CORTEX ]
           </button>
         </div>
       </div>
       <div class="metric" style="flex:1;">
         <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:2px;">
-          <span id="cortex-view-title" style="color:#aaa;">Thought Vector (L2 &rarr; L3):</span>
+          <span id="cortex-view-title" style="color:#aaa;">All 6 Attention Layers (L0-L5):</span>
           <span>Energy: <b id="v_energy" class="text-cyan">0.00</b></span>
         </div>
         <div id="v_preview" style="color:#777; font-size:10px; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
           [ 0.00, 0.00, 0.00, 0.00 ... ]
         </div>
 
-        <!-- VIEW A: 96-D CORTEX GRID (16x6) -->
-        <div id="view-cortex-grid" class="cortex-container">
+        <div id="view-cortex-grid" class="cortex-container" style="display:none;">
           <div id="cortex-grid" class="cortex-grid"></div>
           <div class="cortex-legend">
             <span style="color:#ff0055;">&#9632; Negative</span>
@@ -710,8 +688,7 @@
           </div>
         </div>
 
-        <!-- VIEW B: ALL 6 LAYERS + 4-HEAD MATRIX (280px) -->
-        <div id="view-all-attn" style="display:none; background:#000; border:1px solid #222; padding:6px; margin:5px 0 3px 0; max-height:280px; overflow-y:auto;">
+        <div id="view-all-attn" style="display:block; background:#000; border:1px solid #222; padding:6px; margin:5px 0 3px 0; max-height:280px; overflow-y:auto;">
           <div id="all-layers-container" style="display:flex; flex-direction:column; gap:5px; font-size:9px;">
             <div style="color:#666; text-align:center; padding:10px 0;">Hover any token or run a prompt to view all 6 layers.</div>
           </div>
@@ -730,31 +707,72 @@
       headerEl.querySelector('span').innerText = (isHidden ? '[-] ' : '[+] ') + baseTitle;
     }
 
-    let isShiftDown = false;
+    let isReverseMode = false;
     let activeHoverContext = null;
 
-    function reInspectActive() {
-      if (!activeHoverContext) return;
-      const { history, idx, runId, coords } = activeHoverContext;
-      // Clear previous glows instantly before applying new directional weights
+    function releaseInputFocus() {
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        document.activeElement.blur();
+      }
+    }
+
+    function clearAttendedHighlights() {
       document.querySelectorAll('.tok-attended').forEach(el => {
         el.classList.remove('tok-attended');
         el.style.removeProperty('--attn-strength');
       });
-      inspectToken(history, idx, runId, coords);
     }
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Shift' && !isShiftDown) {
-        isShiftDown = true;
-        reInspectActive();
+    function updateAttentionDirectionUI() {
+      const btn = document.getElementById('btn-toggle-reverse');
+      if (btn) {
+        if (isReverseMode) {
+          btn.innerText = '[ ATTN: REV \u2192 ]';
+          btn.style.color = '#00e5ff';
+          btn.style.borderColor = '#00e5ff';
+          btn.style.background = 'rgba(0, 229, 255, 0.12)';
+        } else {
+          btn.innerText = '[ ATTN: BWD \u2190 ]';
+          btn.style.color = '#777';
+          btn.style.borderColor = '#333';
+          btn.style.background = '#111';
+        }
       }
-    });
+      const title = document.getElementById('cortex-view-title');
+      if (title && cortexViewMode === 'attn') {
+        title.innerHTML = isReverseMode 
+          ? 'All 6 Attention Layers <span style="color:#00e5ff; font-weight:bold;">[REVERSE &rarr;]</span>:'
+          : 'All 6 Attention Layers <span style="color:#ff66cc; font-weight:bold;">[BACKWARD &larr;]</span>:';
+      }
+    }
+    function reInspectActive() {
+      if (activeHoverContext) {
+        const { history, idx, runId, coords } = activeHoverContext;
+        clearAttendedHighlights();
+        inspectToken(history, idx, runId, coords);
+      } else {
+        const target = getTargetInspectionItem();
+        if (target) {
+          if (persistentOverlay) {
+            highlightActiveLayer(target);
+          }
+          if (cortexViewMode === 'attn') {
+            renderAllLayersAttention(target);
+          }
+        }
+      }
+    }
 
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'Shift' && isShiftDown) {
-        isShiftDown = false;
-        reInspectActive();
+    function toggleReverseAttention() {
+      isReverseMode = !isReverseMode;
+      updateAttentionDirectionUI();
+      reInspectActive();
+    }
+
+    // Tracks mouse coords without modifying reverse mode
+    window.addEventListener('mousemove', (e) => {
+      if (activeHoverContext) {
+        activeHoverContext.coords = { clientX: e.clientX, clientY: e.clientY };
       }
     });
 
@@ -768,10 +786,52 @@
     let userPromptHasA = false;
 
     let currentSelectedLayer = 5;
-    let currentSelectedHead = 'all'; // 'all', 0, 1, 2, or 3
-    let cortexViewMode = 'grid';
+    let currentSelectedHead = 'all';
+    
+    let cortexViewMode = localStorage.getItem('pico_cortex_view') || 'attn';
     let lastInspectedItem = null;
     let persistentOverlay = false;
+
+    function applyCortexViewModeUI() {
+      const gridView = document.getElementById('view-cortex-grid');
+      const attnView = document.getElementById('view-all-attn');
+      const btn = document.getElementById('btn-toggle-view');
+      const title = document.getElementById('cortex-view-title');
+
+      if (cortexViewMode === 'attn') {
+        if (gridView) gridView.style.display = 'none';
+        if (attnView) attnView.style.display = 'block';
+        if (btn) {
+          btn.innerText = '[ SWAP TO CORTEX ]';
+          btn.style.color = '#ff66cc';
+          btn.style.borderColor = '#ff66cc';
+        }
+        if (title) {
+          title.innerHTML = isReverseMode 
+            ? 'All 6 Attention Layers <span style="color:#00e5ff; font-weight:bold;">[REVERSE &rarr;]</span>:'
+            : 'All 6 Attention Layers <span style="color:#ff66cc; font-weight:bold;">[BACKWARD &larr;]</span>:';
+        }
+      } else {
+        if (gridView) gridView.style.display = 'block';
+        if (attnView) attnView.style.display = 'none';
+        if (btn) {
+          btn.innerText = '[ SWAP TO ATTN ]';
+          btn.style.color = '#00e5ff';
+          btn.style.borderColor = '#00e5ff';
+        }
+        if (title) title.innerText = 'Thought Vector (L2 \u2192 L3):';
+      }
+      localStorage.setItem('pico_cortex_view', cortexViewMode);
+    }
+
+    function toggleCortexView() {
+      cortexViewMode = (cortexViewMode === 'attn') ? 'grid' : 'attn';
+      applyCortexViewModeUI();
+      const target = getTargetInspectionItem();
+      if (target && cortexViewMode === 'attn') {
+        renderAllLayersAttention(target);
+      }
+    }
 
     function onParamChange() {
       const slTemp = document.getElementById('sl-temp');
@@ -1323,7 +1383,7 @@
 
       input.value = val;
       updateFormatButtonLabel();
-      updateMakerPreview(); // Synchronize Question Maker preview immediately
+      updateMakerPreview();
     }
 
     function buildMakerPromptString() {
@@ -1349,7 +1409,6 @@
       const pRendered = pTmpl.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => bindings[k] || k);
       const qRendered = qTmpl.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => bindings[k] || k);
 
-      // Render format adhering to active QCA / CQA toggle
       if (currentFormatMode === 'QCA') {
         return `[q] ${qRendered} ? [c] ${pRendered} . [a]`;
       } else {
@@ -1365,7 +1424,6 @@
         btn.style.borderColor = currentFormatMode === 'QCA' ? '#39ff14' : '#ff66cc';
       }
     }
-
 
     function updateMakerPreview() {
       document.getElementById('mk-preview').innerText = buildMakerPromptString();
@@ -1513,7 +1571,7 @@
       if (!currentRunHistory || currentRunHistory.length === 0) return null;
 
       for (let i = currentRunHistory.length - 1; i >= 0; i--) {
-        if (currentRunHistory[i].word.trim().toLowerCase() === '[a]') {
+        if (currentRunHistory[i].word && currentRunHistory[i].word.trim().toLowerCase() === '[a]') {
           return currentRunHistory[i];
         }
       }
@@ -1543,19 +1601,24 @@
       updateLayerUI(val);
     }
 
-   function selectHeadByValue(headVal) {
-      const btn = Array.from(document.querySelectorAll('.head-pill')).find(b => {
-        return headVal === 'all' ? b.innerText.includes('ALL') : b.innerText.includes(`H${headVal}`);
-      });
-      selectHead(headVal, btn);
-    }
-
     window.addEventListener('keydown', (e) => {
-      const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      const inInput = (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT');
-      if (inInput) return;
+      if (e.repeat) return; // Prevent rapid flicker on key hold
 
-      // Up and Down arrows change layers
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      const inInput = (activeTag === 'INPUT' || activeTag === 'TEXTAREA');
+
+      // 'R' / 'r' toggles immediately if hovering a token or if not actively typing
+      if (e.key === 'r' || e.key === 'R') {
+        if (activeHoverContext || !inInput) {
+          e.preventDefault();
+          if (inInput && document.activeElement) document.activeElement.blur();
+          toggleReverseAttention();
+          return;
+        }
+      }
+
+      if (inInput || activeTag === 'SELECT') return;
+
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         updateLayerUI(currentSelectedLayer + 1);
@@ -1564,7 +1627,6 @@
         updateLayerUI(currentSelectedLayer - 1);
       }
 
-      // Left and Right arrows change attention heads
       const headCycle = ['all', 0, 1, 2, 3];
       if (e.key === 'ArrowRight') {
         e.preventDefault();
@@ -1598,33 +1660,6 @@
       }
     }
 
-    function toggleCortexView() {
-      const gridView = document.getElementById('view-cortex-grid');
-      const attnView = document.getElementById('view-all-attn');
-      const btn = document.getElementById('btn-toggle-view');
-      const title = document.getElementById('cortex-view-title');
-
-      if (cortexViewMode === 'grid') {
-        cortexViewMode = 'attn';
-        gridView.style.display = 'none';
-        attnView.style.display = 'block';
-        btn.innerText = '[ SWAP TO CORTEX ]';
-        btn.style.color = '#ff66cc';
-        btn.style.borderColor = '#ff66cc';
-        title.innerText = 'All 6 Attention Layers (L0-L5):';
-        const target = getTargetInspectionItem();
-        if (target) renderAllLayersAttention(target);
-      } else {
-        cortexViewMode = 'grid';
-        gridView.style.display = 'block';
-        attnView.style.display = 'none';
-        btn.innerText = '[ SWAP TO ATTN ]';
-        btn.style.color = '#00e5ff';
-        btn.style.borderColor = '#00e5ff';
-        title.innerText = 'Thought Vector (L2 \u2192 L3):';
-      }
-    }
-
     function renderAllLayersAttention(item) {
       const container = document.getElementById('all-layers-container');
       if (!container || !item || !item.attnLayers) return;
@@ -1635,9 +1670,16 @@
         ? currentRunHistory.map(h => h.word)
         : [];
 
-      const numTokens = (item.attnLayers[0] && item.attnLayers[0].all)
-        ? item.attnLayers[0].all.length
-        : (item.attnLayers[0] ? item.attnLayers[0].length : 0);
+      const targetIdx = (currentRunHistory && currentRunHistory.length > 0)
+        ? currentRunHistory.indexOf(item)
+        : -1;
+      const reverseMode = isReverseMode && targetIdx !== -1;
+
+      const numTokens = reverseMode 
+        ? currentRunHistory.length 
+        : ((item.attnLayers[0] && item.attnLayers[0].all)
+            ? item.attnLayers[0].all.length
+            : (item.attnLayers[0] ? item.attnLayers[0].length : 0));
 
       if (numTokens === 0) return;
 
@@ -1647,10 +1689,36 @@
       matrixWrapper.style.gap = '2px';
       matrixWrapper.style.fontFamily = "'Fira Code', monospace";
 
+      const dirHeader = document.createElement('div');
+      dirHeader.style.display = 'flex';
+      dirHeader.style.justifyContent = 'space-between';
+      dirHeader.style.fontSize = '8px';
+      dirHeader.style.marginBottom = '2px';
+      dirHeader.style.fontWeight = 'bold';
+      if (reverseMode) {
+        dirHeader.innerHTML = `<span style="color:#00e5ff;">[ REVERSE: Downstream Tokens &rarr; "${item.word}" (#${targetIdx+1}) ]</span><span style="color:#888;">(Press 'R' for Backward)</span>`;
+      } else {
+        dirHeader.innerHTML = `<span style="color:#ff66cc;">[ BACKWARD: "${item.word}" (#${targetIdx+1}) &rarr; Past Tokens ]</span><span style="color:#888;">(Press 'R' for Reverse)</span>`;
+      }
+      matrixWrapper.appendChild(dirHeader);
+
       for (let lIdx = 0; lIdx < 6; lIdx++) {
-        const layerWeights = getLayerHeadAttention(item, lIdx) || [];
+        let layerWeights = [];
+        if (!reverseMode) {
+          layerWeights = getLayerHeadAttention(item, lIdx) || [];
+        } else {
+          for (let d = 0; d < numTokens; d++) {
+            if (d < targetIdx) {
+              layerWeights.push(0.0);
+            } else {
+              const dAttn = getLayerHeadAttention(currentRunHistory[d], lIdx);
+              layerWeights.push((dAttn && targetIdx < dAttn.length) ? dAttn[targetIdx] : 0.0);
+            }
+          }
+        }
+
         const isMeow = lIdx < 3;
-        const baseColor = isMeow ? '255, 102, 204' : '0, 229, 255';
+        const baseColor = reverseMode ? (isMeow ? '0, 229, 255' : '57, 255, 20') : (isMeow ? '255, 102, 204' : '0, 229, 255');
         const isSelected = (lIdx === currentSelectedLayer);
 
         const row = document.createElement('div');
@@ -1665,7 +1733,7 @@
         lbl.style.width = '62px';
         lbl.style.fontSize = '9px';
         lbl.style.fontWeight = isSelected ? 'bold' : 'normal';
-        lbl.style.color = isSelected ? '#39ff14' : (isMeow ? '#ff66cc' : '#00e5ff');
+        lbl.style.color = isSelected ? '#39ff14' : (isMeow ? (reverseMode ? '#00e5ff' : '#ff66cc') : (reverseMode ? '#39ff14' : '#00e5ff'));
         lbl.innerText = `L${lIdx} ${isMeow ? 'MEOW' : 'MIAOU'}`;
 
         const strip = document.createElement('div');
@@ -1692,7 +1760,11 @@
           }
 
           const tokWord = tokens[tIdx] || `#${tIdx}`;
-          cell.title = `L${lIdx} -> "${tokWord}" (${(w * 100).toFixed(1)}%)`;
+          if (reverseMode) {
+            cell.title = `L${lIdx}: "${tokWord}" attended ${(w * 100).toFixed(1)}% onto "${item.word}"`;
+          } else {
+            cell.title = `L${lIdx}: "${item.word}" attended ${(w * 100).toFixed(1)}% onto "${tokWord}"`;
+          }
           strip.appendChild(cell);
         });
 
@@ -1701,7 +1773,6 @@
         matrixWrapper.appendChild(row);
       }
 
-      // 4-HEAD BREAKDOWN FOR ACTIVE LAYER (H0 - H3)
       const headDivider = document.createElement('div');
       headDivider.style.display = 'flex';
       headDivider.style.justifyContent = 'space-between';
@@ -1713,15 +1784,27 @@
       headDivider.innerHTML = `<span>[ L${currentSelectedLayer} HEAD BREAKDOWN (H0 - H3) ]</span><span style="color:#ff66cc;">CLICK ROW TO SELECT HEAD</span>`;
       matrixWrapper.appendChild(headDivider);
 
-      const activeLayerData = item.attnLayers ? item.attnLayers[currentSelectedLayer] : null;
       const headPalette = ['#00e5ff', '#39ff14', '#ffaa00', '#ff00aa'];
 
       for (let hIdx = 0; hIdx < 4; hIdx++) {
         let hWeights = [];
-        if (activeLayerData && activeLayerData.heads && activeLayerData.heads[hIdx]) {
-          hWeights = activeLayerData.heads[hIdx];
-        } else if (Array.isArray(activeLayerData)) {
-          hWeights = activeLayerData;
+        if (!reverseMode) {
+          const activeLayerData = item.attnLayers ? item.attnLayers[currentSelectedLayer] : null;
+          if (activeLayerData && activeLayerData.heads && activeLayerData.heads[hIdx]) {
+            hWeights = activeLayerData.heads[hIdx];
+          } else if (Array.isArray(activeLayerData)) {
+            hWeights = activeLayerData;
+          }
+        } else {
+          for (let d = 0; d < numTokens; d++) {
+            if (d < targetIdx) {
+              hWeights.push(0.0);
+            } else {
+              const dLayerData = currentRunHistory[d].attnLayers ? currentRunHistory[d].attnLayers[currentSelectedLayer] : null;
+              let hw = (dLayerData && dLayerData.heads && dLayerData.heads[hIdx]) ? dLayerData.heads[hIdx] : (Array.isArray(dLayerData) ? dLayerData : []);
+              hWeights.push((hw && targetIdx < hw.length) ? hw[targetIdx] : 0.0);
+            }
+          }
         }
 
         const isHeadSelected = (currentSelectedHead === hIdx);
@@ -1758,7 +1841,11 @@
           cell.style.background = w > 0.3 ? '#ffffff' : (alpha > 0.05 ? headPalette[hIdx] : 'transparent');
           cell.style.opacity = alpha > 0 ? Math.max(0.2, alpha) : 0;
           const tokWord = tokens[tIdx] || `#${tIdx}`;
-          cell.title = `L${currentSelectedLayer}.H${hIdx} -> "${tokWord}" (${(w * 100).toFixed(1)}%)`;
+          if (reverseMode) {
+            cell.title = `L${currentSelectedLayer}.H${hIdx}: "${tokWord}" attended ${(w * 100).toFixed(1)}% onto "${item.word}"`;
+          } else {
+            cell.title = `L${currentSelectedLayer}.H${hIdx} -> "${tokWord}" (${(w * 100).toFixed(1)}%)`;
+          }
           hStrip.appendChild(cell);
         });
 
@@ -1767,7 +1854,6 @@
         matrixWrapper.appendChild(hRow);
       }
 
-      // Mean Attention Curve across all 6 layers (Tied to [ALL])
       const isAllSelected = (currentSelectedHead === 'all');
 
       const macroRow = document.createElement('div');
@@ -1789,7 +1875,7 @@
       macroLbl.style.fontSize = '9px';
       macroLbl.style.color = isAllSelected ? '#00e5ff' : '#39ff14';
       macroLbl.style.fontWeight = 'bold';
-      macroLbl.innerText = isAllSelected ? 'OVERALL:' : 'OVERALL:';
+      macroLbl.innerText = 'OVERALL:';
 
       const macroStrip = document.createElement('div');
       macroStrip.style.flex = '1';
@@ -1805,9 +1891,16 @@
       for (let tIdx = 0; tIdx < numTokens; tIdx++) {
         let sumW = 0;
         for (let lIdx = 0; lIdx < 6; lIdx++) {
-          const lData = item.attnLayers[lIdx];
-          const arr = (lData && lData.all) ? lData.all : (Array.isArray(lData) ? lData : []);
-          sumW += (arr && arr[tIdx]) ? arr[tIdx] : 0;
+          if (!reverseMode) {
+            const lData = item.attnLayers[lIdx];
+            const arr = (lData && lData.all) ? lData.all : (Array.isArray(lData) ? lData : []);
+            sumW += (arr && arr[tIdx]) ? arr[tIdx] : 0;
+          } else {
+            if (tIdx >= targetIdx) {
+              const dAttn = getLayerHeadAttention(currentRunHistory[tIdx], lIdx);
+              sumW += (dAttn && targetIdx < dAttn.length) ? dAttn[targetIdx] : 0;
+            }
+          }
         }
         const meanW = sumW / 6.0;
         const barH = Math.max(1, Math.min(15, Math.round(meanW * 28)));
@@ -1816,10 +1909,14 @@
         bar.style.flex = '1';
         bar.style.minWidth = '2px';
         bar.style.height = `${barH}px`;
-        bar.style.background = meanW > 0.15 ? '#39ff14' : '#1a4d1a';
+        bar.style.background = meanW > 0.15 ? (reverseMode ? '#00e5ff' : '#39ff14') : (reverseMode ? '#0a3d4d' : '#1a4d1a');
         
         const tokWord = tokens[tIdx] || `#${tIdx}`;
-        bar.title = `Mean Network Focus -> "${tokWord}" (${(meanW * 100).toFixed(1)}%)`;
+        if (reverseMode) {
+          bar.title = `Mean Focus: "${tokWord}" attended ${(meanW * 100).toFixed(1)}% onto "${item.word}"`;
+        } else {
+          bar.title = `Mean Network Focus -> "${tokWord}" (${(meanW * 100).toFixed(1)}%)`;
+        }
         macroStrip.appendChild(bar);
       }
 
@@ -1832,12 +1929,15 @@
 
     function highlightActiveLayer(item, targetIdx = -1) {
       if (!item && targetIdx === -1) return;
-      uninspectToken();
+      clearAttendedHighlights();
 
-      const reverseMode = isShiftDown && targetIdx !== -1;
+      if (targetIdx === -1 && currentRunHistory && currentRunHistory.length > 0) {
+        targetIdx = currentRunHistory.indexOf(item);
+      }
+
+      const reverseMode = isReverseMode && targetIdx !== -1;
 
       if (!reverseMode) {
-        // Standard Backward Attention: Who did this token look at?
         const activeAttn = getLayerHeadAttention(item, currentSelectedLayer);
         if (!activeAttn) return;
 
@@ -1850,7 +1950,6 @@
           }
         });
       } else {
-        // Reverse Forward Attention: Which downstream tokens attended to ME?
         currentRunHistory.forEach((downstreamItem, dIdx) => {
           if (dIdx <= targetIdx) return;
           const downstreamAttn = getLayerHeadAttention(downstreamItem, currentSelectedLayer);
@@ -1873,7 +1972,6 @@
 
       lastInspectedItem = item;
 
-      // Keep position stable even when triggered by keyboard Shift
       let coords = null;
       if (ev && ev.clientX !== undefined) {
         coords = { clientX: ev.clientX, clientY: ev.clientY };
@@ -1891,18 +1989,17 @@
       
       highlightActiveLayer(item, idx);
 
-      const reverseMode = isShiftDown;
+      const reverseMode = isReverseMode;
       const pop = document.getElementById('attn-popover');
 
-      if (reverseMode && ev) {
-        // Reverse Forward Sparkline: Graph of downstream tokens looking back at this word
+      if (reverseMode && coords) {
         const downstreamWeights = [];
         for (let d = idx + 1; d < history.length; d++) {
           const dAttn = getLayerHeadAttention(history[d], currentSelectedLayer);
           downstreamWeights.push((dAttn && idx < dAttn.length) ? dAttn[idx] : 0);
         }
 
-        document.getElementById('pop-title').innerText = `[SHIFT REVERSE] Word #${idx+1}: "${item.word}"`;
+        document.getElementById('pop-title').innerText = `[REVERSE] Word #${idx+1}: "${item.word}"`;
         document.getElementById('pop-title').style.color = '#00e5ff';
         const barsBox = document.getElementById('pop-bars');
         barsBox.innerHTML = downstreamWeights.map(w => 
@@ -1911,13 +2008,12 @@
         const headStr = currentSelectedHead === 'all' ? 'All Heads' : `Head ${currentSelectedHead}`;
         document.getElementById('pop-footer').innerText = `Downstream Attention onto "${item.word}" (${downstreamWeights.length} future tokens)`;
 
-        const targetX = Math.max(90, Math.min(window.innerWidth - 90, ev.clientX));
-        const targetY = Math.max(40, ev.clientY - 12);
+        const targetX = Math.max(90, Math.min(window.innerWidth - 90, coords.clientX));
+        const targetY = Math.max(40, coords.clientY - 12);
         pop.style.left = targetX + 'px';
         pop.style.top = targetY + 'px';
         pop.style.display = 'block';
-      } else if (ev) {
-        // Standard Backward Attention
+      } else if (coords) {
         const activeAttn = getLayerHeadAttention(item, currentSelectedLayer);
         if (activeAttn && activeAttn.length > 0) {
           document.getElementById('pop-title').innerText = `Token #${idx+1}: "${item.word}"`;
@@ -1929,8 +2025,8 @@
           const headStr = currentSelectedHead === 'all' ? 'All Heads' : `Head ${currentSelectedHead}`;
           document.getElementById('pop-footer').innerText = `L${currentSelectedLayer} [${headStr}] Backward Attention (${activeAttn.length} tokens)`;
 
-          const targetX = Math.max(90, Math.min(window.innerWidth - 90, ev.clientX));
-          const targetY = Math.max(40, ev.clientY - 12);
+          const targetX = Math.max(90, Math.min(window.innerWidth - 90, coords.clientX));
+          const targetY = Math.max(40, coords.clientY - 12);
           pop.style.left = targetX + 'px';
           pop.style.top = targetY + 'px';
           pop.style.display = 'block';
@@ -1941,10 +2037,7 @@
     function uninspectToken() {
       activeHoverContext = null;
       if (!persistentOverlay) {
-        document.querySelectorAll('.tok-attended').forEach(el => {
-          el.classList.remove('tok-attended');
-          el.style.removeProperty('--attn-strength');
-        });
+        clearAttendedHighlights();
       }
       const pop = document.getElementById('attn-popover');
       if (pop) pop.style.display = 'none';
@@ -1973,8 +2066,12 @@
     }
 
     async function gen() {
-      const p = document.getElementById('prompt').value.trim();
+      const promptEl = document.getElementById('prompt');
+      const p = promptEl.value.trim();
       if (!p) return;
+
+      promptEl.blur(); 
+      abortGen();
 
       abortGen();
       abortController = new AbortController();
@@ -2048,7 +2145,20 @@
                   span.id = `${currentRunId}-tok-${idx}`;
                   span.innerText = word + ' ';
                   currentRunHistory.push({ word: word, v: null, ranks: null, attn: null, attnLayers: null });
-                  span.onmouseenter = (e) => inspectToken(currentRunHistory, idx, currentRunId, e);
+                  span.onmouseenter = (e) => {
+                    releaseInputFocus();
+                    inspectToken(currentRunHistory, idx, currentRunId, e);
+                  };
+                  span.onmousemove = (e) => {
+                    if (activeHoverContext) {
+                      activeHoverContext.coords = { clientX: e.clientX, clientY: e.clientY };
+                    }
+                  };
+
+                  span.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleReverseAttention();
+                  };
                   span.onmouseleave = uninspectToken;
                   promptLine.appendChild(span);
                 });
@@ -2113,7 +2223,19 @@
               tokSpan.className = 'term-tok tok-ai';
               tokSpan.id = `${currentRunId}-tok-${tokIndex}`;
               tokSpan.innerText = data.w + ' ';
-              tokSpan.onmouseenter = (e) => inspectToken(currentRunHistory, tokIndex, currentRunId, e);
+              tokSpan.onmouseenter = (e) => {
+                releaseInputFocus();
+                inspectToken(currentRunHistory, tokIndex, currentRunId, e);
+              };
+              tokSpan.onmousemove = (e) => {
+                if (activeHoverContext) {
+                  activeHoverContext.coords = { clientX: e.clientX, clientY: e.clientY };
+                }
+              };
+              tokSpan.onclick = (e) => {
+                e.stopPropagation();
+                toggleReverseAttention();
+              };
               tokSpan.onmouseleave = uninspectToken;
               if (genStream) genStream.appendChild(tokSpan);
               log.scrollTop = log.scrollHeight;
@@ -2160,7 +2282,6 @@
       const savedLayer = localStorage.getItem('pico_selected_layer') || 5;
       updateLayerUI(savedLayer);
 
-      // Default strictly to QCA on boot
       const initPrompt = document.getElementById('prompt').value.trim();
       const cP = initPrompt.indexOf('[c]');
       const qP = initPrompt.indexOf('[q]');
@@ -2170,7 +2291,9 @@
         currentFormatMode = 'QCA';
       }
 
+      applyCortexViewModeUI();
       updateFormatButtonLabel();
+      updateAttentionDirectionUI();
       updateMakerPreview();
       onParamChange();
     };
