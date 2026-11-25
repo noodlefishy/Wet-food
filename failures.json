@@ -1,302 +1,302 @@
 [
   {
     "category": "01: Single Supporting Fact",
-    "question": "[q] who went to the garage ? [c] sophie went to the library . rocky went to the garage . [a]",
-    "target": "rocky .",
-    "got": "sophie . <eos>"
-  },
-  {
-    "category": "01: Single Supporting Fact",
-    "question": "[q] who went to the garage ? [c] zoe went to the library . simba went to the garage . [a]",
-    "target": "simba .",
+    "question": "[q] who went to the garage ? [c] zoe went to the library . lily went to the garage . [a]",
+    "target": "lily .",
     "got": "zoe . <eos>"
   },
   {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the yard ? [c] the yard is north of the room . the room is north of the porch . [a]",
-    "target": "porch .",
-    "got": "room . <eos>"
+    "category": "01: Single Supporting Fact",
+    "question": "[q] who went to the room ? [c] lily went to the kitchen . sophie went to the room . [a]",
+    "target": "sophie .",
+    "got": "lily . <eos>"
+  },
+  {
+    "category": "02: Two Supporting Facts",
+    "question": "[q] who has the hat ? [c] bob found the hat in the library . then bob went to the shed . [a]",
+    "target": "bob .",
+    "got": "nobody . <eos>"
   },
   {
     "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the basement ? [c] the basement is north of the attic . the attic is north of the garage . [a]",
-    "target": "garage .",
-    "got": "attic . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is north of the basement ? [c] the attic is north of the porch . the porch is north of the basement . [a]",
+    "question": "[q] what is south of the balcony ? [c] the garage is north of the attic . the balcony is north of the garage . [a]",
     "target": "attic .",
-    "got": "porch . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the bedroom ? [c] the bedroom is north of the hallway . the hallway is north of the park . [a]",
-    "target": "park .",
-    "got": "hallway . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the library ? [c] the library is north of the shed . the shed is north of the garage . [a]",
-    "target": "garage .",
-    "got": "shed . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is north of the garage ? [c] the shed is north of the garage . the library is north of the shed . [a]",
-    "target": "library .",
-    "got": "shed . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is north of the attic ? [c] the porch is north of the garage . the garage is north of the attic . [a]",
-    "target": "porch .",
     "got": "garage . <eos>"
   },
   {
     "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the forest ? [c] the forest is north of the kitchen . the kitchen is north of the porch . [a]",
-    "target": "porch .",
+    "question": "[q] what is north of the garden ? [c] the kitchen is north of the garden . the garage is north of the kitchen . [a]",
+    "target": "garage .",
     "got": "kitchen . <eos>"
   },
   {
     "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the library ? [c] the library is north of the balcony . the balcony is north of the park . [a]",
-    "target": "park .",
-    "got": "balcony . <eos>"
+    "question": "[q] what is north of the forest ? [c] the room is north of the garage . the garage is north of the forest . [a]",
+    "target": "room .",
+    "got": "garage . <eos>"
   },
   {
     "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the basement ? [c] the basement is north of the attic . the attic is north of the garage . [a]",
-    "target": "garage .",
-    "got": "attic . <eos>"
+    "question": "[q] what is north of the basement ? [c] the forest is north of the park . the park is north of the basement . [a]",
+    "target": "forest .",
+    "got": "park . <eos>"
   },
   {
     "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the library ? [c] the library is north of the hallway . the hallway is north of the park . [a]",
-    "target": "park .",
+    "question": "[q] what is north of the forest ? [c] the room is north of the garage . the garage is north of the forest . [a]",
+    "target": "room .",
+    "got": "garage . <eos>"
+  },
+  {
+    "category": "04: Two Argument Relations",
+    "question": "[q] what is north of the forest ? [c] the room is north of the garage . the garage is north of the forest . [a]",
+    "target": "room .",
+    "got": "garage . <eos>"
+  },
+  {
+    "category": "04: Two Argument Relations",
+    "question": "[q] what is south of the kitchen ? [c] the kitchen is north of the hallway . the hallway is north of the library . [a]",
+    "target": "library .",
     "got": "hallway . <eos>"
   },
   {
     "category": "04: Two Argument Relations",
-    "question": "[q] what is south of the basement ? [c] the basement is north of the forest . the forest is north of the porch . [a]",
-    "target": "porch .",
-    "got": "forest . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is north of the garage ? [c] the balcony is north of the garage . the library is north of the balcony . [a]",
+    "question": "[q] what is north of the room ? [c] the library is north of the garage . the garage is north of the room . [a]",
     "target": "library .",
-    "got": "balcony . <eos>"
-  },
-  {
-    "category": "04: Two Argument Relations",
-    "question": "[q] what is north of the attic ? [c] the basement is north of the garage . the garage is north of the attic . [a]",
-    "target": "basement .",
     "got": "garage . <eos>"
   },
   {
     "category": "06: Yes/No Truth Verification",
-    "question": "[q] is rocky in the garage ? [c] oscar went to the garage . rocky went to the bedroom . [a]",
-    "target": "no .",
-    "got": "yes . <eos>"
-  },
-  {
-    "category": "06: Yes/No Truth Verification",
-    "question": "[q] is ruby in the bedroom ? [c] daisy went to the garage . ruby went to the bedroom . [a]",
+    "question": "[q] is lily in the bedroom ? [c] lily went to the bedroom . rocky went to the forest . [a]",
     "target": "yes .",
     "got": "no . <eos>"
   },
   {
     "category": "06: Yes/No Truth Verification",
-    "question": "[q] is buster in the porch ? [c] chloe went to the porch . buster went to the library . [a]",
+    "question": "[q] is oscar in the porch ? [c] oscar went to the kitchen . buster went to the porch . [a]",
     "target": "no .",
     "got": "yes . <eos>"
   },
   {
+    "category": "06: Yes/No Truth Verification",
+    "question": "[q] is bob in the garage ? [c] alice went to the garage . bob went to the attic . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
+  },
+  {
+    "category": "06: Yes/No Truth Verification",
+    "question": "[q] is alice in the attic ? [c] alice went to the garage . bob went to the attic . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
+  },
+  {
+    "category": "06: Yes/No Truth Verification",
+    "question": "[q] is bob in the park ? [c] oscar went to the park . bob went to the yard . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does daisy have ? [c] mia has the pencil and the stick . daisy has the coin . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does mia have ? [c] daisy has the coin . mia has the pencil and the stick . [a]",
+    "target": "two .",
+    "got": "one . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does alice have ? [c] daisy has the blanket . alice has the pencil and the hat . [a]",
+    "target": "two .",
+    "got": "one . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does sophie have ? [c] sophie has the box . daisy has the toy and the bottle . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does sophie have ? [c] daisy has the pencil . sophie has the cup and the coin . [a]",
+    "target": "two .",
+    "got": "one . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does bob have ? [c] toby has the plate and the hat . bob has the toy . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does ruby have ? [c] mia has the bottle and the key . ruby has the book . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does jack have ? [c] bella has the key . jack has the ball and the coin . [a]",
+    "target": "two .",
+    "got": "one . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does charlie have ? [c] charlie has the hat . chloe has the pencil and the book . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does sam have ? [c] sam has the cup . lucy has the bowl and the coin . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does mia have ? [c] mia has the blanket . chloe has the bottle and the stick . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does bob have ? [c] toby has the hat and the cup . bob has the toy . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does luna have ? [c] luna has the hat . charlie has the stick and the box . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does luna have ? [c] luna has the cup . mia has the stick and the key . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does jack have ? [c] jack has the pencil . charlie has the toy and the ball . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does sam have ? [c] sam has the toy . lily has the key and the ball . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does lily have ? [c] daisy has the cup and the bottle . lily has the hat . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
+    "category": "07: Counting",
+    "question": "[q] how many items does ruby have ? [c] ruby has the book . buster has the pencil and the apple . [a]",
+    "target": "one .",
+    "got": "two . <eos>"
+  },
+  {
     "category": "08: Lists and Sets",
-    "question": "[q] what does oliver have ? [c] mia has the hat . oliver has the toy and the stick . [a]",
-    "target": "toy and stick .",
-    "got": "toy and ball . <eos>"
+    "question": "[q] what does toby have ? [c] toby has the plate . oliver has the key and the coin . [a]",
+    "target": "plate .",
+    "got": "plate and coin . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the library ? [c] bob went to the library . max and toby went to the bedroom . [a]",
-    "target": "bob .",
-    "got": "bob and toby . <eos>"
+    "category": "08: Lists and Sets",
+    "question": "[q] what does bob have ? [c] toby has the toy and the blanket . bob has the bottle . [a]",
+    "target": "bottle .",
+    "got": "bottle and blanket . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the kitchen ? [c] lucy went to the library . oscar and daisy went to the kitchen . [a]",
-    "target": "oscar and daisy .",
-    "got": "oscar . <eos>"
+    "category": "08: Lists and Sets",
+    "question": "[q] what does toby have ? [c] toby has the plate . alice has the pencil and the hat . [a]",
+    "target": "plate .",
+    "got": "plate and hat . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] where is daisy ? [c] ruby and lucy went to the room . daisy went to the garden . [a]",
-    "target": "garden .",
-    "got": "room . <eos>"
+    "category": "08: Lists and Sets",
+    "question": "[q] what does oliver have ? [c] felix has the hat . oliver has the coin and the stick . [a]",
+    "target": "coin and stick .",
+    "got": "coin . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] where is oscar ? [c] oscar and rocky went to the bedroom . buster went to the hallway . [a]",
-    "target": "bedroom .",
-    "got": "hallway . <eos>"
+    "category": "09: Simple Negation",
+    "question": "[q] is luna in the park ? [c] luna is not in the park . luna is in the yard . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] bella and sophie went to the park . chloe went to the garage . [a]",
-    "target": "chloe .",
-    "got": "chloe and sophie . <eos>"
+    "category": "09: Simple Negation",
+    "question": "[q] is oliver in the hallway ? [c] oliver is in the balcony . oliver is not in the hallway . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] jack and milo went to the garage . toby went to the room . [a]",
-    "target": "jack and milo .",
-    "got": "jack . <eos>"
+    "category": "09: Simple Negation",
+    "question": "[q] is jack in the forest ? [c] jack is not in the forest . jack is in the attic . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] where is lucy ? [c] lucy and charlie went to the shed . lily went to the porch . [a]",
-    "target": "shed .",
-    "got": "porch . <eos>"
+    "category": "09: Simple Negation",
+    "question": "[q] is jack in the forest ? [c] jack is in the attic . jack is not in the forest . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] charlie and leo went to the garage . lucy went to the library . [a]",
-    "target": "charlie and leo .",
-    "got": "charlie . <eos>"
+    "category": "09: Simple Negation",
+    "question": "[q] is rocky in the forest ? [c] rocky is not in the forest . rocky is in the kitchen . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] lucy went to the library . charlie and leo went to the garage . [a]",
-    "target": "charlie and leo .",
-    "got": "lucy . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is oliver in the attic ? [c] oliver is not in the attic . oliver is in the attic or the yard . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garden ? [c] lily and max went to the garden . ruby went to the basement . [a]",
-    "target": "lily and max .",
-    "got": "ruby and max . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is chloe in the park ? [c] chloe is not in the kitchen . chloe is in the kitchen or the park . [a]",
+    "target": "yes .",
+    "got": "no . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] where is jack ? [c] daisy and jack went to the kitchen . alice went to the garden . [a]",
-    "target": "kitchen .",
-    "got": "garden . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is lucy in the shed ? [c] lucy is in the shed or the kitchen . lucy is not in the shed . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] where is luna ? [c] alice and chloe went to the porch . luna went to the garage . [a]",
-    "target": "garage .",
-    "got": "porch . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is sophie in the park ? [c] sophie is not in the library . sophie is in the library or the park . [a]",
+    "target": "yes .",
+    "got": "no . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the porch ? [c] luna went to the garage . alice and chloe went to the porch . [a]",
-    "target": "alice and chloe .",
-    "got": "alice . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is oliver in the hallway ? [c] oliver is not in the hallway . oliver is in the hallway or the bedroom . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] where is buster ? [c] oscar and leo went to the park . buster went to the attic . [a]",
-    "target": "attic .",
-    "got": "park . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is oliver in the attic ? [c] oliver is not in the attic . oliver is in the attic or the yard . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   },
   {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] chloe and max went to the garage . ruby went to the library . [a]",
-    "target": "chloe and max .",
-    "got": "chloe . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] ruby went to the library . chloe and max went to the garage . [a]",
-    "target": "chloe and max .",
-    "got": "chloe . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the library ? [c] sam and sophie went to the library . rocky went to the attic . [a]",
-    "target": "sam and sophie .",
-    "got": "sam . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] where is zoe ? [c] zoe and felix went to the garage . buster went to the park . [a]",
-    "target": "garage .",
-    "got": "park . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] simba and sam went to the garage . rocky went to the room . [a]",
-    "target": "simba and sam .",
-    "got": "simba . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the park ? [c] bella went to the garage . oscar and oliver went to the park . [a]",
-    "target": "oscar and oliver .",
-    "got": "oscar . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the basement ? [c] simba and sophie went to the library . jack went to the basement . [a]",
-    "target": "jack .",
-    "got": "jack and sophie . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] where is leo ? [c] mia and bella went to the library . leo went to the kitchen . [a]",
-    "target": "kitchen .",
-    "got": "library . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the park ? [c] jack and buster went to the porch . luna went to the park . [a]",
-    "target": "luna .",
-    "got": "luna and buster . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] oliver and sam went to the kitchen . milo went to the garage . [a]",
-    "target": "milo .",
-    "got": "milo and sam . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the bedroom ? [c] ruby went to the library . leo and sophie went to the bedroom . [a]",
-    "target": "leo and sophie .",
-    "got": "leo . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] where is ruby ? [c] bob and daisy went to the forest . ruby went to the bedroom . [a]",
-    "target": "bedroom .",
-    "got": "forest . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] where is ruby ? [c] toby and daisy went to the porch . ruby went to the hallway . [a]",
-    "target": "hallway .",
-    "got": "porch . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the library ? [c] simba and bella went to the kitchen . sam went to the library . [a]",
-    "target": "sam .",
-    "got": "sam and bella . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the kitchen ? [c] sam went to the library . simba and bella went to the kitchen . [a]",
-    "target": "simba and bella .",
-    "got": "simba . <eos>"
-  },
-  {
-    "category": "12: Conjunction",
-    "question": "[q] who is in the garage ? [c] jack went to the garage . luna and oscar went to the kitchen . [a]",
-    "target": "jack .",
-    "got": "jack and oscar . <eos>"
+    "category": "10: Indefinite Knowledge",
+    "question": "[q] is milo in the garage ? [c] milo is in the garage or the garden . milo is not in the garage . [a]",
+    "target": "no .",
+    "got": "yes . <eos>"
   }
 ]

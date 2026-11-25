@@ -35,7 +35,7 @@ def evalSuite(tests, desc):
         gen = []
         with torch.no_grad():
             curr_pos = aPos
-            for _ in range(6):
+            for _ in range(16):
                 logits = model(x)
                 predId = logits[0, min(curr_pos, BLOCK_SIZE - 1)].argmax().item()
                 w = VOCAB[predId] if predId < len(VOCAB) else "<unk>"

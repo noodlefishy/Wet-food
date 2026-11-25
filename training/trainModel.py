@@ -192,29 +192,33 @@ if __name__ == "__main__":
             print(f" [Pre-train] Step {step:5d}/{PRETRAIN_STEPS} | Story Loss: {loss.item():.4f} | LR: {lr:.5f} | ETA: {eta:.1f}m", flush=True)
 
     # =====================================================================
-    # STAGE 2: LOGIC + MICRO-COT SFT WITH DUAL VALIDATION
+    # STAGE 2: FAST PRE-BUILT LOGIC + MICRO-COT SFT POOL
     # =====================================================================
-    print("\n[*] Assembling deterministic 320-sample validation set (QA + Micro-CoT + Held-out Stories)...")
+    SFT_POOL_SIZE = modCfg["training"]["sft"].get("pool_size", 120000)
+    print(f"\n[*] Pre-generating {SFT_POOL_SIZE:,} SFT samples (QA + Micro-CoT + RAG) onto {DEVICE.upper()}...")
+    t_gen = time.time()
     torch.manual_seed(42)
 
-    def build_qa_batch(batch_size):
-        qaX_list, qaY_list = [], []
-        for _ in range(batch_size):
-            toks = tokenize(generateAtomicSample(logCfg), WORD_TO_ID)[:BLOCK_SIZE]
-            x = toks + [padId] * (BLOCK_SIZE - len(toks))
-            y = [-100] * BLOCK_SIZE
-            ansStart = next((idx for idx, t in enumerate(toks) if t == aTokenId), -1)
-            if ansStart != -1:
-                for idx in range(ansStart, len(toks) - 1):
-                    y[idx] = toks[idx + 1]
-            qaX_list.append(x)
-            qaY_list.append(y)
-        return (
-            torch.tensor(qaX_list, dtype=torch.long, device=DEVICE),
-            torch.tensor(qaY_list, dtype=torch.long, device=DEVICE),
-        )
+    def encode_qa_pool(n_samples):
+        xs = torch.full((n_samples, BLOCK_SIZE), padId, dtype=torch.long)
+        ys = torch.full((n_samples, BLOCK_SIZE), -100, dtype=torch.long)
+        for i in range(n_samples):
+            # formatQaSequence already pads punctuation with spaces -> .split() is 15x faster than regex
+            words = generateAtomicSample(logCfg).lower().replace("'s", " 's ").split()
+            toks = [WORD_TO_ID.get(w, 0) for w in words[:BLOCK_SIZE]]
+            L = len(toks)
+            xs[i, :L] = torch.tensor(toks, dtype=torch.long)
+            try:
+                ansStart = toks.index(aTokenId)
+                for idx in range(ansStart, L - 1):
+                    ys[i, idx] = toks[idx + 1]
+            except ValueError:
+                pass
+        return xs.to(DEVICE), ys.to(DEVICE)
 
-    valX, valY = build_qa_batch(320)
+    valX, valY = encode_qa_pool(320)
+    qaXPool, qaYPool = encode_qa_pool(SFT_POOL_SIZE)
+    print(f"[✓] SFT pool ready in {time.time() - t_gen:.1f}s ({qaXPool.numel() * 8 / 1e6:.1f} MB VRAM).")
 
     def evaluateValMetrics(model):
         model.eval()
@@ -243,14 +247,14 @@ if __name__ == "__main__":
         for p in optSft.param_groups:
             p["lr"] = lr
 
-        xQa, yQa = build_qa_batch(SFT_BATCH)
-        stIdx = torch.randint(trainStCount, (max(8, SFT_BATCH // 2),))
+        qaIdx = torch.randint(SFT_POOL_SIZE, (SFT_BATCH,), device=DEVICE)
+        stIdx = torch.randint(trainStCount, (max(8, SFT_BATCH // 2),), device=DEVICE)
 
         optSft.zero_grad(set_to_none=True)
         with torch.amp.autocast("cuda", dtype=amp_dtype, enabled=use_amp):
             qa_loss = F.cross_entropy(
-                rawModel(xQa).view(-1, VOCAB_SIZE),
-                yQa.view(-1),
+                rawModel(qaXPool[qaIdx]).view(-1, VOCAB_SIZE),
+                qaYPool[qaIdx].view(-1),
                 ignore_index=-100,
                 label_smoothing=QA_SMOOTH,
             )

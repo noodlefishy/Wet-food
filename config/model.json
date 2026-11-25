@@ -11,25 +11,26 @@
     "window_size": 60,
     "sink_size": 4
   },
-  "training": {
+ "training": {
     "device": "cuda",
     "weight_decay": 0.02,
     "grad_clip": 1.0,
     "pretrain": {
-      "steps": 14000,
-      "batch_size": 32,
-      "warmup_steps": 600,
-      "base_lr": 0.002,
+      "steps": 9000,
+      "batch_size": 64,
+      "warmup_steps": 400,
+      "base_lr": 0.0022,
       "min_lr": 0.0002
     },
     "sft": {
-      "steps": 18000,
+      "steps": 16000,
       "batch_size": 32,
-      "base_lr": 0.00035,
+      "pool_size": 120000,
+      "base_lr": 0.00055,
       "min_lr": 0.00001,
-      "label_smoothing": 0.02,
+      "label_smoothing": 0.0,
       "qa_loss_weight": 2.0,
-      "story_loss_weight": 0.45
+      "story_loss_weight": 0.55
     }
   },
   "dataset": {

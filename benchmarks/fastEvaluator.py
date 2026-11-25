@@ -16,17 +16,19 @@ def extract_answer(text):
         return " ".join(val.rstrip(". ").split())
     return " ".join(clean.split()).rstrip(". ")
 
-def main():
-    ctx = load_distributed_model(projectRoot)
-    model = ctx["model"]
-    VOCAB = ctx["vocab"]
-    WORD_TO_ID = ctx["word_to_id"]
-    BLOCK_SIZE = ctx["block_size"]
-    NUM_LAYERS = ctx["num_layers"]
-    device = ctx["device"]
+ctx = load_distributed_model(projectRoot)
+model = ctx["model"]
+VOCAB = ctx["vocab"]
+WORD_TO_ID = ctx["word_to_id"]
+BLOCK_SIZE = ctx["block_size"]
+NUM_LAYERS = ctx["num_layers"]
+device = ctx["device"]
 
-    padId = WORD_TO_ID.get("<pad>", 1)
-    eosId = WORD_TO_ID.get("<eos>", 2)
+padId = WORD_TO_ID.get("<pad>", 1)
+eosId = WORD_TO_ID.get("<eos>", 2)
+
+def main():
+
 
     print(f"[✓] Model loaded ({NUM_LAYERS}L RoPE) on {device.upper()}\n")
 
