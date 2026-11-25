@@ -20,10 +20,6 @@
     ],
     "container": [
       "box", "bag", "basket", "drawer"
-    ],
-    "rag_adj": [
-      "hot", "cold", "heavy", "light", "clean", "dirty", "open", "closed",
-      "red", "blue", "green", "yellow"
     ]
   },
   "pair_pools": {
@@ -87,12 +83,14 @@
     {
       "name": "05: Three Argument Relations",
       "premise": [
-        "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}"
+        "{actor1} gave the {item1} to {actor2} . then {actor2} gave the {item1} to {actor3}",
+        "{actor1} gave the {item1} to {actor2}"
       ],
       "queries": [
         { "q": "who gave the {item1} to {actor2}", "a": "{actor1} ." },
         { "q": "who has the {item1} now", "a": "{actor3} ." },
-        { "q": "who had the {item1} first", "a": "{actor1} ." }
+        { "q": "who had the {item1} first", "a": "{actor1} ." },
+        { "q": "who has the {item1}", "a": "{actor2} ." }
       ]
     },
     {
@@ -144,15 +142,9 @@
     },
     {
       "name": "10: Indefinite Knowledge",
-      "premise": [
-        "{actor1} is in the {location1} or the {location2} . {actor1} is not in the {location1}",
-        "{actor1} is not in the {location1} . {actor1} is in the {location1} or the {location2}"
-      ],
-      "queries": [
-        { "q": "where is {actor1}", "a": "{location2} ." },
-        { "q": "is {actor1} in the {location1}", "a": "no ." },
-        { "q": "is {actor1} in the {location2}", "a": "yes ." }
-      ]
+      "type": "disjunction",
+      "premise": [],
+      "queries": []
     },
     {
       "name": "11: Basic Coreference",

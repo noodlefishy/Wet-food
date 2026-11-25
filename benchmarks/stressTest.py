@@ -6,6 +6,7 @@ sys.path.insert(0, projectRoot)
 from curriculum import (
     formatQaSequence,
     generateComposedCoTSample,
+    generateDisjunctionSample,
     generateMultiCountSample,
     generateRagRuleSample,
     pluralize,
@@ -96,6 +97,17 @@ for cat in cfg["categories"]:
         if len(cases) > 1500:
             cases = random.sample(cases, 1500)
         stressSuite[catName].extend(cases)
+
+    elif ctype == "disjunction":
+        seen = set()
+        for _ in range(1500):
+            sample = generateDisjunctionSample(cfg)
+            if sample not in seen:
+                seen.add(sample)
+                p, t = splitQa(sample)
+                stressSuite[catName].append({"q": p, "target": t})
+            if len(stressSuite[catName]) >= 1000:
+                break
 
     elif ctype in ("multi_counting", "composed_cot", "rag_rules"):
         gen_fn = {
