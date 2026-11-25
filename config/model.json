@@ -58,7 +58,7 @@
       "first", "now", "before", "after", "yes", "no", "zero", "one", "two", "three", "four",
       "five", "six", "seven", "eight", "nine", "ten", "none", "nobody", "nothing", "nowhere",
       "went", "walked", "ran", "arrived", "gave", "got", "has", "had", "have", "found", "find",
-      "put", "left", "picked", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
+      "put", "left", "picked", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi","things"
     ],
     "name_replacements": {
       "bob": ["timmy", "tom", "jack"],
