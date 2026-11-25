@@ -1,0 +1,45 @@
+alice went to the kitchen
+bob went to the garden
+if lucy is hungry then lucy is in the kitchen
+lucy is hungry
+if max is tired then max is in the bedroom
+max is tired
+if oscar is thirsty then oscar is in the porch
+oscar is thirsty
+felix is in the park or the forest
+felix is not in the park
+cats like the toy
+simba is a cat
+lily and jack went to the school
+daisy was in the shop
+then daisy went to the library
+first toby was in the cave
+then toby was in the castle
+zoe is not in the yard
+zoe is in the balcony
+the cup is red
+red things are hot
+the plate is blue
+blue things are cold
+the bowl is clean
+clean things are light
+the coin is heavy
+heavy things are in the basement
+the rock is dirty
+dirty things are in the yard
+bob left the ball in the garden
+if the ball is in the garden then it is dirty
+alice put the spoon in the garage
+if the spoon is in the garage then it is green
+bob put the jar in the attic
+if the jar is in the attic then it is closed
+alice gave the key to zoe
+lily has the book , the apple , and the hat
+the box is bigger than the stick
+the stick is bigger than the blanket
+the flower is to the left of the shoe
+the shoe is to the left of the bottle
+the castle is north of the beach
+the beach is north of the shed
+the hallway leads to the attic
+the attic leads to the balcony

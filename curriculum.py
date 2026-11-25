@@ -26,6 +26,7 @@ def pluralize(word, count=2):
 NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 FEMALE_ACTORS = {"alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"}
 DEFAULT_RAG_ADJS = ["hot", "cold", "heavy", "light", "clean", "dirty", "open", "closed", "red", "blue", "green", "yellow"]
+STATES = ["hungry", "tired", "thirsty"]
 
 def _sample_entities(pools):
     actors = random.sample(pools["actor"], min(5, len(pools["actor"])))
@@ -153,16 +154,22 @@ def generateComposedCoTSample(cfg, allow_distractor=True):
     return formatQaSequence(p, q, a)
 
 def generateRagRuleSample(cfg, allow_distractor=True):
+    """
+    Covers Yes/No rules, Wh- rule deduction (where/what colour/who),
+    and missing-fact abstention (nowhere/nobody/nothing).
+    """
     pools = cfg["pools"]
-    actors, locs, items, _ = _sample_entities(pools)
-    a1 = actors[0]
+    actors, locs, items, colours = _sample_entities(pools)
+    a1, a2, a3 = actors[0], actors[1], actors[2]
     l1, l2 = locs[0], locs[1]
-    i1 = items[0]
+    i1, i2 = items[0], items[1]
+    c1 = colours[0]
     adjs = pools.get("rag_adj", DEFAULT_RAG_ADJS)
     adj1, adj2, adj3 = random.sample(adjs, 3)
 
-    mode = random.randrange(2)
-    if mode == 0:
+    r = random.random()
+    if r < 0.22:
+        # Mode 0: Yes/No property inheritance ("X things are Y . the item is X")
         is_pos = random.random() < 0.5
         rule = f"{adj1} things are {adj2}"
         fact = f"the {i1} is {adj1 if is_pos else adj3}"
@@ -170,7 +177,8 @@ def generateRagRuleSample(cfg, allow_distractor=True):
         p = " . ".join(clauses)
         q = f"is the {i1} {adj2}"
         a = f"the {i1} is {adj1} . {rule} : yes" if is_pos else f"the {i1} is {adj3} : no"
-    else:
+    elif r < 0.44:
+        # Mode 1: Yes/No conditional location rule ("if the item is in loc then it is adj")
         is_pos = random.random() < 0.5
         rule = f"if the {i1} is in the {l1} then it is {adj1}"
         actual_loc = l1 if is_pos else l2
@@ -179,6 +187,58 @@ def generateRagRuleSample(cfg, allow_distractor=True):
         p = " . ".join(clauses)
         q = f"is the {i1} {adj1}"
         a = f"the {i1} is in the {l1} : yes" if is_pos else f"the {i1} is in the {l2} : no"
+    elif r < 0.84:
+        # Mode 2: Wh- rules (where / what colour / who)
+        wh_mode = random.randrange(4)
+        if wh_mode == 0:
+            state = random.choice(STATES)
+            rule = f"if {a1} is {state} then {a1} is in the {l1}"
+            fact = f"{a1} is {state}"
+            clauses = [rule, fact] if random.random() < 0.5 else [fact, rule]
+            p = " . ".join(clauses)
+            q = f"where is {a1}"
+            a = f"{a1} is {state} : {l1}"
+        elif wh_mode == 1:
+            rule = f"{adj1} things are in the {l1}"
+            fact = f"the {i1} is {adj1}"
+            clauses = [rule, fact] if random.random() < 0.5 else [fact, rule]
+            p = " . ".join(clauses)
+            q = f"where is the {i1}"
+            a = f"the {i1} is {adj1} : {l1}"
+        elif wh_mode == 2:
+            rule = f"if the {i1} is in the {l1} then it is {c1}"
+            fact = f"the {i1} is in the {l1}" if random.random() < 0.5 else f"{a1} put the {i1} in the {l1}"
+            clauses = [rule, fact] if random.random() < 0.5 else [fact, rule]
+            p = " . ".join(clauses)
+            q = f"what colour is the {i1}"
+            a = f"the {i1} is in the {l1} : {c1}"
+        else:
+            rule = f"cats like the {i1}"
+            fact = f"{a1} is a cat"
+            clauses = [rule, fact] if random.random() < 0.5 else [fact, rule]
+            p = " . ".join(clauses)
+            q = f"who likes the {i1}"
+            a = f"{a1} is a cat : {a1}"
+    else:
+        # Mode 3: Missing-fact abstention when RAG retrieves irrelevant context
+        abs_mode = random.randrange(4)
+        if abs_mode == 0:
+            p = f"{a2} went to the {l1} . the {i1} is {adj1}"
+            q = f"where is {a1}"
+            a = "nowhere"
+        elif abs_mode == 1:
+            p = f"{a1} went to the {l1} . the {i2} is in the {l2}"
+            q = f"where is the {i1}"
+            a = "nowhere"
+        elif abs_mode == 2:
+            p = f"{a1} has the {i2} . {a2} went to the {l1}"
+            q = f"who has the {i1}"
+            a = "nobody"
+        else:
+            p = f"{a2} has the {i1} . {a3} went to the {l1}"
+            q = f"what does {a1} have"
+            a = "nothing"
+        return formatQaSequence(p, q, a)
 
     if allow_distractor and random.random() < 0.5:
         p = _inject_distractor(p, q, pools)
