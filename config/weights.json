@@ -18,5 +18,10 @@
   "17: Positional Reasoning": 9.0,
   "18: Size Reasoning": 9.0,
   "19: Micro Navigation": 3.0,
-  "20: Agent Motivations": 3.0
+  "20: Agent Motivations": 3.0,
+  "21: Direct Arithmetic": 4.0,
+  "22: Word Arithmetic": 6.0,
+  "23: Multi-Item Counting": 4.0,
+  "24: Composed Micro-CoT": 14.0,
+  "25: RAG Rule Deduction": 12.0
 }

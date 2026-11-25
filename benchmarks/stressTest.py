@@ -3,7 +3,16 @@ import itertools, json, os, random, sys
 projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, projectRoot)
 
-from curriculum import formatQaSequence, pluralize, splitQa
+from curriculum import (
+    formatQaSequence,
+    generateComposedCoTSample,
+    generateMultiCountSample,
+    generateRagRuleSample,
+    pluralize,
+    splitQa,
+)
+
+random.seed(42)
 
 cfgPath = os.path.join(projectRoot, "config", "world.json")
 with open(cfgPath, "r") as f:
@@ -30,8 +39,8 @@ for cat in cfg["categories"]:
     stressSuite[catName] = []
 
     if ctype == "direct_arithmetic":
-        for n1 in range(10):
-            for n2 in range(10):
+        for n1 in range(11):
+            for n2 in range(11):
                 for isSub in (False, True):
                     if isSub and n2 > n1:
                         continue
@@ -42,25 +51,29 @@ for cat in cfg["categories"]:
                         if isSub != ("minus" in tmpl):
                             continue
                         for qObj in cat["queries"]:
+                            if isSub != ("minus" in qObj["q"]):
+                                continue
                             b = {
                                 "n1_word": NUM_WORDS[n1],
                                 "n2_word": NUM_WORDS[n2],
-                                "ans_word": NUM_WORDS[ans] if ans > 0 else "zero",
+                                "ans_word": NUM_WORDS[ans],
                             }
                             p, t = splitQa(formatQaSequence(tmpl.format(**b), qObj["q"].format(**b), qObj["a"].format(**b)))
                             stressSuite[catName].append({"q": p, "target": t})
 
     elif ctype == "arithmetic" or "Arithmetic" in catName:
+        cases = []
         for a1, a2 in itertools.permutations(actors[:8], 2):
             for it in items[:6]:
                 for isSub in (False, True):
                     pairs = (
-                        [(n1, n2) for n1 in range(1, 6) for n2 in range(1, n1 + 1)]
+                        [(n1, n2) for n1 in range(1, 7) for n2 in range(1, n1 + 1)]
                         if isSub
-                        else [(n1, n2) for n1 in range(1, 5) for n2 in range(1, 5)]
+                        else [(n1, n2) for n1 in range(1, 6) for n2 in range(1, 6)]
                     )
                     for n1, n2 in pairs:
                         ans = (n1 - n2) if isSub else (n1 + n2)
+                        op_word = "minus" if isSub else "plus"
                         b = {
                             "actor1": a1,
                             "actor2": a2,
@@ -71,6 +84,7 @@ for cat in cfg["categories"]:
                             "item1_plural": pluralize(it, 2),
                             "n1_word": NUM_WORDS[n1],
                             "n2_word": NUM_WORDS[n2],
+                            "expr": f"{NUM_WORDS[n1]} {op_word} {NUM_WORDS[n2]}",
                             "ans_word": NUM_WORDS[ans] if ans > 0 else "none",
                         }
                         for tmpl in cat["premise"]:
@@ -78,7 +92,27 @@ for cat in cfg["categories"]:
                                 continue
                             for qObj in cat["queries"]:
                                 p, t = splitQa(formatQaSequence(tmpl.format(**b), qObj["q"].format(**b), qObj["a"].format(**b)))
-                                stressSuite[catName].append({"q": p, "target": t})
+                                cases.append({"q": p, "target": t})
+        if len(cases) > 1500:
+            cases = random.sample(cases, 1500)
+        stressSuite[catName].extend(cases)
+
+    elif ctype in ("multi_counting", "composed_cot", "rag_rules"):
+        gen_fn = {
+            "multi_counting": lambda: generateMultiCountSample(cfg),
+            "composed_cot": lambda: generateComposedCoTSample(cfg, allow_distractor=True),
+            "rag_rules": lambda: generateRagRuleSample(cfg, allow_distractor=True),
+        }[ctype]
+        target_n = 500 if ctype == "multi_counting" else 1000
+        seen = set()
+        for _ in range(target_n * 3):
+            sample = gen_fn()
+            if sample not in seen:
+                seen.add(sample)
+                p, t = splitQa(sample)
+                stressSuite[catName].append({"q": p, "target": t})
+            if len(stressSuite[catName]) >= target_n:
+                break
 
     else:
         premises = cat.get("premise", cat.get("premises", [""]))

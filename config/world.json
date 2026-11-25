@@ -7,17 +7,23 @@
     ],
     "location": [
       "garden", "kitchen", "park", "room", "bedroom", "attic", "basement",
-      "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony"
+      "yard", "porch", "hallway", "forest", "garage", "library", "shed", "balcony",
+      "beach", "cave", "castle", "shop", "school"
     ],
     "item": [
       "ball", "box", "book", "cup", "key", "toy", "stick", "blanket",
-      "apple", "hat", "bottle", "bowl", "plate", "pencil", "coin"
+      "apple", "hat", "bottle", "bowl", "plate", "pencil", "coin",
+      "rock", "flower", "shoe", "jar", "spoon"
     ],
     "colour": [
       "red", "blue", "yellow", "green", "white", "black", "orange", "pink"
     ],
     "container": [
       "box", "bag", "basket", "drawer"
+    ],
+    "rag_adj": [
+      "hot", "cold", "heavy", "light", "clean", "dirty", "open", "closed",
+      "red", "blue", "green", "yellow"
     ]
   },
   "pair_pools": {
@@ -260,6 +266,47 @@
         { "q": "why did {actor1} go to the kitchen", "a": "hungry ." },
         { "q": "who is hungry", "a": "{actor1} ." }
       ]
+    },
+    {
+      "name": "21: Direct Arithmetic",
+      "type": "direct_arithmetic",
+      "premise": [
+        "{n1_word} plus {n2_word}",
+        "{n1_word} minus {n2_word}"
+      ],
+      "queries": [
+        { "q": "what is {n1_word} plus {n2_word}", "a": "{n1_word} plus {n2_word} : {ans_word} ." },
+        { "q": "what is {n1_word} minus {n2_word}", "a": "{n1_word} minus {n2_word} : {ans_word} ." }
+      ]
+    },
+    {
+      "name": "22: Word Arithmetic",
+      "type": "arithmetic",
+      "premise": [
+        "{actor1} has {n1_word} {item1_n1} . {actor2} gave {actor1} {n2_word} {item1_n2}",
+        "{actor1} has {n1_word} {item1_n1} . {actor1} gave {n2_word} {item1_n2} to {actor2}"
+      ],
+      "queries": [
+        { "q": "how many items does {actor1} have", "a": "{expr} : {ans_word} ." }
+      ]
+    },
+    {
+      "name": "23: Multi-Item Counting",
+      "type": "multi_counting",
+      "premise": [],
+      "queries": []
+    },
+    {
+      "name": "24: Composed Micro-CoT",
+      "type": "composed_cot",
+      "premise": [],
+      "queries": []
+    },
+    {
+      "name": "25: RAG Rule Deduction",
+      "type": "rag_rules",
+      "premise": [],
+      "queries": []
     }
   ]
 }

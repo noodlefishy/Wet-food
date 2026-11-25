@@ -25,9 +25,7 @@ def pluralize(word, count=2):
 
 NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 FEMALE_ACTORS = {"alice", "luna", "sophie", "chloe", "daisy", "bella", "lucy", "lily", "mia", "ruby", "zoe"}
-
-# Adjectives guaranteed to be in config/model.json core_words or common TinyStories vocab
-RAG_ADJS = ["hot", "cold", "heavy", "light", "clean", "dirty", "open", "closed", "red", "blue", "green", "yellow"]
+DEFAULT_RAG_ADJS = ["hot", "cold", "heavy", "light", "clean", "dirty", "open", "closed", "red", "blue", "green", "yellow"]
 
 def _sample_entities(pools):
     actors = random.sample(pools["actor"], min(5, len(pools["actor"])))
@@ -42,7 +40,6 @@ def _pick_unused(pool, used_text, exclude=()):
     return random.choice(candidates) if candidates else None
 
 def _inject_distractor(premise_str, question_str, pools):
-    # Keep total prompt safely inside BLOCK_SIZE = 64
     if len(premise_str.split()) > 28:
         return premise_str
 
@@ -60,11 +57,59 @@ def _inject_distractor(premise_str, question_str, pools):
         return premise_str
 
     clauses = [c.strip() for c in premise_str.split(".") if c.strip()]
-    insert_idx = random.randint(0, len(clauses))
-    clauses.insert(insert_idx, distractor)
+    clauses.insert(random.randint(0, len(clauses)), distractor)
     return " . ".join(clauses)
 
-def generateComposedCoTSample(cfg):
+def generateDirectArithmeticSample():
+    if random.random() < 0.5:
+        n1 = random.randint(0, 10)
+        n2 = random.randint(0, n1)
+        ans = n1 - n2
+        expr = f"{NUM_WORDS[n1]} minus {NUM_WORDS[n2]}"
+    else:
+        n1 = random.randint(0, 10)
+        n2 = random.randint(0, 10 - n1)
+        ans = n1 + n2
+        expr = f"{NUM_WORDS[n1]} plus {NUM_WORDS[n2]}"
+    return formatQaSequence(expr, f"what is {expr}", f"{expr} : {NUM_WORDS[ans]}")
+
+def generateWordArithmeticSample(cfg):
+    pools = cfg["pools"]
+    actors, _, items, _ = _sample_entities(pools)
+    a1, a2 = actors[0], actors[1]
+    it = items[0]
+
+    if random.random() < 0.5:
+        n1 = random.randint(1, 6)
+        n2 = random.randint(1, n1)
+        ans = n1 - n2
+        ans_w = NUM_WORDS[ans] if ans > 0 else "none"
+        p = f"{a1} has {NUM_WORDS[n1]} {pluralize(it, n1)} . {a1} gave {NUM_WORDS[n2]} {pluralize(it, n2)} to {a2}"
+        cot = f"{NUM_WORDS[n1]} minus {NUM_WORDS[n2]} : {ans_w}"
+    else:
+        n1 = random.randint(1, 5)
+        n2 = random.randint(1, 5)
+        ans = n1 + n2
+        ans_w = NUM_WORDS[ans]
+        p = f"{a1} has {NUM_WORDS[n1]} {pluralize(it, n1)} . {a2} gave {a1} {NUM_WORDS[n2]} {pluralize(it, n2)}"
+        cot = f"{NUM_WORDS[n1]} plus {NUM_WORDS[n2]} : {ans_w}"
+    return formatQaSequence(p, f"how many items does {a1} have", cot)
+
+def generateMultiCountSample(cfg):
+    pools = cfg["pools"]
+    actors, _, items, _ = _sample_entities(pools)
+    a1, a2 = actors[0], actors[1]
+    n = random.randint(1, 4)
+    held = items[:n]
+    if n == 1:
+        p = f"{a1} has the {held[0]} . {a2} has the {items[4]}"
+    elif n == 2:
+        p = f"{a1} has the {held[0]} and the {held[1]}"
+    else:
+        p = f"{a1} has " + " , ".join(f"the {x}" for x in held[:-1]) + f" , and the {held[-1]}"
+    return formatQaSequence(p, f"how many items does {a1} have", f"{' '.join(held)} : {NUM_WORDS[n]}")
+
+def generateComposedCoTSample(cfg, allow_distractor=True):
     pools = cfg["pools"]
     actors, locs, items, _ = _sample_entities(pools)
     a1, a2, a3 = actors[0], actors[1], actors[2]
@@ -102,72 +147,22 @@ def generateComposedCoTSample(cfg):
         q = f"what is south of the {l1}"
         a = f"{l2} is south of the {l1} : {l2}"
 
-    if random.random() < 0.4:
+    if allow_distractor and random.random() < 0.4:
         p = _inject_distractor(p, q, pools)
 
     return formatQaSequence(p, q, a)
 
-def generateArithmeticSample(cfg):
-    pools = cfg["pools"]
-    actors, _, items, _ = _sample_entities(pools)
-    a1, a2 = actors[0], actors[1]
-    it = items[0]
-
-    mode = random.randrange(3)
-    if mode == 0:
-        if random.random() < 0.5:
-            n1 = random.randint(0, 10)
-            n2 = random.randint(0, n1)
-            ans = n1 - n2
-            expr = f"{NUM_WORDS[n1]} minus {NUM_WORDS[n2]}"
-        else:
-            n1 = random.randint(0, 10)
-            n2 = random.randint(0, 10 - n1)
-            ans = n1 + n2
-            expr = f"{NUM_WORDS[n1]} plus {NUM_WORDS[n2]}"
-        return formatQaSequence(expr, f"what is {expr}", f"{expr} : {NUM_WORDS[ans]}")
-    elif mode == 1:
-        if random.random() < 0.5:
-            n1 = random.randint(1, 6)
-            n2 = random.randint(1, n1)
-            ans = n1 - n2
-            ans_w = NUM_WORDS[ans] if ans > 0 else "none"
-            p = f"{a1} has {NUM_WORDS[n1]} {pluralize(it, n1)} . {a1} gave {NUM_WORDS[n2]} {pluralize(it, n2)} to {a2}"
-            cot = f"{NUM_WORDS[n1]} minus {NUM_WORDS[n2]} : {ans_w}"
-        else:
-            n1 = random.randint(1, 5)
-            n2 = random.randint(1, 5)
-            ans = n1 + n2
-            ans_w = NUM_WORDS[ans]
-            p = f"{a1} has {NUM_WORDS[n1]} {pluralize(it, n1)} . {a2} gave {a1} {NUM_WORDS[n2]} {pluralize(it, n2)}"
-            cot = f"{NUM_WORDS[n1]} plus {NUM_WORDS[n2]} : {ans_w}"
-        return formatQaSequence(p, f"how many items does {a1} have", cot)
-    else:
-        n = random.randint(1, 4)
-        held = items[:n]
-        if n == 1:
-            p = f"{a1} has the {held[0]} . {a2} has the {items[4]}"
-        elif n == 2:
-            p = f"{a1} has the {held[0]} and the {held[1]}"
-        else:
-            p = f"{a1} has " + " , ".join(f"the {x}" for x in held[:-1]) + f" , and the {held[-1]}"
-        return formatQaSequence(p, f"how many items does {a1} have", f"{' '.join(held)} : {NUM_WORDS[n]}")
-
-def generateRagRuleSample(cfg):
-    """
-    Teaches simple, bAbI-native rule patterns so a RAG DB can store atomic rules
-    like 'hot things are red' or 'if the cup is in the kitchen then it is hot'.
-    """
+def generateRagRuleSample(cfg, allow_distractor=True):
     pools = cfg["pools"]
     actors, locs, items, _ = _sample_entities(pools)
     a1 = actors[0]
     l1, l2 = locs[0], locs[1]
     i1 = items[0]
-    adj1, adj2, adj3 = random.sample(RAG_ADJS, 3)
+    adjs = pools.get("rag_adj", DEFAULT_RAG_ADJS)
+    adj1, adj2, adj3 = random.sample(adjs, 3)
 
     mode = random.randrange(2)
     if mode == 0:
-        # Property inheritance: "X things are Y . the item is X" -> "is the item Y?"
         is_pos = random.random() < 0.5
         rule = f"{adj1} things are {adj2}"
         fact = f"the {i1} is {adj1 if is_pos else adj3}"
@@ -176,20 +171,16 @@ def generateRagRuleSample(cfg):
         q = f"is the {i1} {adj2}"
         a = f"the {i1} is {adj1} . {rule} : yes" if is_pos else f"the {i1} is {adj3} : no"
     else:
-        # Conditional location rule: "if the item is in the loc then it is adj"
         is_pos = random.random() < 0.5
         rule = f"if the {i1} is in the {l1} then it is {adj1}"
         actual_loc = l1 if is_pos else l2
-        if random.random() < 0.5:
-            fact = f"the {i1} is in the {actual_loc}"
-        else:
-            fact = f"{a1} put the {i1} in the {actual_loc}"
+        fact = f"the {i1} is in the {actual_loc}" if random.random() < 0.5 else f"{a1} put the {i1} in the {actual_loc}"
         clauses = [rule, fact] if random.random() < 0.5 else [fact, rule]
         p = " . ".join(clauses)
         q = f"is the {i1} {adj1}"
         a = f"the {i1} is in the {l1} : yes" if is_pos else f"the {i1} is in the {l2} : no"
 
-    if random.random() < 0.6:
+    if allow_distractor and random.random() < 0.5:
         p = _inject_distractor(p, q, pools)
 
     return formatQaSequence(p, q, a)
@@ -197,15 +188,6 @@ def generateRagRuleSample(cfg):
 def generateAtomicSample(cfg, targetCategory=None):
     pools = cfg["pools"]
     categories = cfg["categories"]
-
-    if targetCategory is None:
-        r = random.random()
-        if r < 0.16:
-            return generateComposedCoTSample(cfg)
-        if r < 0.30:
-            return generateArithmeticSample(cfg)
-        if r < 0.42:
-            return generateRagRuleSample(cfg)
 
     weights = []
     for c in categories:
@@ -223,6 +205,18 @@ def generateAtomicSample(cfg, targetCategory=None):
     )
     if cat is None:
         raise RuntimeError("[!] FATAL: Failed to sample category from curriculum.")
+
+    ctype = cat.get("type", "")
+    if ctype == "direct_arithmetic":
+        return generateDirectArithmeticSample()
+    if ctype == "arithmetic":
+        return generateWordArithmeticSample(cfg)
+    if ctype == "multi_counting":
+        return generateMultiCountSample(cfg)
+    if ctype == "composed_cot":
+        return generateComposedCoTSample(cfg, allow_distractor=(targetCategory is None))
+    if ctype == "rag_rules":
+        return generateRagRuleSample(cfg, allow_distractor=(targetCategory is None))
 
     premiseTmpl = random.choice(cat.get("premise", cat.get("premises", [""])))
     queryObj = random.choice(cat["queries"])
@@ -249,7 +243,7 @@ def generateAtomicSample(cfg, targetCategory=None):
     if targetCategory is None:
         if random.random() < 0.15 and " went to the " in pStr:
             pStr = pStr.replace(" went to the ", random.choice([" walked to the ", " ran to the "]))
-        if random.random() < 0.35:
+        if random.random() < 0.30:
             pStr = _inject_distractor(pStr, qRendered, pools)
 
     return formatQaSequence(pStr, qRendered, aRendered)
