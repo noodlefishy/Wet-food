@@ -1,40 +1,45 @@
 {
   "architecture": {
-    "vocab_size": 1024,
+    "vocab_size": 2048,
     "block_size": 64,
-    "embed_dim": 96,
+    "embed_dim": 128,
     "num_heads": 4,
-    "num_layers": 6,
-    "meow_layers": 3,
-    "miaou_layers": 3,
+    "num_layers": 8,
+    "meow_layers": 4,
+    "miaou_layers": 4,
     "pos_embedding": "rope",
-    "window_size": 20,
+    "window_size": 60,
     "sink_size": 4
   },
   "training": {
     "device": "cuda",
-    "weight_decay": 0.01,
+    "weight_decay": 0.02,
     "grad_clip": 1.0,
     "pretrain": {
-      "steps": 10000,
+      "steps": 14000,
       "batch_size": 32,
-      "warmup_steps": 500,
+      "warmup_steps": 600,
       "base_lr": 0.002,
       "min_lr": 0.0002
     },
     "sft": {
-      "steps": 14000,
-      "batch_size": 24,
-      "base_lr": 0.0004,
-      "min_lr": 0.00001
+      "steps": 18000,
+      "batch_size": 32,
+      "base_lr": 0.00035,
+      "min_lr": 0.00001,
+      "label_smoothing": 0.02,
+      "qa_loss_weight": 2.0,
+      "story_loss_weight": 0.45
     }
   },
   "dataset": {
     "url": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
-    "logic_samples_target": 8000,
+    "max_story_bytes": 18874368,
+    "logic_samples_target": 12000,
     "core_words": [
       "<unk>", "<pad>", "<eos>", ".", "?", ":", ",", "[c]", "[q]", "[a]",
       "question", "answer", "the", "in", "to", "from", "of", "a", "and", "or", "not", "than",
+      "i", "'s",
       "who", "what", "where", "how", "many", "why", "is", "are", "was", "were", "does", "did",
       "he", "she", "they", "it", "alice", "bob", "felix", "luna", "cat", "cats",
       "garden", "kitchen", "park", "room", "bedroom", "attic", "basement",
@@ -50,10 +55,10 @@
       "if", "then", "true", "false", "so", "because",
       "hello", "hi", "hey", "good", "morning", "day", "night", "doing", "great", "fine", "nice",
       "thanks", "thank", "you", "welcome", "bye", "goodbye", "help", "think", "talk", "ai", "friend",
-      "first", "then", "now", "before", "after", "yes", "no", "zero", "one", "two", "three", "four",
+      "first", "now", "before", "after", "yes", "no", "zero", "one", "two", "three", "four",
       "five", "six", "seven", "eight", "nine", "ten", "none", "nobody", "nothing", "nowhere",
-      "went", "walked", "arrived", "gave", "got", "has", "had", "have", "found", "find",
-      "put", "left", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
+      "went", "walked", "ran", "arrived", "gave", "got", "has", "had", "have", "found", "find",
+      "put", "left", "picked", "likes", "wants", "leads", "hungry", "tired", "thirsty", "pico", "wifi"
     ],
     "name_replacements": {
       "bob": ["timmy", "tom", "jack"],

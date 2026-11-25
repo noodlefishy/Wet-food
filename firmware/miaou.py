@@ -1,87 +1,32 @@
-# miaou.py - Worker (Slave) node for distributed transformer (96-D / 4-Head MHA)
-import network, socket, struct, math, gc, time, machine
-from machine import Pin; from array import array
-machine.freq(240_000_000); led = Pin("LED", Pin.OUT); led.on()
+# miaou.py - Worker node for distributed transformer
+import gc, machine, network, socket, struct, time
+from machine import Pin
+from pico_engine import PicoEngine, recv_all
 
-EMBED_DIM = 96
-BLOCK_SIZE = 64
-NUM_HEADS = 4
-HEAD_DIM = EMBED_DIM // NUM_HEADS  # Exactly 24
-VOCAB_SIZE = 1024
-ROW_B = 4 + EMBED_DIM
-L0_OFF = VOCAB_SIZE * ROW_B
-SINK_SIZE = 2
-WINDOW_SIZE = 10
-LAYERS = 3
+machine.freq(240_000_000)
+led = Pin("LED", Pin.OUT)
+led.on()
 
-try: import wifiConfig; WIFI_SSID = wifiConfig.SSID; WIFI_PASS = wifiConfig.PASSWORD
-except: WIFI_SSID = ""; WIFI_PASS = ""
+eng = PicoEngine("pico2 weights.model", has_emb=False, default_layers=3)
+E = eng.embed_dim
+V = eng.vocab_size
+BUF_lg = [0.0] * V
 
-# Zero-allocation buffers
-BUF_nx    = [0.0] * EMBED_DIM
-BUF_qkv   = [0.0] * (3 * EMBED_DIM)
-BUF_ao    = [0.0] * EMBED_DIM
-BUF_proj  = [0.0] * EMBED_DIM
-BUF_mlp1  = [0.0] * (4 * EMBED_DIM)
-BUF_mlp2  = [0.0] * EMBED_DIM
-BUF_ln_w  = [0.0] * EMBED_DIM
-BUF_ln_b  = [0.0] * EMBED_DIM
-BUF_lg    = [0.0] * VOCAB_SIZE
-BUF_LIN   = bytearray(4 * EMBED_DIM * 4)
+try:
+    import wifiConfig
+    WIFI_SSID = wifiConfig.SSID
+    WIFI_PASS = wifiConfig.PASSWORD
+except Exception:
+    WIFI_SSID = ""
+    WIFI_PASS = ""
 
-def recv_all(sock, n):
-    data = bytearray()
-    while len(data) < n:
-        packet = sock.recv(n - len(data))
-        if not packet: return None
-        data.extend(packet)
-    return data
+print("\n" + "=" * 50)
+print(f"[MIAOU] {E}-D / {eng.num_heads}H / {eng.layers}L | KV cap={eng.sink_size}+{eng.window_size}")
 
-@micropython.native
-def stream_linear_into(f, r, c, x, out):
-    bv = memoryview(BUF_LIN)[:c]
-    for i in range(r):
-        scale = struct.unpack('f', f.read(4))[0]
-        f.readinto(bv)
-        s = 0.0
-        for j in range(c):
-            v = bv[j]
-            s += (v if v < 128 else v - 256) * x[j]
-        out[i] = s * scale
-    bi = 0
-    mv_b = memoryview(BUF_LIN)
-    while bi < r:
-        s = min(64, r - bi)
-        f.readinto(mv_b[:s * 4])
-        b = struct.unpack(f'{s}f', mv_b[:s * 4])
-        for i in range(s):
-            out[bi + i] += b[i]
-        bi += s
-
-def layer_norm_into(x, w, b, out):
-    n = len(x)
-    m = sum(x) / n
-    v = sum((x[i] - m) ** 2 for i in range(n)) / n
-    s = math.sqrt(v + 1e-5)
-    for i in range(n):
-        out[i] = ((x[i] - m) / s) * w[i] + b[i]
-
-def read_vec_into(f, c, target):
-    raw = f.read(c * 4)
-    vals = struct.unpack(f'{c}f', raw)
-    for i in range(c):
-        target[i] = vals[i]
-
-half_head = HEAD_DIM // 2
-inv_freq = [1.0 / (10000.0 ** (2.0 * i / HEAD_DIM)) for i in range(half_head)]
-cos_tab = [[math.cos(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
-sin_tab = [[math.sin(p * inv_freq[i]) for i in range(half_head)] for p in range(BLOCK_SIZE)]
-
-print("\n" + "="*50)
-print("[MIAOU] Initializing 96-D / 4-Head Worker (Layers 3-5)...")
-
-try: network.hostname('miaou')
-except: pass
+try:
+    network.hostname("miaou")
+except Exception:
+    pass
 
 sta = network.WLAN(network.STA_IF)
 sta.active(True)
@@ -90,14 +35,14 @@ if WIFI_SSID:
     sta.connect(WIFI_SSID, WIFI_PASS)
     t_end = time.time() + 12
     while not sta.isconnected() and time.time() < t_end:
-        led.toggle(); time.sleep(0.2)
+        led.toggle()
+        time.sleep(0.2)
 
-is_home_wifi = sta.isconnected()
-if is_home_wifi:
-    print(f"[MIAOU] Connected to Home Wi-Fi! IP: {sta.ifconfig()[0]}")
+if sta.isconnected():
+    print(f"[MIAOU] Connected to Wi-Fi! IP: {sta.ifconfig()[0]}")
     beacon_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     beacon_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    beacon_sock.bind(('0.0.0.0', 5001))
+    beacon_sock.bind(("0.0.0.0", 5001))
     meow_ip = None
     while not meow_ip:
         led.toggle()
@@ -108,9 +53,11 @@ if is_home_wifi:
     beacon_sock.close()
 else:
     print("[MIAOU] Connecting to Meow-Net...")
-    sta.connect('Meow-Net')
-    while not sta.isconnected(): led.toggle(); time.sleep(0.25)
-    meow_ip = '192.168.4.1'
+    sta.connect("Meow-Net")
+    while not sta.isconnected():
+        led.toggle()
+        time.sleep(0.25)
+    meow_ip = "192.168.4.1"
 
 c = socket.socket()
 connected = False
@@ -121,134 +68,59 @@ while not connected:
         c.settimeout(None)
         connected = True
         print(f"[MIAOU] Paired with Meow at {meow_ip}:5000!")
-    except: time.sleep(0.2)
+    except Exception:
+        time.sleep(0.2)
 
 led.off()
 
-f_w = open("pico2 weights.model", "rb")
-kv = [{'k':[], 'v':[]} for _ in range(LAYERS)]
-token_counter = [0]
-x_vec = [0.0] * EMBED_DIM
-
-def run_layer(f, idx, x, pos):
-    read_vec_into(f, EMBED_DIM, BUF_ln_w)
-    read_vec_into(f, EMBED_DIM, BUF_ln_b)
-    layer_norm_into(x, BUF_ln_w, BUF_ln_b, BUF_nx)
-
-    stream_linear_into(f, 3 * EMBED_DIM, EMBED_DIM, BUF_nx, BUF_qkv)
-    
-    c_tab = cos_tab[min(pos, BLOCK_SIZE - 1)]
-    s_tab = sin_tab[min(pos, BLOCK_SIZE - 1)]
-    for h in range(NUM_HEADS):
-        ho = h * HEAD_DIM
-        for i in range(half_head):
-            i2 = ho + i * 2
-            q0, q1 = BUF_qkv[i2], BUF_qkv[i2 + 1]
-            BUF_qkv[i2]     = q0 * c_tab[i] - q1 * s_tab[i]
-            BUF_qkv[i2 + 1] = q0 * s_tab[i] + q1 * c_tab[i]
-            k0, k1 = BUF_qkv[EMBED_DIM + i2], BUF_qkv[EMBED_DIM + i2 + 1]
-            BUF_qkv[EMBED_DIM + i2]     = k0 * c_tab[i] - k1 * s_tab[i]
-            BUF_qkv[EMBED_DIM + i2 + 1] = k0 * s_tab[i] + k1 * c_tab[i]
-    
-    kv[idx]['k'].append(array('f', BUF_qkv[EMBED_DIM : 2 * EMBED_DIM]))
-    kv[idx]['v'].append(array('f', BUF_qkv[2 * EMBED_DIM : 3 * EMBED_DIM]))
-    
-    if len(kv[idx]['k']) > SINK_SIZE + WINDOW_SIZE:
-        kv[idx]['k'].pop(SINK_SIZE)
-        kv[idx]['v'].pop(SINK_SIZE)
-        
-    for i in range(EMBED_DIM): BUF_ao[i] = 0.0
-    sc = 1.0 / math.sqrt(HEAD_DIM)
-    seq_len = len(kv[idx]['k'])
-    
-    for h in range(NUM_HEADS):
-        ho = h * HEAD_DIM
-        ms = -1e9
-        for t in range(seq_len):
-            k_t = kv[idx]['k'][t]
-            dot = 0.0
-            for i in range(HEAD_DIM):
-                dot += BUF_qkv[ho + i] * k_t[ho + i]
-            score = dot * sc
-            BUF_mlp1[t] = score
-            if score > ms: ms = score
-            
-        sum_exp = 0.0
-        for t in range(seq_len):
-            ew = math.exp(BUF_mlp1[t] - ms)
-            BUF_mlp1[t] = ew
-            sum_exp += ew
-            
-        inv_sum = 1.0 / (sum_exp if sum_exp > 1e-12 else 1.0)
-        for t in range(seq_len):
-            w = BUF_mlp1[t] * inv_sum
-            v_t = kv[idx]['v'][t]
-            for i in range(HEAD_DIM):
-                BUF_ao[ho + i] += w * v_t[ho + i]
-            
-    stream_linear_into(f, EMBED_DIM, EMBED_DIM, BUF_ao, BUF_proj)
-    for i in range(EMBED_DIM): x[i] += BUF_proj[i]
-    
-    read_vec_into(f, EMBED_DIM, BUF_ln_w)
-    read_vec_into(f, EMBED_DIM, BUF_ln_b)
-    layer_norm_into(x, BUF_ln_w, BUF_ln_b, BUF_nx)
-    
-    stream_linear_into(f, 4 * EMBED_DIM, EMBED_DIM, BUF_nx, BUF_mlp1)
-    for j in range(4 * EMBED_DIM):
-        if BUF_mlp1[j] < 0.0: BUF_mlp1[j] = 0.0
-        
-    stream_linear_into(f, EMBED_DIM, 4 * EMBED_DIM, BUF_mlp1, BUF_mlp2)
-    for i in range(EMBED_DIM): x[i] += BUF_mlp2[i]
+token_counter = 0
+x_vec = [0.0] * E
+pkt_size = 1 + E * 4
 
 while True:
     try:
-        header = recv_all(c, 1 + EMBED_DIM * 4)
-        if not header: break
-        
+        header = recv_all(c, pkt_size)
+        if not header:
+            break
+
         mode = header[0]
-        data = header[1:]
-        
-        # Mode 2: Reset
         if mode == 2:
-            for c_kv in kv: c_kv['k'].clear(); c_kv['v'].clear()
-            token_counter[0] = 0
+            eng.clear_kv()
+            token_counter = 0
             c.sendall(b"OK")
             gc.collect()
             continue
-            
+
         led.on()
-        floats = struct.unpack(f'{EMBED_DIM}f', data)
-        for i in range(EMBED_DIM): x_vec[i] = floats[i]
-        
-        pos = token_counter[0]
-        token_counter[0] += 1
-        
-        f_w.seek(0)
-        for l in range(LAYERS): run_layer(f_w, l, x_vec, pos)
-        
-        # Mode 0: Intermediate prefill token (KV cache updated; skip LM head)
+        floats = struct.unpack_from(f"{E}f", header, 1)
+        for i in range(E):
+            x_vec[i] = floats[i]
+
+        pos = token_counter
+        token_counter += 1
+        eng.run_all_layers(x_vec, pos, return_attn=False)
+
         if mode == 0:
             c.sendall(b"OK")
             led.off()
             continue
-            
-        # Mode 1: Final prompt token or generation token (compute logits)
-        read_vec_into(f_w, EMBED_DIM, BUF_ln_w)
-        read_vec_into(f_w, EMBED_DIM, BUF_ln_b)
-        layer_norm_into(x_vec, BUF_ln_w, BUF_ln_b, BUF_nx)
-        
-        stream_linear_into(f_w, VOCAB_SIZE, EMBED_DIM, BUF_nx, BUF_lg)
+
+        eng.read_vec_into(E, eng.ln_w)
+        eng.read_vec_into(E, eng.ln_b)
+        eng.layer_norm_into(x_vec, eng.ln_w, eng.ln_b, eng.nx)
+        eng.stream_linear_into(V, E, eng.nx, BUF_lg)
         BUF_lg[0] = BUF_lg[1] = -1e9
-        
-        tops = [2]*5; tvs = [-1e9]*5
-        for i in range(2, VOCAB_SIZE):
+
+        tops = [2] * 5
+        tvs = [-1e9] * 5
+        for i in range(2, V):
             if BUF_lg[i] > tvs[0]:
                 tvs[0], tops[0], j = BUF_lg[i], i, 0
-                while j < 4 and tvs[j] > tvs[j+1]:
-                    tvs[j], tvs[j+1], tops[j], tops[j+1] = tvs[j+1], tvs[j], tops[j+1], tops[j]
+                while j < 4 and tvs[j] > tvs[j + 1]:
+                    tvs[j], tvs[j + 1], tops[j], tops[j + 1] = tvs[j + 1], tvs[j], tops[j + 1], tops[j]
                     j += 1
-                    
-        c.sendall(struct.pack('5H', tops[4], tops[3], tops[2], tops[1], tops[0]))
+
+        c.sendall(struct.pack("5H", tops[4], tops[3], tops[2], tops[1], tops[0]))
         led.off()
     except Exception as e:
         print(f"[MIAOU] Connection error: {e}")

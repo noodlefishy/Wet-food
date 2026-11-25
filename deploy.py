@@ -1,4 +1,4 @@
-import sys, os, subprocess, gzip
+import gzip, os, subprocess, sys
 
 HTML_SRC = "firmware/index.html"
 HTML_GZ = "firmware/index.html.gz"
@@ -11,13 +11,15 @@ MEOW_FILES = [
     ("models/local/vocab.py", "vocab.py"),
     ("firmware/wifiConfig.py", "wifiConfig.py"),
     ("firmware/index.html.gz", "index.html.gz"),
-    ("firmware/meow.py", "main.py")
+    ("firmware/pico_engine.py", "pico_engine.py"),
+    ("firmware/meow.py", "main.py"),
 ]
 
 MIAOU_FILES = [
     ("models/local/pico2 weights.model", "pico2 weights.model"),
     ("firmware/wifiConfig.py", "wifiConfig.py"),
-    ("firmware/miaou.py", "main.py")
+    ("firmware/pico_engine.py", "pico_engine.py"),
+    ("firmware/miaou.py", "main.py"),
 ]
 
 args = [a.lower() for a in sys.argv[1:]]

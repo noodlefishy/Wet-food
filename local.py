@@ -1,137 +1,71 @@
-# local.py - High-speed local Mac runner with multi-head attention extraction & TCP_NODELAY streaming
-import os, sys, json, re, time, math, socket, urllib.parse
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import torch, torch.nn.functional as F
+import json, math, os, socket, sys, time, urllib.parse
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import torch
+import torch.nn.functional as F
 
 projectRoot = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, projectRoot)
 
-from benchmarks.fastEvaluator import (
-    model, VOCAB, WORD_TO_ID, BLOCK_SIZE, padId, device, 
-    NUM_HEADS, HEAD_DIM, EMBED_DIM, cosC, sinC, applyRope, NUM_LAYERS,VOCAB_SIZE
-)
+from pico.model import apply_rope, load_distributed_model
+from pico.tokenizer import canonicalize_to_qca, tokenize
 
-model.eval()
+ctx = load_distributed_model(projectRoot)
+model = ctx["model"]
+VOCAB = ctx["vocab"]
+WORD_TO_ID = ctx["word_to_id"]
+VOCAB_SIZE = ctx["vocab_size"]
+EMBED_DIM = ctx["embed_dim"]
+BLOCK_SIZE = ctx["block_size"]
+NUM_HEADS = ctx["num_heads"]
+HEAD_DIM = ctx["head_dim"]
+NUM_LAYERS = ctx["num_layers"]
+MEOW_LAYERS = ctx["meow_layers"]
+device = ctx["device"]
+padId = WORD_TO_ID.get("<pad>", 1)
+
 print("=" * 65)
-print(f"[*] Loaded PyTorch Model ({EMBED_DIM}-D, {NUM_HEADS} Heads, dk={HEAD_DIM}) on {str(device).upper()}")
+print(f"[*] Loaded PyTorch Model ({EMBED_DIM}-D, {NUM_LAYERS}L, {NUM_HEADS} Heads, dk={HEAD_DIM}) on {str(device).upper()}")
 print("[*] Starting Local Neon Cyber-Terminal at http://localhost:8080")
 print("=" * 65)
 
-TOKEN_REGEX = r"\[[cqa]\]|<eos>|<unk>|<pad>|'s|\w+|[.,?!:]"
-
-def tokenize(s):
-    for c in [".", "?", "!", ",", ":"]: s = s.replace(c, f" {c} ")
-    s = s.replace("'s", " 's ")
-    return [WORD_TO_ID.get(w, 0) for w in re.findall(TOKEN_REGEX, s.lower())]
-
-def canonicalize_to_qca(raw):
-    p = raw.strip()
-    is_logic = any(t in p for t in ("[c]", "[q]", "[a]")) or any(
-        p.lower().startswith(w) for w in ("who", "what", "where", "is", "does", "why", "how", "question")
-    ) or ("?" in p)
-    
-    if not is_logic:
-        return p, False
-
-    if "[q]" in p and "[c]" in p:
-        q_pos = p.find("[q]")
-        c_pos = p.find("[c]")
-        if q_pos < c_pos:
-            if not p.endswith("[a]"): p = p.rstrip("?.: ") + " [a]"
-            return p, True
-        else:
-            c_part = p[c_pos + 3 : q_pos].strip().rstrip(". ")
-            rem = p[q_pos + 3 :].strip()
-            q_part = rem.split("[a]")[0].strip().rstrip("?.: ")
-            return f"[q] {q_part} ? [c] {c_part} . [a]", True
-
-    if "?" in p:
-        parts = p.split("?")
-        q_words = ("who", "what", "where", "is", "are", "does", "did", "why", "how")
-        first = parts[0].strip()
-        second = parts[1].replace("[a]", "").strip().rstrip(". ")
-        if any(first.lower().startswith(w) for w in q_words):
-            if second: return f"[q] {first} ? [c] {second} . [a]", True
-            else: return f"[q] {first} ? [a]", True
-        else:
-            return f"[q] {second} ? [c] {first} . [a]", True
-
-    if not p.startswith("[q]"): p = f"[q] {p}"
-    if not p.endswith("[a]"): p = p.rstrip("?.: ") + " ? [a]"
-    return p, True
-
 activation_cache = {
     "thought_vector": None,
-    "layers_attn": [None] * NUM_LAYERS
+    "layers_attn": [None] * NUM_LAYERS,
 }
 
 def make_attn_hook(l_idx):
     def hook(module, inp, out):
         x = inp[0]
-        B, T, C = x.shape
-        qkv = module.qkvProj(x)
-        q, k, _ = qkv.chunk(3, dim=-1)
-        q = q.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
-        k = k.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2)
-        q = applyRope(q, cosC, sinC)
-        k = applyRope(k, cosC, sinC)
-        
+        B, T, _ = x.shape
+        q, k, _ = module.qkvProj(x).chunk(3, dim=-1)
+        q = apply_rope(q.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2), module.cos_cached, module.sin_cached)
+        k = apply_rope(k.view(B, T, NUM_HEADS, HEAD_DIM).transpose(1, 2), module.cos_cached, module.sin_cached)
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(HEAD_DIM)
         mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
-        scores = scores.masked_fill(mask, float('-inf'))
-        attn_matrix = F.softmax(scores, dim=-1) # Shape: (B, NUM_HEADS, T, T)
-        
-        # Cache full multi-head tensor (NUM_HEADS, T, T)
-        activation_cache["layers_attn"][l_idx] = attn_matrix[0].detach().cpu()
+        scores = scores.masked_fill(mask, float("-inf"))
+        activation_cache["layers_attn"][l_idx] = F.softmax(scores, dim=-1)[0].detach().cpu()
     return hook
 
-def layer2_block_hook(module, inp, out):
+def meow_boundary_hook(module, inp, out):
     activation_cache["thought_vector"] = out[0].detach()
 
-model.layers[2].register_forward_hook(layer2_block_hook)
+model.layers[MEOW_LAYERS - 1].register_forward_hook(meow_boundary_hook)
 for idx in range(NUM_LAYERS):
     model.layers[idx].sa.register_forward_hook(make_attn_hook(idx))
 
-
 def compute_attention_rollout(layers_attn_list, seq_len):
-    """
-    Peak-Preserving Attribution (2D Matrix):
-    Extracts the maximum attention spike across all layers for every token pair (i, j),
-    preserving sharp reasoning gates without residual blur.
-    """
     valid_layers = [l for l in layers_attn_list if l is not None]
     if not valid_layers or seq_len <= 0:
         return torch.zeros((seq_len, seq_len))
 
     dev = valid_layers[0].device
-    
-    # Each cached layer tensor is (NUM_HEADS, T, T).
-    # Average across heads first: (T, T), then slice [:seq_len, :seq_len]
-    averaged_layers = []
-    for l in valid_layers:
-        if l.ndim == 3:
-            # l is (NUM_HEADS, T, T) -> mean over heads -> (T, T)
-            avg_mat = l.mean(dim=0)[:seq_len, :seq_len].to(dev)
-        else:
-            # l is already (T, T)
-            avg_mat = l[:seq_len, :seq_len].to(dev)
-        averaged_layers.append(avg_mat)
-
-    # 1. Stack all 6 layers: shape (NUM_LAYERS, seq_len, seq_len)
-    stacked = torch.stack(averaged_layers, dim=0)
-
-    # 2. Element-wise maximum across all layers: shape (seq_len, seq_len)
-    peak_matrix, _ = stacked.max(dim=0)
-
-    # 3. Apply causal mask (tokens cannot attend to future tokens)
-    causal_mask = torch.tril(torch.ones((seq_len, seq_len), device=dev))
-    peak_matrix = peak_matrix * causal_mask
-
-    # 4. Normalize each row so it sums to 1.0
-    row_sums = peak_matrix.sum(dim=-1, keepdim=True).clamp(min=1e-9)
-    norm_peaks = peak_matrix / row_sums
-
-    return norm_peaks.detach().cpu()
+    averaged_layers = [
+        (l.mean(dim=0) if l.ndim == 3 else l)[:seq_len, :seq_len].to(dev)
+        for l in valid_layers
+    ]
+    peak_matrix, _ = torch.stack(averaged_layers, dim=0).max(dim=0)
+    peak_matrix = peak_matrix * torch.tril(torch.ones((seq_len, seq_len), device=dev))
+    return (peak_matrix / peak_matrix.sum(dim=-1, keepdim=True).clamp(min=1e-9)).detach().cpu()
 
 class SimulatorHandler(BaseHTTPRequestHandler):
     def setup(self):
@@ -143,10 +77,11 @@ class SimulatorHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
-        
+
         if parsed.path in ("/", "/index.html"):
             html_path = os.path.join(projectRoot, "firmware", "index.html")
-            with open(html_path, "rb") as f: content = f.read()
+            with open(html_path, "rb") as f:
+                content = f.read()
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(content)))
@@ -161,11 +96,14 @@ class SimulatorHandler(BaseHTTPRequestHandler):
 
             default_temp = 0.0 if is_logic else 0.75
             default_top_k = 1 if is_logic else 25
-            try: temp_param = float(query.get("t", [default_temp])[0])
-            except (ValueError, TypeError): temp_param = default_temp
-
-            try: top_k_param = int(query.get("k", [default_top_k])[0])
-            except (ValueError, TypeError): top_k_param = default_top_k
+            try:
+                temp_param = float(query.get("t", [default_temp])[0])
+            except (ValueError, TypeError):
+                temp_param = default_temp
+            try:
+                top_k_param = int(query.get("k", [default_top_k])[0])
+            except (ValueError, TypeError):
+                top_k_param = default_top_k
 
             self.send_response(200)
             self.send_header("Content-Type", "application/x-ndjson")
@@ -192,57 +130,54 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                         head_rows = [mat[h, pos, :max_len].tolist() for h in range(NUM_HEADS)]
                         all_l.append({
                             "all": [round(w, 3) for w in avg_row],
-                            "heads": [[round(w, 3) for w in h_row] for h_row in head_rows]
+                            "heads": [[round(w, 3) for w in h_row] for h_row in head_rows],
                         })
                     else:
                         all_l.append({
                             "all": [0.0] * max_len,
-                            "heads": [[0.0] * max_len for _ in range(NUM_HEADS)]
+                            "heads": [[0.0] * max_len for _ in range(NUM_HEADS)],
                         })
                 return all_l
 
-            canonical_tks = tokenize(qca_prompt)
-            user_tks = tokenize(raw_prompt)
+            canonical_tks = tokenize(qca_prompt, WORD_TO_ID)
+            user_tks = tokenize(raw_prompt, WORD_TO_ID)
             if not canonical_tks:
                 send_chunk({"stage": "error", "msg": "Empty prompt"})
-                try: self.wfile.write(b"0\r\n\r\n")
-                except Exception: pass
+                try:
+                    self.wfile.write(b"0\r\n\r\n")
+                except Exception:
+                    pass
                 return
-
-            qca_words = [VOCAB[t] for t in canonical_tks]
-            user_words = [VOCAB[t] for t in user_tks]
 
             if not send_chunk({
                 "stage": "init",
                 "user_prompt": raw_prompt,
-                "qca_tokens": qca_words,
-                "user_tokens": user_words,
-                "is_logic": is_logic
+                "qca_tokens": [VOCAB[t] for t in canonical_tks],
+                "user_tokens": [VOCAB[t] for t in user_tks],
+                "is_logic": is_logic,
             }):
                 return
 
             curr_tokens = list(canonical_tks)
-            
-            # Phase 1: Prefill prompt tokens
             t_prev = time.perf_counter()
+
             for stp in range(len(canonical_tks)):
-                prefix = curr_tokens[:stp + 1]
+                prefix = curr_tokens[: stp + 1]
                 padded = prefix + [padId] * (BLOCK_SIZE - len(prefix))
                 x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
-                
+
                 with torch.no_grad():
                     logits = model(x)
-                
+
                 lat_ms = int((time.perf_counter() - t_prev) * 1000)
                 t_prev = time.perf_counter()
 
-                tv = activation_cache.get("thought_vector", None)
-                v_slice = tv[stp, :96].tolist() if tv is not None else [0.0] * 96
+                tv = activation_cache.get("thought_vector")
+                v_slice = tv[stp, : min(96, EMBED_DIM)].tolist() if tv is not None else [0.0] * min(96, EMBED_DIM)
 
                 lg = logits[0, stp].clone()
                 lg[WORD_TO_ID.get("<unk>", 0)] = lg[WORD_TO_ID.get("<pad>", 1)] = -1e9
-                top_indices = torch.topk(lg, 5).indices.tolist()
-                ranks = [VOCAB[idx] for idx in top_indices]
+                ranks = [VOCAB[idx] for idx in torch.topk(lg, 5).indices.tolist()]
 
                 curr_len = stp + 1
                 R_mat = compute_attention_rollout(activation_cache["layers_attn"], curr_len)
@@ -258,12 +193,11 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "v": v_slice,
                     "ranks": ranks,
                     "attn_layers": extract_all_layers_attn(stp, stp + 1),
-                    "rollout": rollout_row
+                    "rollout": rollout_row,
                 }):
                     return
                 time.sleep(0.08)
 
-            # Phase 2: Autoregressive Generation
             generated_history = []
             max_gen = 30 if is_logic else 60
 
@@ -271,10 +205,10 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 pos = len(curr_tokens) - 1
                 padded = curr_tokens + [padId] * (BLOCK_SIZE - len(curr_tokens))
                 x = torch.tensor([padded[:BLOCK_SIZE]], dtype=torch.long, device=device)
-                
+
                 with torch.no_grad():
                     logits = model(x)
-                    
+
                 lg = logits[0, pos].clone()
                 lg[WORD_TO_ID.get("<unk>", 0)] = lg[WORD_TO_ID.get("<pad>", 1)] = -1e9
 
@@ -283,16 +217,12 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 else:
                     for past_tok in set(curr_tokens[-16:] + generated_history[-10:]):
                         lg[past_tok] -= 1.8
-                    
                     if not is_logic and gen_stp < 14:
                         lg[WORD_TO_ID.get("<eos>", 2)] = -1e9
                         lg[WORD_TO_ID.get(".", 3)] -= 0.8
-
                     probs = F.softmax(lg / max(0.05, temp_param), dim=-1)
-                    k_val = min(max(1, top_k_param), VOCAB_SIZE)
-                    top_k_probs, top_k_indices = torch.topk(probs, k_val)
-                    sample_idx = torch.multinomial(top_k_probs, 1).item()
-                    pred_id = top_k_indices[sample_idx].item()
+                    top_k_probs, top_k_indices = torch.topk(probs, min(max(1, top_k_param), VOCAB_SIZE))
+                    pred_id = top_k_indices[torch.multinomial(top_k_probs, 1).item()].item()
 
                 word = VOCAB[pred_id]
                 if word in ("<eos>", "<pad>"):
@@ -301,11 +231,9 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 lat_ms = int((time.perf_counter() - t_prev) * 1000)
                 t_prev = time.perf_counter()
 
-                tv = activation_cache.get("thought_vector", None)
-                v_slice = tv[pos, :96].tolist() if tv is not None else [0.0] * 96
-
-                top_indices = torch.topk(lg, 5).indices.tolist()
-                ranks = [VOCAB[idx] for idx in top_indices]
+                tv = activation_cache.get("thought_vector")
+                v_slice = tv[pos, : min(96, EMBED_DIM)].tolist() if tv is not None else [0.0] * min(96, EMBED_DIM)
+                ranks = [VOCAB[idx] for idx in torch.topk(lg, 5).indices.tolist()]
 
                 curr_len = len(curr_tokens)
                 R_mat = compute_attention_rollout(activation_cache["layers_attn"], curr_len)
@@ -319,7 +247,7 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                     "v": v_slice,
                     "ranks": ranks,
                     "attn_layers": extract_all_layers_attn(pos, len(curr_tokens)),
-                    "rollout": rollout_row
+                    "rollout": rollout_row,
                 }):
                     return
 
@@ -327,11 +255,12 @@ class SimulatorHandler(BaseHTTPRequestHandler):
                 generated_history.append(pred_id)
                 if len(curr_tokens) >= BLOCK_SIZE:
                     break
-
                 time.sleep(0.16)
 
-            try: self.wfile.write(b"0\r\n\r\n")
-            except Exception: pass
+            try:
+                self.wfile.write(b"0\r\n\r\n")
+            except Exception:
+                pass
 
     def log_message(self, format, *args):
         return
